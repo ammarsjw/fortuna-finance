@@ -59,7 +59,6 @@ contract Battling is Ownable {
         uint256 rewardCyclesDone;
         uint256 rationsDaysTotal;
         uint8 battleType;
-        bool isRewardReset;
         uint256 dayForRewardReset;
         uint256 dayForLimitReached;
     }
@@ -255,7 +254,7 @@ contract Battling is Ownable {
 
 
         numberOfBattles[msg.sender]++;
-        addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, rewardBase[_battleType - 1], block.timestamp, block.timestamp, 0, 0, _battleType, false, 0, 0);
+        addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, rewardBase[_battleType - 1], block.timestamp, block.timestamp, 0, 0, _battleType, 0, 0);
         fortunasToken.transferFrom(msg.sender, address(this), _tokens);
     }
 
@@ -290,28 +289,28 @@ contract Battling is Ownable {
             if (_tempBattle.rationsDaysTotal < _tempBattle.dayForLimitReached) {
                 uint256 daysPreIncrease = _tempBattle.dayForLimitReached - _tempBattle.rationsDaysTotal;
                 tempRations = totalTokens.mul(rationsBase[daysPreIncrease - 1]).div(multiplierForMisc);
-                if (_tempBattle.isRewardReset == false && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
+                if (_tempBattle.dayForRewardReset == 0 && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
                     _tempBattle = findDayForRewardReset(_tempBattle, daysPreIncrease, 1);
                 }
 
                 uint256 daysPostIncrease = (_tempBattle.rationsDaysTotal.add(_rationDays)) - _tempBattle.dayForLimitReached;
                 totalPercentage = rationsBase[daysPostIncrease - 1].add(rationsIncrease[daysPostIncrease - 1]);
                 tempRations = totalTokens.mul(totalPercentage).div(multiplierForMisc);
-                if (_tempBattle.isRewardReset == false && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
+                if (_tempBattle.dayForRewardReset == 0 && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
                     _tempBattle = findDayForRewardReset(_tempBattle, daysPostIncrease, 2);
                 }
             }
             else {
                 totalPercentage = rationsBase[_rationDays - 1].add(rationsIncrease[_rationDays - 1]);
                 tempRations = totalTokens.mul(totalPercentage).div(multiplierForMisc);
-                if (_tempBattle.isRewardReset == false && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
+                if (_tempBattle.dayForRewardReset == 0 && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
                     _tempBattle = findDayForRewardReset(_tempBattle, _rationDays, 3);
                 }                
             }
         }
         else {
             tempRations = totalTokens.mul(rationsBase[_rationDays - 1]).div(multiplierForMisc);
-            if (_tempBattle.isRewardReset == false && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
+            if (_tempBattle.dayForRewardReset == 0 && _tempBattle.rationsAmount.add(tempRations) > _tempBattle.originalTokensSent) {
                 _tempBattle = findDayForRewardReset(_tempBattle, _rationDays, 4);
             }
         }
@@ -335,7 +334,6 @@ contract Battling is Ownable {
                 tempTempRations = totalTokens.mul(rationsBase[i]).div(multiplierForMisc);
                 if (_tempBattle.rationsAmount.add(tempTempRations) > _tempBattle.originalTokensSent) {
                     _tempBattle.dayForRewardReset = _tempBattle.rationsDaysTotal.add(tempTempRations);
-                    _tempBattle.isRewardReset = true;
                 }
             }
         }
@@ -345,7 +343,6 @@ contract Battling is Ownable {
                 tempTempRations = totalTokens.mul(totalPercentage).div(multiplierForMisc);
                 if (_tempBattle.rationsAmount.add(tempTempRations) > _tempBattle.originalTokensSent) {
                     _tempBattle.dayForRewardReset = _tempBattle.rationsDaysTotal.add(tempTempRations);
-                    _tempBattle.isRewardReset = true;
                 }
             }
         }
@@ -370,9 +367,8 @@ contract Battling is Ownable {
             tempBattle.rewardAmount -= _tokensToRemove;
         }
 
-        if (tempBattle.isRewardReset == false && tempBattle.rationsAmount > tempBattle.originalTokensSent) {
+        if (tempBattle.dayForRewardReset == 0 && tempBattle.rationsAmount > tempBattle.originalTokensSent) {
             tempBattle.dayForRewardReset = tempBattle.rationsDaysTotal;
-            tempBattle.isRewardReset = true;
         }
 
         require(fortunasToken.balanceOf(address(this)) >= _tokensToRemove, "removeTokens::Contract has insufficient balance. Please try again later");
@@ -486,7 +482,7 @@ contract Battling is Ownable {
         require(fortunasToken.balanceOf(address(this)) >= totalTokens, "battleEnd::Contract has insufficient balance. Please try again later");
         fortunasToken.transfer(msg.sender, totalTokens);
 
-        addressForBattle[msg.sender][_battleNumber - 1] = Battle(0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0);
+        addressForBattle[msg.sender][_battleNumber - 1] = Battle(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
     function calculateRewardsAndReturn(Battle memory _tempBattle, bool _isPotentialNeeded) internal view returns (Battle memory, uint256) {
@@ -528,7 +524,7 @@ contract Battling is Ownable {
 
             for ( ; _tempBattle.rewardCyclesDone < numberOfRewardCycles ; _tempBattle.rewardCyclesDone++) {
                 // isRewardReset
-                if (_tempBattle.rewardCyclesDone == _tempBattle.dayForRewardReset.mul(48) && _tempBattle.isRewardReset == true) {
+                if (_tempBattle.rewardCyclesDone == _tempBattle.dayForRewardReset.mul(48) && _tempBattle.dayForRewardReset != 0) {
                     _tempBattle.currentRewardPercentage = rewardBase[_tempBattle.battleType - 1];
                 }
 
@@ -553,7 +549,7 @@ contract Battling is Ownable {
                 uint256 extraRewardCyclesDone = _tempBattle.rewardCyclesDone;
                 uint256 extraCurrentRewardPercentage = _tempBattle.currentRewardPercentage;
                 for ( ; extraRewardCyclesDone < extraNumberOfRewardCycles ; extraRewardCyclesDone++) {
-                    if (extraRewardCyclesDone == _tempBattle.dayForRewardReset.mul(48) && _tempBattle.isRewardReset == true) {
+                    if (extraRewardCyclesDone == _tempBattle.dayForRewardReset.mul(48) && _tempBattle.dayForRewardReset != 0) {
                         extraCurrentRewardPercentage = rewardBase[_tempBattle.battleType - 1];
                     }
 
@@ -575,10 +571,10 @@ contract Battling is Ownable {
     }
 
     /**
-     * @dev Should be called if updated battle data needed, ideally to be called once every day
-     *      Subject to change:-
-     *      Can be changed to calculate rewards for all battles for a specific user
-     *      Function "battleEnd" must be called if the battle has already finished
+     * @dev Should be called if updated battle data needed
+     *      Ideally to be called only if an update on current reward amount is needed
+     *      Subject to change : Can be changed to calculate rewards for all battles of a specific user
+     *      Function "battleEnd" should be called if the battle has already finished
      */
     function calculateRewardsAndSave(uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
