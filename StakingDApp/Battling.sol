@@ -430,7 +430,7 @@ contract Battling is Ownable {
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "removeCavalry::No such battle is currently taking place");
         (tempBattle, ) = calculateRewardsAndReturn(tempBattle, _battleType);
         require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeCavalry::Cannot remove tokens from battles that have already finished");
-        require(_cavalryToRemove == addressForCavalry[msg.sender][_battleNumber - 1], "removeHero::Incorrect cavalry specified");
+        require(_cavalryToRemove == addressForCavalry[msg.sender][_battleNumber - 1], "removeCavalry::Incorrect cavalry specified");
 
 
         uint256 percentageToRemove = rewardBase[_battleType - 1].mul(cavalryPercentages[_cavalryToRemove - 1]).div(100);
@@ -539,6 +539,23 @@ contract Battling is Ownable {
         }
 
         return (_tempBattle, extraRewardAmount);
+    }
+    
+    /**
+     * @dev Should be called if updated data on a battle is needed
+     *      Subject to change
+     *      Can be adjusted to calculate rewards for all battles for a specific user
+     *      External function "battleEnd" must be called if the battle has already finished
+     */
+    function calculateRewardsAndSave(uint8 _battleType, uint256 _battleNumber) external {
+        Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
+        require(2 <= _battleType && _battleType <= 6, "calculateRewardsAndSave::Incorrect battle type");
+        require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "calculateRewardsAndSave::No such battle is currently taking place");
+        require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewardsAndSave::Cannot calculate rewards for battles that have already finished");
+
+
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, _battleType);
+        addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
     }
 
     /**
