@@ -5,47 +5,52 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./Math.sol";
 import "./FortunasToken.sol";
+import "./IPancakePair.sol";
+import "./IPancakeRouter02.sol";
+import "./IPancakeFactory.sol";
+import "./IWBUSD.sol";
 
 contract Battling is Ownable {
     using SafeMath for uint256;
     using SafeMath for uint8;
     using Math for uint256;
 
+    uint256 public bribeToEmeperor;                     // percentage of staked amount sent to treasury every time battling or training occurs
+    
     address treasuryWallet;
-    address liquidityProvider;
+    
+    IWBUSD wbusd;
+    IPancakeFactory pancakeFactory;
+    IPancakePair pancakePair;
+    IPancakeRouter02 pancakeRouter;
+
+    FortunasToken fortunasToken;
 
     uint256 contractStartTime;                          // a certain epoch time for testing (11:00 AM, 13th May 2022)
     uint256 timeSinceLastReward;
     uint256 public rewardTime;                          // 30 minutes in epoch time
     uint256 public oneDayTime;                          // 1 day in epoch time
 
-    uint256 public bribeToEmeperor;                     // percentage of staked amount sent to treasury every time battling or training occurs
-
     uint256 multiplierForReward;
     uint256 multiplierForMisc;
 
-    uint256[] rationsBase;                              // rations %
-
-    uint256[] rationsIncrease;                          // percentage increase in rations percentages when reward limit is reached
+    uint256[5] rationsBase;                              // rations %
+    uint256[5] rationsIncrease;                          // percentage increase in rations percentages when reward limit is reached
 
     uint256 rationsIncreasePercentage;
     
-    uint256[] rewardLimit;                              // rewardBase cannot exceed these amounts for battles
+    uint256[6] rewardLimit;                              // rewardBase cannot exceed these amounts for battles
+    uint256[6] rewardBase;                               // 30 minute reward %
+    uint256[6] rewardIncrease;                           // percentage of reward to add after every day of rations
 
-    uint256[] rewardBase;                               // 30 minute reward %
-
-    uint256[] rewardIncrease;                           // percentage of reward to add after every day of rations
-
-    uint256[] rewardBasePercentages;
+    uint256[6] rewardBasePercentages;
     uint256 rewardIncreasePercentage;
 
-    uint256[] heroPercentages;
+    uint256[5] heroPercentages;
+    uint256[6] heroPrices;
 
-    uint256[] cavalryPercentages;
-
-    FortunasToken fortunasToken;
-
-    address[] fortunasHolders;
+    uint256[5] cavalryPercentages;
+    uint256[5] cavalryPrices;
 
     // structs
 
@@ -53,6 +58,7 @@ contract Battling is Ownable {
         uint256 originalTokensSent;
         uint256 rationsAmount;
         uint256 rewardAmount;
+        uint256 liquidityAmount;
         uint256 currentRewardPercentage;
         uint256 battleStartTime;
         uint256 battleRewardTime;
@@ -61,6 +67,9 @@ contract Battling is Ownable {
         uint8 battleType;
         uint256 dayForRewardReset;
         uint256 dayForLimitReached;
+        uint8 hero;
+        uint8 cavalry;
+        uint256 losses;
     }
 
     // mappings
@@ -69,42 +78,59 @@ contract Battling is Ownable {
     mapping(address => uint256) numberOfBattles;
     mapping(address => mapping(uint8 => uint256)) addressForHeroBattle;
     mapping(address => mapping(uint8 => uint256)) addressForCavalryBattle;
+    mapping(address => mapping(uint8 => bool)) addressForOwnedHeroes;
+    mapping(address => mapping(uint8 => bool)) addressForOwnedCavalries;
 
     // constructor
 
     constructor() {
-        treasuryWallet = msg.sender;                    // TODO change this after testing phase to the correct address
-        liquidityProvider = msg.sender;                 // TODO change this after testing phase to the correct address
-
-        contractStartTime = 1652421600;                 // TODO change after testing
-        timeSinceLastReward = 1652421600;               // TODO change after testing
-        rewardTime = 1800;
-        oneDayTime = 86400;
-
         bribeToEmeperor = 5000;
 
         // TODO (for mainnet) rather than using the constructor, use the setter function to initialize all the below variables to hide the values from the public eye
+        treasuryWallet = address(0);
+        
+        wbusd = IWBUSD(address(0));
+        // mainnet
+        // pancakeFactory = IPancakeFactory(0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73);
+        // testnet
+        pancakeFactory = IPancakeFactory(address(0));
+        pancakePair = IPancakePair(pancakeFactory.getPair(address(fortunasToken), address(wbusd)));
+        pancakeRouter = IPancakeRouter02(address(0));
+
+        contractStartTime = 1652421600;
+        timeSinceLastReward = 1652421600;
+        // rewardTime = 1800;
+        // oneDayTime = 86400;
+        // 30 seconds, only for testing
+        rewardTime = 30;
+        // 24 minutes, only for testing
+        oneDayTime = 1440;
+
         multiplierForReward = 1000000000;
         multiplierForMisc = 1000000;
         
-        rationsBase = [1000, 2000, 3000, 4000, 5000];
+        rationsBase = [2500, 5000, 7500, 10000, 12500];
 
         rationsIncrease = [125, 250, 375, 500, 625];
 
         rationsIncreasePercentage = 125000;
 
-        rewardLimit = [520833, 1041667, 208333, 173611, 111107, 81667];
+        rewardLimit = [520833, 1041667, 208333, 260416, 416650, 612500];
 
-        rewardBase = [520833, 1041667, 156250, 86806, 22221, 8167];
+        rewardBase = [520833, 1041667, 156250, 130208, 83330, 61250];
 
-        rewardIncrease = [0, 0, 1042, 868, 556, 408];
+        rewardIncrease = [0, 0, 1042, 1302, 2083, 3063];
 
         rewardBasePercentages = [100, 100, 75, 50, 20, 10];
         rewardIncreasePercentage = 5000;
 
         heroPercentages = [2, 4, 6, 8, 10];
 
-        cavalryPercentages = [1, 2, 3];
+        heroPrices = [2500, 5000, 7500, 10000, 12500, 5000];
+
+        cavalryPercentages = [1, 2, 3, 4, 5];
+
+        cavalryPrices = [2500, 5000, 7500, 10000, 12500];
     }
 
     // getters
@@ -113,8 +139,8 @@ contract Battling is Ownable {
         return treasuryWallet;
     }
 
-    function getLiquidityProvider() external view onlyOwner returns (address) {
-        return liquidityProvider;
+    function getFortunasToken() external view onlyOwner returns (address) {
+        return address(fortunasToken);
     }
 
     function getContractStartTime() external view onlyOwner returns (uint256) {
@@ -133,10 +159,6 @@ contract Battling is Ownable {
         return multiplierForMisc;
     }
 
-    function getFortunasTokenContractAddress() external view onlyOwner returns (address) {
-        return address(fortunasToken);
-    }
-
     function getAddressForBattle(address _walletAddress, uint _battleNumber) external view onlyOwner returns (Battle memory) {
         return addressForBattle[_walletAddress][_battleNumber];
     }
@@ -151,8 +173,8 @@ contract Battling is Ownable {
         treasuryWallet = _treasuryWallet;
     }
 
-    function setLiquidityProvider(address _liquidityProvider) external onlyOwner {
-        liquidityProvider = _liquidityProvider;
+    function setFortunasToken(address _contractAddress) external onlyOwner {
+        fortunasToken = FortunasToken(_contractAddress);
     }
 
     function setContractStartTime(uint256 _contractStartTime) external onlyOwner {
@@ -235,16 +257,12 @@ contract Battling is Ownable {
         }
     }
 
-    function setFortunasTokenContractAddress(address _contractAddress) external onlyOwner {
-        fortunasToken = FortunasToken(_contractAddress);
-    }
-
     // functions
 
     function battleStart(uint256 _tokens, uint8 _battleType) external {
-        uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
         require(2 <= _battleType && _battleType <= 6, "battleStart::No such battle type exists");
-        require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::Insufficient manpower");
+        uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
+        require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::Insufficient funds");
         require(allowance >= _tokens, "battleStart::Not enough allowance to send tokens");
 
 
@@ -252,10 +270,27 @@ contract Battling is Ownable {
         _tokens -= bribe;
         fortunasToken.transferFrom(msg.sender, treasuryWallet, bribe);
 
+        if (_battleType == 2) {
+            (, , uint256 tempLiquidityAmount) = pancakeRouter.addLiquidity(
+                address(fortunasToken),
+                address(wbusd),
+                _tokens,
+                _tokens, // TODO how much wbusd to be sent along with $FRTNA Tokens
+                _tokens,
+                _tokens,
+                msg.sender,
+                block.timestamp.add(60)
+            );
 
-        numberOfBattles[msg.sender]++;
-        addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, rewardBase[_battleType - 1], block.timestamp, block.timestamp, 0, 0, _battleType, 0, 0);
-        fortunasToken.transferFrom(msg.sender, address(this), _tokens);
+            numberOfBattles[msg.sender]++;
+            addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, tempLiquidityAmount, rewardBase[_battleType - 1], block.timestamp, block.timestamp, 0, 0, _battleType, 0, 0, 0, 0, 0);
+        }
+        else {
+            fortunasToken.transferFrom(msg.sender, address(this), _tokens);
+
+            numberOfBattles[msg.sender]++;
+            addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, 0, rewardBase[_battleType - 1], block.timestamp, block.timestamp, 0, 0, _battleType, 0, 0, 0, 0, 0);
+        }
     }
 
     function sendRations(uint8 _battleType, uint256 _battleNumber, uint256 _rationDays) external {
@@ -265,9 +300,9 @@ contract Battling is Ownable {
             require(false, "sendRations::Cannot send rations to battles that have already finished");
         }
         else {
-            uint256 rationsExpended = block.timestamp.sub(tempBattle.battleStartTime.add(3 days)).div(oneDayTime);
-            uint256 tempRationDaysLeft = tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
-            require(tempRationDaysLeft <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
+            uint256 rationsExpended = block.timestamp.sub(tempBattle.battleStartTime.add(3 days)).ceilDiv(oneDayTime);
+            uint256 currentRationsDays = tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
+            require(currentRationsDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
         }
         require(3 <= _battleType && _battleType <= 6, "sendRations::User can only add rations to easy, medium, hard or very hard battles");
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
@@ -276,7 +311,7 @@ contract Battling is Ownable {
         uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
         uint256 extraRewardAmount;
 
-        (tempBattle, extraRewardAmount) = calculateRewardsAndReturn(tempBattle, true);
+        (tempBattle, extraRewardAmount) = calculateRewardsAndReturn(tempBattle, true, false);
         
         calculateRationsAndTransfer(allowance, tempBattle, _battleNumber, _rationDays, extraRewardAmount);
     }
@@ -353,7 +388,7 @@ contract Battling is Ownable {
     function removeTokens(uint256 _tokensToRemove, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "removeTokens::No such battle is currently taking place");
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
         require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTokens::Cannot remove tokens from battles that have already finished");
         require(_tokensToRemove < tempBattle.originalTokensSent + tempBattle.rewardAmount, "removeTokens::Not enough tokens in this battle");
 
@@ -377,13 +412,73 @@ contract Battling is Ownable {
         addressForBattle[msg.sender][_battleType - 1] = tempBattle;
     }
 
+    function purchaseHero(uint8 _heroToPurchase, uint256 randomizer) external {
+        require(1 <= _heroToPurchase && _heroToPurchase <= 6, "purchaseHero::Incorrect hero specified");
+        require(addressForOwnedHeroes[msg.sender][_heroToPurchase] == false, "purchaseHero::You already own this hero");
+
+        (uint256 reserves, , ) = pancakePair.getReserves();
+
+        uint8 heroForCost = _heroToPurchase;
+        if (_heroToPurchase == 6 && randomizer != 0) {
+            // TODO off chain randomizer
+            uint256 randNum = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+            randNum = randNum.mul(randomizer).mod(100);
+            if (0 < randNum && randNum <= 50) {
+                _heroToPurchase = 1;
+            }
+            else if (50 < randNum && randNum <= 75) {
+                _heroToPurchase = 2;
+            }
+            else if (75 < randNum && randNum <= 90) {
+                _heroToPurchase = 3;
+            }
+            else if (90 < randNum && randNum <= 99) {
+                _heroToPurchase = 4;
+            }
+            else if (randNum == 0) {
+                _heroToPurchase = 5;
+            }
+        }
+        require(_heroToPurchase != 6, "purchaseHero::Error in randomizer");
+        uint256 price = reserves.mul(10).mul(heroPrices[heroForCost - 1]).div(multiplierForMisc);
+        if (price.mod(10) >= 5) {
+            price = reserves.mul(heroPrices[heroForCost - 1]).ceilDiv(multiplierForMisc);
+        }
+        else {
+            price = reserves.mul(heroPrices[heroForCost - 1]).div(multiplierForMisc);
+        }
+        fortunasToken.transferFrom(msg.sender, address(this), price);
+
+        addressForOwnedHeroes[msg.sender][_heroToPurchase] = true;
+    }
+
+    function purchaseCavalry(uint8 _cavalryToPurchase) external {
+        require(1 <= _cavalryToPurchase && _cavalryToPurchase <= 5, "purchaseCavalry::Incorrect cavalry specified");
+        require(addressForOwnedCavalries[msg.sender][_cavalryToPurchase] == false, "purchaseCavalry::You already own this cavalry");
+
+        (uint256 reserves, , ) = pancakePair.getReserves();
+
+        uint256 price = reserves.mul(10).mul(cavalryPrices[_cavalryToPurchase - 1]).div(multiplierForMisc);
+        if (price.mod(10) >= 5) {
+            price = reserves.mul(cavalryPrices[_cavalryToPurchase - 1]).ceilDiv(multiplierForMisc);
+        }
+        else {
+            price = reserves.mul(cavalryPrices[_cavalryToPurchase - 1]).div(multiplierForMisc);
+        }
+        fortunasToken.transferFrom(msg.sender, address(this), price);
+
+        addressForOwnedCavalries[msg.sender][_cavalryToPurchase] = true;
+    }
+
     function addHero(uint8 _heroToAdd, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "addHero::No such battle is currently taking place");
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
-        require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addHero::Cannot remove tokens from battles that have already finished");
+        require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addHero::User can only add hero to easy, medium, hard or very hard battles");
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
+        require(block.timestamp < tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addHero::Cannot add heroes to battles that have already finished");
+        require(addressForOwnedHeroes[msg.sender][_heroToAdd], "addHero::User does not own this hero");
         require(addressForHeroBattle[msg.sender][_heroToAdd] == 0, "addHero::This hero is currently in another battle");
-        // require for checking whether this user can add such a hero or not
+        require(tempBattle.hero == 0, "addHero::A hero is already in this battle");
 
 
         uint256 percentageToAdd;
@@ -395,6 +490,7 @@ contract Battling is Ownable {
             percentageToAdd = rewardLimit[_battleType - 1].mul(heroPercentages[_heroToAdd - 1]).div(100);
         }
         tempBattle.currentRewardPercentage += percentageToAdd;
+        tempBattle.hero = _heroToAdd;
 
         addressForHeroBattle[msg.sender][_heroToAdd] = _battleNumber;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -403,8 +499,9 @@ contract Battling is Ownable {
     function removeHero(uint8 _heroToRemove, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "removeHero::No such battle is currently taking place");
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
-        require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeHero::Cannot remove tokens from battles that have already finished");
+        require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeHero::User can only remove hero from easy, medium, hard or very hard battles");
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
+        require(block.timestamp < tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeHero::Cannot remove heroes from battles that have already finished");
         require(addressForHeroBattle[msg.sender][_heroToRemove] == _battleNumber, "removeHero::Incorrect hero or battle number given");
 
 
@@ -418,6 +515,7 @@ contract Battling is Ownable {
         }
         tempBattle.currentRewardPercentage -= percentageToRemove;
         tempBattle.dayForLimitReached = 0;
+        tempBattle.hero = 0;
 
         addressForHeroBattle[msg.sender][_heroToRemove] = 0;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -426,10 +524,12 @@ contract Battling is Ownable {
     function addCavalry(uint8 _cavalryToAdd, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "addCavalry::No such battle is currently taking place");
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
-        require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::Cannot remove tokens from battles that have already finished");
+        require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addCavalry::User can only add cavalry to easy, medium, hard or very hard battles");
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
+        require(block.timestamp < tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::Cannot add cavalries to battles that have already finished");
+        require(addressForOwnedCavalries[msg.sender][_cavalryToAdd], "addCavalry::User does not own this cavalry");
         require(addressForCavalryBattle[msg.sender][_cavalryToAdd] == 0, "addCavalry::This cavalry unit is currently in another battle");
-        // require for checking whether this user can add such a cavalry or not
+        require(tempBattle.cavalry == 0, "addHero::A cavalry unit is already in this battle");
 
 
         uint256 percentageToAdd;
@@ -441,6 +541,7 @@ contract Battling is Ownable {
             percentageToAdd = rewardLimit[_battleType - 1].mul(cavalryPercentages[_cavalryToAdd - 1]).div(100);
         }
         tempBattle.currentRewardPercentage += percentageToAdd;
+        tempBattle.cavalry = _cavalryToAdd;
 
         addressForCavalryBattle[msg.sender][_cavalryToAdd] = _battleNumber;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -449,8 +550,9 @@ contract Battling is Ownable {
     function removeCavalry(uint8 _cavalryToRemove, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "removeCavalry::No such battle is currently taking place");
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
-        require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeCavalry::Cannot remove tokens from battles that have already finished");
+        require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeCavalry::User can only remove cavalry from easy, medium, hard or very hard battles");
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
+        require(block.timestamp < tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeCavalry::Cannot remove cavalries from battles that have already finished");
         require(addressForCavalryBattle[msg.sender][_cavalryToRemove] == _battleNumber, "removeCavalry::Incorrect cavalry unit or battle number given");
 
 
@@ -464,6 +566,7 @@ contract Battling is Ownable {
         }
         tempBattle.currentRewardPercentage -= percentageToRemove;
         tempBattle.dayForLimitReached = 0;
+        tempBattle.cavalry = 0;
 
         addressForCavalryBattle[msg.sender][_cavalryToRemove] = 0;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -475,17 +578,38 @@ contract Battling is Ownable {
         require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "battleEnd::No such battle is currently taking place");
 
 
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
+        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, true);
+        uint256 tokensToTransfer;
 
-        uint256 totalTokens = tempBattle.originalTokensSent.add(tempBattle.rewardAmount);
-        
-        require(fortunasToken.balanceOf(address(this)) >= totalTokens, "battleEnd::Contract has insufficient balance. Please try again later");
-        fortunasToken.transfer(msg.sender, totalTokens);
+        if (_battleType == 2) {
+            tokensToTransfer = tempBattle.rewardAmount;
 
-        addressForBattle[msg.sender][_battleNumber - 1] = Battle(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            pancakeRouter.removeLiquidity(
+                address(fortunasToken),
+                address(wbusd),
+                tempBattle.liquidityAmount,
+                tempBattle.originalTokensSent,
+                tempBattle.originalTokensSent,
+                msg.sender,
+                block.timestamp.add(60)
+            );
+        }
+        else {
+            tokensToTransfer = tempBattle.originalTokensSent.add(tempBattle.rewardAmount);
+ 
+            calculateLosses(tempBattle, tempBattle.losses);
+        }
+
+        require(fortunasToken.balanceOf(address(this)) >= tokensToTransfer, "battleEnd::Contract has insufficient balance. Please try again later");
+        fortunasToken.transfer(msg.sender, tokensToTransfer);
+
+        addressForHeroBattle[msg.sender][tempBattle.hero] = 0;
+        addressForCavalryBattle[msg.sender][tempBattle.cavalry] = 0;
+        Battle memory emptyBattle;
+        addressForBattle[msg.sender][_battleNumber - 1] = emptyBattle;
     }
 
-    function calculateRewardsAndReturn(Battle memory _tempBattle, bool _isPotentialNeeded) internal view returns (Battle memory, uint256) {
+    function calculateRewardsAndReturn(Battle memory _tempBattle, bool _isPotentialNeeded, bool isBattleEnd) internal view returns (Battle memory, uint256) {
         uint256 startTimeForReward;
         uint256 numberOfRewardCycles;
         uint256 tempTotalTokens = _tempBattle.originalTokensSent.add(_tempBattle.rewardAmount);
@@ -508,18 +632,54 @@ contract Battling is Ownable {
             if (block.timestamp >= rationsEndTime &&
                 _tempBattle.rationsDaysTotal > 0) {
                 numberOfRewardCycles = rationsEndTime.sub(startTimeForReward).div(rewardTime);
+                if (isBattleEnd) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 100;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 10;
+                    }
+                    _tempBattle.losses += 1;
+                }
             }
             else if (block.timestamp >= _tempBattle.battleStartTime.add(3 days) &&
                 block.timestamp < rationsEndTime &&
                 _tempBattle.rationsDaysTotal > 0) {
                 numberOfRewardCycles = block.timestamp.sub(startTimeForReward).div(rewardTime);
+                if (isBattleEnd) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 200;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 20;
+                    }
+                    _tempBattle.losses += 2;
+                }
             }
             else if (block.timestamp >= _tempBattle.battleStartTime.add(3 days) &&
                 _tempBattle.rationsDaysTotal == 0) {
                 numberOfRewardCycles = _tempBattle.battleStartTime.add(3 days).sub(startTimeForReward).div(rewardTime);
+                if (isBattleEnd) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 100;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 10;
+                    }
+                    _tempBattle.losses += 0;
+                }
             }
             else if (block.timestamp < _tempBattle.battleStartTime.add(3 days)) {
                 numberOfRewardCycles = block.timestamp.sub(startTimeForReward).div(rewardTime);
+                if (isBattleEnd) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 200;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 20;
+                    }
+                    _tempBattle.losses += 0;
+                }
             }
 
             for ( ; _tempBattle.rewardCyclesDone < numberOfRewardCycles ; _tempBattle.rewardCyclesDone++) {
@@ -570,42 +730,123 @@ contract Battling is Ownable {
         return (_tempBattle, extraRewardAmount);
     }
 
+    function calculateLosses(Battle memory _tempBattle, uint256 _losses) internal {
+        uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+        uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+        uint256 randRations = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+
+        randHero = randHero.mod(100);
+        randCavalry = randCavalry.mod(100);
+        randRations = randRations.mod(100);
+
+        uint256[] memory posLosses;
+        for (uint256 i = 0 ; i < 3 ; i++) {
+            posLosses[i] = _losses.mod(10);
+            _losses = _losses.div(10);
+        }
+
+        if (posLosses[2] == 1) {
+            if (0 < randHero && randHero <= 33) {
+                addressForOwnedHeroes[msg.sender][_tempBattle.hero] = false;
+            }
+        }
+        else if (posLosses[2] == 2) {
+            if (0 < randHero && randHero <= 50) {
+                addressForOwnedHeroes[msg.sender][_tempBattle.hero] = false;
+            }
+        }
+
+        if (posLosses[1] == 1) {
+            if (0 < randCavalry && randCavalry <= 33) {
+                addressForOwnedCavalries[msg.sender][_tempBattle.cavalry] = false;
+            }
+        }
+        else if (posLosses[1] == 2) {
+            if (0 < randCavalry && randCavalry <= 50) {
+                addressForOwnedCavalries[msg.sender][_tempBattle.cavalry] = false;
+            }
+        }
+
+        if (posLosses[0] == 1) {
+            if (0 < randRations && randRations <= 33) {
+                fortunasToken.burn(address(this), _tempBattle.rationsAmount);
+            }
+        }
+        else if (posLosses[0] == 2) {
+            if (0 < randRations && randRations <= 50) {
+                fortunasToken.burn(address(this), _tempBattle.rationsAmount);
+            }
+        }
+    }
+
     /**
      * @dev Should be called if updated battle data needed
      *      Ideally to be called only if an update on current reward amount is needed
-     *      Subject to change : Can be changed to calculate rewards for all battles of a specific user
-     *      Function "battleEnd" should be called if the battle has already finished
+     *      Function "battleEnd" should be called if unstaking
      */
-    function calculateRewardsAndSave(uint8 _battleType, uint256 _battleNumber) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
-        require(2 <= _battleType && _battleType <= 6, "calculateRewardsAndSave::Incorrect battle type");
-        require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "calculateRewardsAndSave::No such battle is currently taking place");
-        require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewardsAndSave::Cannot calculate rewards for battles that have already finished");
+    function viewRewards() external view returns (uint256[] memory) {
+        uint256[] memory tempRewards;
+        Battle memory tempBattle;
+        uint256 counter = 0;
+        for (uint256 i = 0 ; i < numberOfBattles[msg.sender] ; i++) {
+            tempBattle = addressForBattle[msg.sender][i];
+            if (tempBattle.originalTokensSent != 0) {
+                (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
+                tempRewards[counter] = tempBattle.rewardAmount;
+                counter++;
+            }
+        }
 
-
-        (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false);
-        addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
+        return tempRewards;
     }
+    // function viewRewards(uint8 _battleType, uint256 _battleNumber) external view returns (Battle memory) {
+    //     Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
+    //     require(2 <= _battleType && _battleType <= 6, "calculateRewardsAndSave::Incorrect battle type");
+    //     require(tempBattle.originalTokensSent != 0 && tempBattle.battleType == _battleType, "calculateRewardsAndSave::No such battle is currently taking place");
+    //     require(block.timestamp >= tempBattle.battleStartTime.add(3 days).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewardsAndSave::Cannot calculate rewards for battles that have already finished");
+
+
+    //     (tempBattle, ) = calculateRewardsAndReturn(tempBattle, false, false);
+        
+    //     return tempBattle;
+    // }
 
     /**
      * @dev Must be called from the frontend every 30 minutes to calculate and send reward to all $FRTNA holders
      */
-    function sendRewardToHolders() external returns (bool) {
-        if (block.timestamp >= rewardTime.mul(2).add(timeSinceLastReward) || timeSinceLastReward <= block.timestamp) {
-            return false;
-        }
+    // function sendRewardToHolders() external returns (bool) {
+    //     if (block.timestamp >= rewardTime.mul(2).add(timeSinceLastReward) || timeSinceLastReward <= block.timestamp) {
+    //         return false;
+    //     }
 
-        uint256 tempRewardAmount;
-        for (uint256 i = 0 ; i < fortunasHolders.length ; i++) {
-            if (fortunasToken.balanceOf(fortunasHolders[i]) != 0) {
-                tempRewardAmount = fortunasToken.balanceOf(fortunasHolders[i]).mul(rewardBase[0]).div(multiplierForReward);
-                require(fortunasToken.balanceOf(address(this)) > tempRewardAmount, "sendRewardToHolders::Contract has insufficient balance. Please try again later");
-                fortunasToken.transfer(fortunasHolders[i], tempRewardAmount);
-            }
-        }
+    //     uint256 tempRewardAmount;
+    //     for (uint256 i = 0 ; i < fortunasHolders.length ; i++) {
+    //         if (fortunasToken.balanceOf(fortunasHolders[i]) != 0) {
+    //             tempRewardAmount = fortunasToken.balanceOf(fortunasHolders[i]).mul(rewardBase[0]).div(multiplierForReward);
+    //             require(fortunasToken.balanceOf(address(this)) > tempRewardAmount, "sendRewardToHolders::Contract has insufficient balance. Please try again later");
+    //             fortunasToken.transfer(fortunasHolders[i], tempRewardAmount);
+    //         }
+    //     }
 
-        timeSinceLastReward += rewardTime;
+    //     timeSinceLastReward += rewardTime;
 
-        return true;
-    }
+    //     return true;
+    // }
 }
+
+// IMPORTANT TODO - can I have more than 1 hero in a battle or similarly can I have more than 1 cavalry in a battle
+
+// TODO/Done LP staking
+// TODO/Done conditions for addHero/addCavalry (owned or not) -> mapping?
+// TODO/Done pancake pair reserve for purchasing/selling heroes/cavalry (maybe selling not needed)
+// TODO/Done Fortunas Chance. Random Hero (L1 to L5)
+// TODO/Done 33% chance of losing heroes, cavalry, rations when unstaking after battle finished
+// TODO/Done 50% chance of losing heroes, cavalry, rations when unstaking before battle finished
+// TODO adjust getters and setters
+// TODO modifiers
+// TODO math upgradeable -> add a function for round off -> ".roundDiv" to make the code less clogged
+// TODO dividend tracking token
+// TODO Ludos? Lottery? Similar to Titano PLAY (https://app.sphere.finance/games)
+// TODO burn rations to help with inflation? Currently burning rations when unstaking
+// TODO Chainlink randomizer
+// TODO buy/sell fees

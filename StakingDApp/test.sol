@@ -17,6 +17,13 @@ contract test is Ownable {
 
     FortunasToken public fortunasToken;
 
+    struct Thing {
+        uint256 a;
+        uint256 b;
+    }
+
+    mapping (uint256 => Thing) public things;
+
     constructor() {
         arr = [1, 2, 3];
     }
@@ -111,5 +118,29 @@ contract test is Ownable {
         }
 
         return (num2, 0);
+    }
+
+    function fun9(uint256 _losses) external pure returns (uint256[3] memory) {
+        uint256[3] memory posNums;
+        for (uint256 i = 0 ; i < 3 ; i++) {
+            posNums[i] = _losses.mod(10);
+            _losses = _losses.div(10);
+        }
+
+        return posNums;
+    }
+
+    function fun10() external returns (Thing memory) {
+        things[0] = Thing(1, 2);
+
+        return things[0];
+    }
+
+    function fun11() external returns (Thing memory) {
+        Thing memory thingy;
+        
+        things[0] = thingy;
+
+        return things[0];
     }
 }
