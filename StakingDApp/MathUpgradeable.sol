@@ -1,12 +1,11 @@
+pragma solidity ^0.8.0;
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.5.0) (utils/math/Math.sol)
-
-pragma solidity ^0.8.0;
 
 /**
  * @dev Standard math utilities missing in the Solidity language.
  */
-library Math {
+library MathUpgradeable {
     /**
      * @dev Returns the largest of two numbers.
      */
@@ -39,5 +38,35 @@ library Math {
     function ceilDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         // (a + b - 1) / b can overflow on addition, so we distribute.
         return a / b + (a % b == 0 ? 0 : 1);
+    }
+
+    /**
+     * @dev Returns the current rounding of the division of two numbers.
+     *
+     * This differs from standard division with `/` in that it can round up and
+     * down depending on the floating point.
+     */
+    function roundDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 result = a * 10 / b;
+        if (result % 10 >= 5) {
+            result = a / b + (a % b == 0 ? 0 : 1);
+        }
+        else {
+            result = a / b;
+        }
+
+        return result;
+    }
+
+    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 result;
+        if (a > b) {
+            result = a - b;
+        }
+        else {
+            result = 0;
+        }
+
+        return result;
     }
 }

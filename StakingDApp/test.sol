@@ -3,12 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 import "./SafeMath.sol";
-import "./Math.sol";
+import "./MathUpgradeable.sol";
 import "./FortunasToken.sol";
 
 contract test is Ownable {
     using SafeMath for uint256;
-    using Math for uint256;
+    using MathUpgradeable for uint256;
 
     uint256 public contractStartTime = 1652421600; // a certain epoch time for testing (11:00 AM, 13th May 2022) 
     uint256 public rebaseTime = 1800; // 30 minutes difference in epoch time
@@ -28,7 +28,7 @@ contract test is Ownable {
         arr = [1, 2, 3];
     }
 
-    function setFortunasTokenContractAddress(address _contractAddress) public onlyOwner {
+    function setFortunasTokenContractAddress(address payable _contractAddress) public onlyOwner {
         fortunasToken = FortunasToken(_contractAddress);
     }
 
@@ -142,5 +142,28 @@ contract test is Ownable {
         things[0] = thingy;
 
         return things[0];
+    }
+
+    function fun12(uint256 _num2) external pure returns (uint256) {
+        uint256 num = 50;
+        num = num.sub(_num2);
+
+        return num;
+    }
+
+    function setMapping(uint256 x, uint256 y) external {
+        things[0] = Thing(x, y);
+    }
+
+    function getMapping(uint256 x) external view returns (Thing memory) {
+        return things[x];
+    }
+
+    function fun13(uint256 a, uint256 b) external pure returns (uint256) {
+        return a.roundDiv(b);
+    }
+
+    function fun14(uint256 a, uint256 b) external pure returns (uint256) {
+        return a.safeSub(b);
     }
 }
