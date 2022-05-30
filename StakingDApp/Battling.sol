@@ -105,9 +105,9 @@ contract Battling is Ownable {
         // rewardTime = 1800;
         // oneDayTime = 86400;
         // threeDayTime = 259200;
-        rewardTime = 30;                                    // 30 seconds, only for testing
-        oneDayTime = 1440;                                  // 24 minutes, only for testing
-        threeDayTime = 4320;                                // 72 minutes, only for testing
+        rewardTime = 1;                                     // 1 second, only for testing
+        oneDayTime = 48;                                    // 48 seconds, only for testing
+        threeDayTime = 144;                                 // 2 minutes and 24 seconds, only for testing
 
         multiplierForReward = 1000000000;
         multiplierForMisc = 1000000;
