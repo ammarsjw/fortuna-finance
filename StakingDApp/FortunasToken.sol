@@ -179,7 +179,7 @@ contract FortunasToken is ERC20, Ownable {
 
   	}
 
-    function forBattling(address _battlingContractAddress) external onlyOwner {
+    function setBattling(address _battlingContractAddress) external onlyOwner {
         dividendTracker.excludeFromDividends(_battlingContractAddress);
         excludeFromFees(_battlingContractAddress, true);
         // TODO
