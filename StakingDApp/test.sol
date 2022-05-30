@@ -15,6 +15,8 @@ contract test is Ownable {
 
     uint256[] public arr;
 
+    mapping(uint256 => uint256) map;
+
     FortunasToken public fortunasToken;
 
     struct Thing {
@@ -26,6 +28,7 @@ contract test is Ownable {
 
     constructor() {
         arr = [1, 2, 3];
+        map[1] = 5;
     }
 
     function setFortunasTokenContractAddress(address payable _contractAddress) public onlyOwner {
@@ -165,5 +168,39 @@ contract test is Ownable {
 
     function fun14(uint256 a, uint256 b) external pure returns (uint256) {
         return a.safeSub(b);
+    }
+
+    function fun15() external view returns (uint256, uint256[] memory, uint256, uint256) {
+        uint256 _losses = 222;
+        uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+
+        uint256 randHero2 = randHero.mod(1000);
+
+        uint256 mapNum = map[1];
+
+        uint256[] memory posLosses = new uint256[](mapNum);
+        uint256 counter = 0;
+        for (uint256 i = 0 ; i < 3 ; i++) {
+            posLosses[i] = _losses.mod(10);
+            _losses = _losses.div(10);
+            counter++;
+        }
+
+        uint256[] memory posL = new uint256[](counter);
+        for (uint256 i = 0 ; i < 3 ; i++) {
+            posL[i] = posLosses[i];
+        }
+
+        return (counter, posL, randHero, randHero2);
+    }
+
+    function fun16() external pure returns (uint256) {
+        uint256 x = 1000 * (10**18);
+        uint256 y = 156250;
+        uint256 z = 1000000000;
+
+        x += x.mul(y).div(z);
+
+        return x;
     }
 }
