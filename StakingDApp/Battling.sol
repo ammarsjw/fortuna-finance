@@ -10,8 +10,10 @@ import "./IPancakeRouter02.sol";
 import "./IPancakeFactory.sol";
 import "./FortunasAssets.sol";
 import "./ABDKMath64x64.sol";
+import "./BattlingHelper.sol";
+import "./BattleStruct.sol";
 
-contract Battling is Ownable {
+contract Battling is Ownable, BattleStruct {
     using SafeMath for uint256;
     using SafeMath for uint8;
     using MathUpgradeable for uint256;
@@ -50,32 +52,15 @@ contract Battling is Ownable {
     uint256[6] rewardBasePercentages;
     uint256 rewardIncreasePerDay;
 
-    uint256[6] rewardLimit;                                 // rewardBase cannot exceed these amounts for battles
-    uint256[6] rewardBase;                                  // 30 minute reward %
+    uint256[6] rewardLimit;                                 // rewardBase cannot exceed these amounts
+    uint256[6] rewardBase;                                  // reward % per day
 
     uint256[10] assetPercentages;
     uint256[10] assetPrices;
 
     uint256 randomAssetPrice;
 
-    // structs
-
-    struct Battle {
-        uint256 initialTokensStaked;
-        uint256 additionalTokens;
-        uint256 rations;
-        uint256 rewards;
-        uint256 currentRewardLimit;
-        uint256 currentRewardPercentage;
-        uint256 battleStartTime;
-        uint256 battleDaysExpended;
-        uint256 rationsDaysTotal;
-        uint256 dayForLimitReached;
-        uint8 battleType;
-        uint8 hero;
-        uint8 cavalry;
-        uint256 losses;
-    }
+    BattlingHelper battlingHelper;
 
     // mappings
 
@@ -86,7 +71,7 @@ contract Battling is Ownable {
 
     // constructor
 
-    constructor() {
+    constructor(address _battlingHelper) {
         bribeToEmeperor = 5000;
 
         // TODO (for mainnet) rather than using the constructor, use the setter function to initialize all the below variables to hide the values from the public eye
@@ -128,6 +113,8 @@ contract Battling is Ownable {
                         2500, 5000, 7500, 10000, 12500];    // percentage cost of LP for purchasing each cavalry
 
         randomAssetPrice = 5000;
+
+        battlingHelper = BattlingHelper(_battlingHelper);
     }
 
     // getters
@@ -244,23 +231,18 @@ contract Battling is Ownable {
 
 
         uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
-        uint256 extraRewards;
 
-        tempBattle = calculateRewards(tempBattle);
-        
-        calculateRationsAndTransfer(allowance, tempBattle, _battleNumber, _rationDays, extraRewards);
-    }
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
 
-    function calculateRationsAndTransfer(uint256 _allowance, Battle memory _tempBattle, uint256 _battleNumber, uint256 _rationDays, uint256 _extraRewards) internal {
-        uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards).add(_extraRewards);
+        uint256 tempTotalTokens = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
         uint256 tempRations;
         uint256 totalPercentage;
-        if (_tempBattle.rationsDaysTotal + _rationDays >= _tempBattle.dayForLimitReached) {
-            if (_tempBattle.rationsDaysTotal < _tempBattle.dayForLimitReached) {
-                uint256 daysPreIncrease = _tempBattle.dayForLimitReached - _tempBattle.rationsDaysTotal;
+        if (tempBattle.rationsDaysTotal + _rationDays >= tempBattle.dayForLimitReached) {
+            if (tempBattle.rationsDaysTotal < tempBattle.dayForLimitReached) {
+                uint256 daysPreIncrease = tempBattle.dayForLimitReached - tempBattle.rationsDaysTotal;
                 tempRations = tempTotalTokens.mul(rationsBase[daysPreIncrease - 1]).div(multiplier);
 
-                uint256 daysPostIncrease = (_tempBattle.rationsDaysTotal.add(_rationDays)) - _tempBattle.dayForLimitReached;
+                uint256 daysPostIncrease = (tempBattle.rationsDaysTotal.add(_rationDays)) - tempBattle.dayForLimitReached;
                 totalPercentage = rationsBase[daysPostIncrease - 1].add(rationsIncrease[daysPostIncrease - 1]);
                 tempRations += tempTotalTokens.mul(totalPercentage).div(multiplier);
             }
@@ -273,14 +255,14 @@ contract Battling is Ownable {
             tempRations = tempTotalTokens.mul(rationsBase[_rationDays - 1]).div(multiplier);
         }
         require(fortunasToken.balanceOf(msg.sender) >= tempRations, "calculateRations::Not enough balance to send rations");
-        require(_allowance >= tempRations, "calculateRations::Not enough allowance to send rations");
+        require(allowance >= tempRations, "calculateRations::Not enough allowance to send rations");
 
 
         fortunasToken.transferFrom(msg.sender, address(this), tempRations);
 
-        _tempBattle.rations += tempRations;
-        _tempBattle.rationsDaysTotal += _rationDays;
-        addressForBattle[msg.sender][_battleNumber - 1] = _tempBattle;
+        tempBattle.rations += tempRations;
+        tempBattle.rationsDaysTotal += _rationDays;
+        addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
     }
 
     function addTroops(uint256 _tokensToAdd, uint8 _battleType, uint256 _battleNumber) external {
@@ -289,7 +271,7 @@ contract Battling is Ownable {
         require(block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::Cannot remove tokens from battles that have already finished");
 
 
-        tempBattle = calculateRewards(tempBattle);
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
         if (tempBattle.additionalTokens + _tokensToAdd > tempBattle.initialTokensStaked) {
             tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
             if (tempBattle.hero > 0) {
@@ -309,7 +291,7 @@ contract Battling is Ownable {
         require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::Not enough tokens in this battle");
 
 
-        tempBattle = calculateRewards(tempBattle);
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
         if (_tokensToRemove > tempBattle.additionalTokens) {
             _tokensToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
@@ -400,7 +382,7 @@ contract Battling is Ownable {
         require(tempBattle.hero == 0, "addHero::A hero is already in this battle");
 
 
-        tempBattle = calculateRewards(tempBattle);
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
         tempBattle.currentRewardPercentage += assetPercentages[_heroToAdd - 1];
         if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
             tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
@@ -423,7 +405,7 @@ contract Battling is Ownable {
         require(addressForHeroBattle[msg.sender][_heroToRemove] == _battleNumber, "removeHero::Incorrect hero or battle number given");
 
 
-        tempBattle = calculateRewards(tempBattle);
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
         tempBattle.currentRewardPercentage -= assetPercentages[_heroToRemove - 1];
         if (tempBattle.dayForLimitReached != 0) {
             tempBattle.dayForLimitReached = 0;
@@ -447,7 +429,7 @@ contract Battling is Ownable {
         require(tempBattle.cavalry == 0, "addCavalry::A cavalry unit is already in this battle");
 
 
-        tempBattle = calculateRewards(tempBattle);
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
         tempBattle.currentRewardLimit += assetPercentages[_cavalryToAdd - 1];
         if (tempBattle.dayForLimitReached != 0) {
             if (tempBattle.currentRewardPercentage < tempBattle.currentRewardLimit) {
@@ -471,7 +453,7 @@ contract Battling is Ownable {
         require(addressForCavalryBattle[msg.sender][_cavalryToRemove] == _battleNumber, "removeCavalry::Incorrect cavalry unit or battle number given");
 
 
-        tempBattle = calculateRewards(tempBattle);
+        tempBattle = battlingHelper.calculateRewards(tempBattle);
         tempBattle.currentRewardLimit -= assetPercentages[_cavalryToRemove - 1];
         if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
             tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
@@ -491,7 +473,7 @@ contract Battling is Ownable {
         require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "battleEnd::No such battle is currently taking place");
 
 
-        tempBattle = calculateRewardsForBattleEnd(tempBattle);
+        tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
         uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.rewards);
 
         if (_battleType == 2) {
@@ -509,163 +491,6 @@ contract Battling is Ownable {
         addressForCavalryBattle[msg.sender][tempBattle.cavalry] = 0;
         Battle memory emptyBattle;
         addressForBattle[msg.sender][_battleNumber - 1] = emptyBattle;
-    }
-
-    function calculateRewards(Battle memory _tempBattle) internal view returns (Battle memory) {
-        uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
-
-        uint256 daysWagingBattle = block.timestamp.sub(_tempBattle.battleStartTime).div(oneDayTime);
-        uint256 daysForReward;
-
-        uint256 ratio = rewardBase[_tempBattle.battleType - 1].mul(10 ** 18).div(multiplierForReward);
-        uint256 accruedInterest;
-        if (daysWagingBattle.sub(_tempBattle.battleDaysExpended) != 0) {
-            if (daysWagingBattle < 3) {
-                daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
-
-                accruedInterest = compoundReward(
-                    tempTotalTokens,
-                    ratio,
-                    daysForReward
-                );
-                _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-            }
-            else if (daysWagingBattle >= 3
-            && daysWagingBattle < _tempBattle.rationsDaysTotal.add(3)
-            && _tempBattle.rationsDaysTotal > 0) {
-                if (_tempBattle.battleDaysExpended < 3) {
-                    daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
-
-                    accruedInterest = compoundReward(
-                        tempTotalTokens,
-                        ratio,
-                        daysForReward
-                    );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
-
-                    _tempBattle.battleDaysExpended = 3;
-                }
-                daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
-
-                uint256 exponent = 0;
-                uint256 singleReward;
-                for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
-                        exponent++;
-                    }
-
-                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
-                        _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
-
-                        singleReward = tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
-                        _tempBattle.rewards += singleReward;
-                        tempTotalTokens += singleReward;
-                    }
-                    else if (_tempBattle.dayForLimitReached == 0) {
-                        _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.add(i + 1);
-                        _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    }
-                }
-
-                if (exponent > 0) {
-                    ratio = _tempBattle.currentRewardLimit;
-                    compoundReward(
-                        tempTotalTokens,
-                        ratio,
-                        exponent
-                    );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
-                }
-            }
-
-            _tempBattle.battleDaysExpended = daysWagingBattle;
-        }
-
-        return _tempBattle;
-    }
-
-    function calculateRewardsForBattleEnd(Battle memory _tempBattle) internal view returns (Battle memory) {
-        uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
-
-        if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
-            _tempBattle = calculateRewards(_tempBattle);
-        }
-        else {
-            uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
-
-            uint256 daysWagingBattle = _tempBattle.rationsDaysTotal.add(3);
-            uint256 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
-
-            uint256 ratio = rewardBase[_tempBattle.battleType - 1].mul(10 ** 18).div(multiplierForReward);
-            uint256 accruedInterest;
-            if (_tempBattle.battleType == 2) {
-                require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::Training of troops lasts a fixed 3 days");
-
-                accruedInterest = compoundReward(
-                    tempTotalTokens,
-                    ratio,
-                    daysForReward
-                );
-                _tempBattle.rewards += accruedInterest;
-            }
-            else {
-                if (_tempBattle.battleDaysExpended < 3) {
-                    daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
-
-                    accruedInterest = compoundReward(
-                        tempTotalTokens,
-                        ratio,
-                        daysForReward
-                    );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
-
-                    _tempBattle.battleDaysExpended = 3;
-                }
-                daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
-
-                uint256 exponent = 0;
-                uint256 singleReward;
-                for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
-                        exponent++;
-                    }
-
-                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
-                        _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
-
-                        singleReward = tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
-                        _tempBattle.rewards += singleReward;
-                        tempTotalTokens += singleReward;
-                    }
-                    else if (_tempBattle.dayForLimitReached == 0) {
-                        _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.add(i + 1);
-                        _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    }
-                }
-
-                if (exponent > 0) {
-                    ratio = _tempBattle.currentRewardLimit;
-                    compoundReward(
-                        tempTotalTokens,
-                        ratio,
-                        exponent
-                    );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
-                }
-            }
-
-            _tempBattle.battleDaysExpended = daysWagingBattle;
-        }
-
-        return _tempBattle;
-    }
-
-    function compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
-        return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
     }
 
     function calculateLosses(Battle memory _tempBattle, uint256 _battleNumber) internal {
@@ -719,7 +544,7 @@ contract Battling is Ownable {
         for (uint256 i = 0 ; i < numberOfBattles[_user] ; i++) {
             tempBattle = addressForBattle[_user][i];
             if (tempBattle.initialTokensStaked != 0) {
-                tempBattle = calculateRewards(tempBattle);
+                tempBattle = battlingHelper.calculateRewards(tempBattle);
                 tempRewards[counter] = tempBattle.rewards;
                 counter++;
             }
@@ -765,18 +590,9 @@ contract Battling is Ownable {
 // TODO/Done nft transfer and mapping in assets for ownership
 // TODO/Done adjust calculation for price of heroes/cavalry
 // TODO/Done Reward -> Compound interest
-// TODO/Done calculateRewardsForBattleEnd...
+// TODO/Done battlingHelper.calculateRewardsForBattleEnd...
 // TODO/Done set all required values for testing in Battling, FortunasToken, FortunasAssets and FortunasLottery
 // TODO Chainlink randomizer or api/oracle randomizer
 // TODO FortunasToken -> clean unnecassery code in dividend tracking/paying token
-// TODO modifiers
+// TODO shorten require statements
 // TODO code optimization and code cleaning
-
-/*
-Buying Taxes (10%)
-2.5% Liquidity Pool
-7.5% Treasury
-Selling Taxes (10%)
-7.5% Liquidity Pool
-2.5% Treasury
-*/
