@@ -5,6 +5,7 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./FortunasToken.sol";
+import "./ABDKMath64x64.sol";
 
 contract test is Ownable {
     using SafeMath for uint256;
@@ -213,5 +214,13 @@ contract test is Ownable {
         uint256 numberOfRewardCycles = a.add(threeDayTime).sub(c).div(rewardTime);
 
         return numberOfRewardCycles;
+    }
+
+    function fun18() external pure returns (uint256) {
+        uint256 n = 5;
+        uint256 principal = 1000;
+        uint256 ratio = uint256(5).mul(10**18).div(1000);
+
+        return ABDKMath64x64.mulu (ABDKMath64x64.pow (ABDKMath64x64.add (ABDKMath64x64.fromUInt (1), ABDKMath64x64.divu (ratio,10**18)), n), principal);
     }
 }

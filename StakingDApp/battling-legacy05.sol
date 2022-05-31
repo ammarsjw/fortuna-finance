@@ -589,6 +589,166 @@ contract Battling is Ownable {
         return _tempBattle;
     }
 
+    function calculateRewardsForBattleEnd(Battle memory _tempBattle) internal view returns (Battle memory) {
+        uint256 startTimeForReward;
+        uint256 numberOfRewardCycles;
+        uint256 increaseBy;
+        uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.rewards);
+        uint256 extraRewards;
+
+        if (_tempBattle.battleType == 2) {
+            require(block.timestamp >= _tempBattle.battleStartTime + baseBattleTime, "calculateRewards::Training of troops lasts a fixed 3 days");
+            // startTimeForReward = _tempBattle.battleStartTime.div(rewardTime).mul(rewardTime);
+            // numberOfRewardCycles = _tempBattle.battleStartTime.add(baseBattleTime).sub(startTimeForReward).div(rewardTime);
+
+            // for (uint256 i = 0 ; i < numberOfRewardCycles ; i++) {
+            //     _tempBattle.rewards += tempTotalTokens.mul(rewardBase[_tempBattle.battleType - 1]).div(multiplierForReward);
+            //     tempTotalTokens += _tempBattle.rewards;
+            // }
+            increaseBy = rewardBase[_tempBattle.battleType - 1].mul(3);
+            _tempBattle.rewards += tempTotalTokens.mul(increaseBy).div(multiplierForReward);
+        }
+        else {
+            uint256 daysInBattle = block.timestamp.sub(_tempBattle.battleStartTime).div(oneDayTime);
+            if (
+            daysInBattle < 3) {
+                increaseBy = rewardBase[_tempBattle.battleType - 1].mul(daysInBattle);
+                _tempBattle.rewards += tempTotalTokens.mul(increaseBy).div(multiplierForReward);
+
+                uint256 lastDayCycles = block.timestamp.sub(_tempBattle.battleRewardTime.add(daysInBattle.mul(oneDayTime))).div(rewardTime);
+                uint256 percentageRewardPerCycle = rewardBase[_tempBattle.battleType - 1].mul(10000).div(48);
+                increaseBy = lastDayCycles.mul(percentageRewardPerCycle);
+
+                _tempBattle.rewards += tempTotalTokens.mul(increaseBy).div(1000000000);
+            }
+            else if (
+            daysInBattle >= 3
+            && _tempBattle.rationsDaysTotal == 0) {
+                increaseBy = rewardBase[_tempBattle.battleType - 1].mul(3);
+                _tempBattle.rewards += tempTotalTokens.mul(increaseBy).div(multiplierForReward);
+            }
+            else if (
+            daysInBattle >= 3
+            && daysInBattle < _tempBattle.rationsDaysTotal.add(3)
+            && _tempBattle.rationsDaysTotal > 0) {
+                increaseBy = rewardBase[_tempBattle.battleType - 1].mul(daysInBattle);
+                _tempBattle.rewards += tempTotalTokens.mul(increaseBy).div(multiplierForReward);
+
+                uint256 lastDayCycles = block.timestamp.sub(_tempBattle.battleRewardTime.add(daysInBattle.mul(oneDayTime))).div(rewardTime);
+                uint256 percentageRewardPerCycle = rewardBase[_tempBattle.battleType - 1].mul(10000).div(48);
+                increaseBy = lastDayCycles.mul(percentageRewardPerCycle);
+
+                _tempBattle.rewards += tempTotalTokens.mul(increaseBy).div(1000000000);
+            }
+            else if (
+            daysInBattle >= _tempBattle.rationsDaysTotal.add(3)
+            && _tempBattle.rationsDaysTotal > 0) {
+            }
+
+            startTimeForReward = _tempBattle.battleRewardTime.div(rewardTime).mul(rewardTime);
+            uint256 rationsEndTime = _tempBattle.battleStartTime.add(baseBattleTime).add(_tempBattle.rationsDaysTotal.mul(oneDayTime));
+            _tempBattle.battleRewardTime = block.timestamp;
+            if (block.timestamp >= rationsEndTime &&
+                _tempBattle.rationsDaysTotal > 0) {
+                numberOfRewardCycles = rationsEndTime.sub(startTimeForReward).div(rewardTime);
+                if (_isLosable) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 200;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 20;
+                    }
+                    _tempBattle.losses += 2;
+                }
+            }
+            else if (block.timestamp >= _tempBattle.battleStartTime.add(baseBattleTime) &&
+                block.timestamp < rationsEndTime &&
+                _tempBattle.rationsDaysTotal > 0) {
+                numberOfRewardCycles = block.timestamp.sub(startTimeForReward).div(rewardTime);
+                if (_isLosable) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 200;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 20;
+                    }
+                    _tempBattle.losses += 2;
+                }
+            }
+            else if (block.timestamp >= _tempBattle.battleStartTime.add(baseBattleTime) &&
+                _tempBattle.rationsDaysTotal == 0) {
+                numberOfRewardCycles = _tempBattle.battleStartTime.add(baseBattleTime).sub(startTimeForReward).div(rewardTime);
+                if (_isLosable) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 200;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 20;
+                    }
+                    _tempBattle.losses += 0;
+                }
+            }
+            else if (block.timestamp < _tempBattle.battleStartTime.add(baseBattleTime)) {
+                numberOfRewardCycles = block.timestamp.sub(startTimeForReward).div(rewardTime);
+                if (_isLosable) {
+                    if (_tempBattle.hero != 0) {
+                        _tempBattle.losses += 200;
+                    }
+                    if (_tempBattle.cavalry != 0) {
+                        _tempBattle.losses += 20;
+                    }
+                    _tempBattle.losses += 0;
+                }
+            }
+
+            for ( ; _tempBattle.battleDaysExpended < numberOfRewardCycles ; _tempBattle.battleDaysExpended++) {
+                // isRewardReset
+                if (_tempBattle.battleDaysExpended == _tempBattle.dayForRewardReset.mul(48) && _tempBattle.dayForRewardReset != 0) {
+                    _tempBattle.currentRewardPercentage = rewardBase[_tempBattle.battleType - 1];
+                }
+
+                // isLimitReached
+                if (_tempBattle.currentRewardPercentage >= _tempBattle.currentRewardLimit && _tempBattle.dayForLimitReached != 0) {
+                    _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
+                    _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.div(48);
+
+                }
+                else if (_tempBattle.battleDaysExpended >= uint256(48).mul(3) && _tempBattle.battleDaysExpended.mod(48) == 0 && _tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
+                    _tempBattle.currentRewardPercentage += rewardIncrease[_tempBattle.battleType -1];
+                }
+
+                _tempBattle.rewards += tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
+                tempTotalTokens += _tempBattle.rewards;
+            }
+
+            if (_isExtra) {
+                uint256 extraStartTimeForReward = _tempBattle.battleRewardTime;
+                uint256 extraNumberOfRewardCycles;
+                extraNumberOfRewardCycles = rationsEndTime.sub(extraStartTimeForReward).div(rewardTime);
+                uint256 extraBattleDaysExpended = _tempBattle.battleDaysExpended;
+                uint256 extraCurrentRewardPercentage = _tempBattle.currentRewardPercentage;
+                for ( ; extraBattleDaysExpended < extraNumberOfRewardCycles ; extraBattleDaysExpended++) {
+                    if (extraBattleDaysExpended == _tempBattle.dayForRewardReset.mul(48) && _tempBattle.dayForRewardReset != 0) {
+                        extraCurrentRewardPercentage = rewardBase[_tempBattle.battleType - 1];
+                    }
+
+                    if (extraCurrentRewardPercentage >= _tempBattle.currentRewardLimit && _tempBattle.dayForLimitReached != 0) {
+                        extraCurrentRewardPercentage = _tempBattle.currentRewardLimit;
+                        _tempBattle.dayForLimitReached = extraBattleDaysExpended.div(48);
+                    }
+                    else if (extraBattleDaysExpended >= uint256(48).mul(3) && extraBattleDaysExpended.mod(48) == 0 && _tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
+                        extraCurrentRewardPercentage += rewardIncrease[_tempBattle.battleType - 1];
+                    }
+
+                    extraRewards += tempTotalTokens.mul(extraCurrentRewardPercentage).div(multiplierForReward);
+                    tempTotalTokens += extraRewards;
+                }
+            }
+        }
+
+        return (_tempBattle, extraRewards);
+    }
+
     function compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
         return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
     }
@@ -694,7 +854,7 @@ contract Battling is Ownable {
 // TODO/Done islimitreached and reconfigure reward reset for additional troops not rations
 // TODO/Done nft transfer and mapping in assets for ownership
 // TODO/Done adjust calculation for price of heroes/cavalry
-// TODO/Done Reward -> Compound interest
+// TODO Reward -> Compound interest
 // TODO calculateRewardsForBattleEnd...
 // TODO set all unset values for testing and mainnet in Battling, FortunasToken, FortunasAssets and FortunasLottery
 // TODO Chainlink randomizer or api/oracle randomizer
