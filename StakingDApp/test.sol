@@ -203,4 +203,15 @@ contract test is Ownable {
 
         return x;
     }
+
+    function fun17() external pure returns (uint256) {
+        uint256 a = 1653910671;
+        uint256 threeDayTime = 144;
+        uint256 c = 1653910671;
+        uint256 rewardTime = 1;
+
+        uint256 numberOfRewardCycles = a.add(threeDayTime).sub(c).div(rewardTime);
+
+        return numberOfRewardCycles;
+    }
 }
