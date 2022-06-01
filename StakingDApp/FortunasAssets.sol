@@ -6,7 +6,7 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./ERC1155.sol";
 
-contract FortunasAssets is ERC1155 {
+contract FortunasAssets is Ownable, ERC1155 {
 
     // variables
 

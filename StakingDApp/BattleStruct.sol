@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 contract BattleStruct {
 
     struct Battle {
+        uint8 battleType;
         uint256 initialTokensStaked;
         uint256 additionalTokens;
         uint256 rations;
@@ -14,7 +15,6 @@ contract BattleStruct {
         uint256 battleDaysExpended;
         uint256 rationsDaysTotal;
         uint256 dayForLimitReached;
-        uint8 battleType;
         uint256 hero;
         uint256 cavalry;
     }

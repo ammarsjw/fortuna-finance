@@ -34,17 +34,23 @@ contract BattlingHelper is Ownable, BattleStruct {
 
         multiplierForReward = 10000000;
 
-        rewardBasePercentages = [100, 100, 75, 50, 20, 10];
-        rewardIncreasePerDay = 5;
-
-        rewardLimit = [25000, 50000, 1000, 1250, 2000, 2940];
-        setRewards();                                       // setting reward related variables
+        // setAllRewards
     }
+
+    // setters
 
     function setRewards() internal {
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
         }
+    }
+
+    function setAllRewards(uint256[6] memory _basePercentages, uint256 _increasePerDay, uint256[6] memory _limit) external onlyOwner {
+        rewardBasePercentages = _basePercentages;
+        rewardIncreasePerDay = _increasePerDay;
+
+        rewardLimit = _limit;
+        setRewards();
     }
 
     // functions

@@ -20,8 +20,12 @@ contract FortunasToken is ERC20, Ownable {
 
     bool private swapping;
 
+    // BUSD mainnet
+    // address public immutable BUSD =
+    //     address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
+    // BUSD testnet
     address public BUSD =
-        address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56); //BUSD
+        address(0x3B00Ef435fA4FcFF5C209a37d1f3dcff37c705aD);
 
     FRTNADividendTracker public dividendTracker;
 
