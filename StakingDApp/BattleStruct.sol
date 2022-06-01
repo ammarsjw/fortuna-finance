@@ -17,7 +17,6 @@ contract BattleStruct {
         uint8 battleType;
         uint256 hero;
         uint256 cavalry;
-        uint256 losses;
     }
 
 }

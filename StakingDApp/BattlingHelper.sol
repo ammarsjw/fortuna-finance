@@ -15,6 +15,7 @@ contract BattlingHelper is Ownable, BattleStruct {
     // variables
 
     uint256 public oneDayTime;                              // 1 day in epoch time
+    uint256 public baseBattleTime;
 
     uint256 multiplierForReward;
 
@@ -28,7 +29,9 @@ contract BattlingHelper is Ownable, BattleStruct {
 
     constructor() {
         // oneDayTime = 86400;
-        oneDayTime = 48;                                    // 48 seconds, only for testing
+        // baseBattleTime = 259200;
+        oneDayTime = 60;                                    // 1 minute, only for testing
+        baseBattleTime = 180;                               // 3 minutes, only for testing
 
         multiplierForReward = 10000000;
 
@@ -119,6 +122,8 @@ contract BattlingHelper is Ownable, BattleStruct {
             _tempBattle.battleDaysExpended = daysWagingBattle;
         }
 
+        require(block.timestamp < _tempBattle.battleStartTime.add(baseBattleTime).add(_tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewards::Battle already finished");
+
         return _tempBattle;
     }
 
@@ -196,6 +201,8 @@ contract BattlingHelper is Ownable, BattleStruct {
 
             _tempBattle.battleDaysExpended = daysWagingBattle;
         }
+
+        require(block.timestamp < _tempBattle.battleStartTime.add(baseBattleTime).add(_tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewardsForBattleEnd::Battle already finished");
 
         return _tempBattle;
     }

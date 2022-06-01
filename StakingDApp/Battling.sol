@@ -66,6 +66,14 @@ contract Battling is Ownable, BattleStruct {
     mapping(address => mapping(uint256 => uint256)) private addressForHeroBattle;
     mapping(address => mapping(uint256 => uint256)) private addressForCavalryBattle;
 
+    // events
+
+    // event BattleStart(
+    //     address indexed user,
+    //     uint256 battleNumber,
+    //     uint256 
+    // );
+
     // constructor
 
     constructor(address _battlingHelper) {
@@ -156,12 +164,6 @@ contract Battling is Ownable, BattleStruct {
         }
     }
 
-    function setRewardLimit(uint256[6] memory _rewardLimit) external onlyOwner {
-        rewardLimit = _rewardLimit;
-
-        setRewards();
-    }
-
     function setRewardBasePercentages(uint256[6] memory _rewardBasePercentages) external onlyOwner {
         rewardBasePercentages = _rewardBasePercentages;
 
@@ -170,6 +172,10 @@ contract Battling is Ownable, BattleStruct {
 
     function setrewardIncreasePerDay(uint256 _rewardIncreasePerDay) external onlyOwner {
         rewardIncreasePerDay = _rewardIncreasePerDay;
+    }
+
+    function setRewardLimit(uint256[6] memory _rewardLimit) external onlyOwner {
+        rewardLimit = _rewardLimit;
 
         setRewards();
     }
@@ -199,7 +205,7 @@ contract Battling is Ownable, BattleStruct {
             LPToken.transferFrom(msg.sender, address(this), _tokens);
 
             numberOfBattles[msg.sender]++;
-            addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, _battleType, 0, 0, 0);
+            addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, _battleType, 0, 0);
         }
         else {
             fortunasToken.transferFrom(msg.sender, treasuryWallet, bribe);
@@ -207,7 +213,7 @@ contract Battling is Ownable, BattleStruct {
             fortunasToken.transferFrom(msg.sender, address(this), _tokens);
 
             numberOfBattles[msg.sender]++;
-            addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, _battleType, 0, 0, 0);
+            addressForBattle[msg.sender][numberOfBattles[msg.sender] - 1] = Battle(_tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, _battleType, 0, 0);
         }
     }
 
@@ -524,8 +530,6 @@ contract Battling is Ownable, BattleStruct {
                 addressForBattle[msg.sender][_battleNumber].rations = 0;
             }
         }
-
-        _tempBattle.losses = 0;
     }
 
     /**

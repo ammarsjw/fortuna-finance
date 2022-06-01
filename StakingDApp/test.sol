@@ -217,8 +217,21 @@ contract test is Ownable {
     }
 
     function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256) {
-        uint256 _ratio = _ratio.mul(10 ** 18).div(10000000);
+        _ratio = _ratio.mul(10 ** 18).div(10000000);
 
         return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+    }
+
+    function fun19(uint256 a, uint256 b) external pure returns (uint256) {
+        uint256 baseBattleTime = 180;
+        uint256 oneDayTime = 60;
+
+        return a.add(baseBattleTime).add(b.mul(oneDayTime));
+    }
+
+    function fun20(uint256 a) external view returns (uint256) {
+        uint256 oneDayTime = 60;
+
+        return block.timestamp.sub(a).div(oneDayTime);
     }
 }
