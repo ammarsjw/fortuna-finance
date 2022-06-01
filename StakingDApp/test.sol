@@ -216,11 +216,9 @@ contract test is Ownable {
         return numberOfRewardCycles;
     }
 
-    function fun18() external pure returns (uint256) {
-        uint256 n = 5;
-        uint256 principal = 1000;
-        uint256 ratio = uint256(5).mul(10**18).div(1000);
+    function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256) {
+        uint256 _ratio = _ratio.mul(10 ** 18).div(10000000);
 
-        return ABDKMath64x64.mulu (ABDKMath64x64.pow (ABDKMath64x64.add (ABDKMath64x64.fromUInt (1), ABDKMath64x64.divu (ratio,10**18)), n), principal);
+        return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
     }
 }

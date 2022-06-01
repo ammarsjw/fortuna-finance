@@ -15,8 +15,8 @@ contract BattleStruct {
         uint256 rationsDaysTotal;
         uint256 dayForLimitReached;
         uint8 battleType;
-        uint8 hero;
-        uint8 cavalry;
+        uint256 hero;
+        uint256 cavalry;
         uint256 losses;
     }
 

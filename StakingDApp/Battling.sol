@@ -9,13 +9,11 @@ import "./IPancakePair.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakeFactory.sol";
 import "./FortunasAssets.sol";
-import "./ABDKMath64x64.sol";
 import "./BattlingHelper.sol";
 import "./BattleStruct.sol";
 
 contract Battling is Ownable, BattleStruct {
     using SafeMath for uint256;
-    using SafeMath for uint8;
     using MathUpgradeable for uint256;
 
     uint256 public bribeToEmeperor;                         // percentage of staked amount sent to treasury every time battling or training occurs
@@ -36,7 +34,6 @@ contract Battling is Ownable, BattleStruct {
     // BUSD
     address public BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
 
-    uint256 contractStartTime;                              // a certain epoch time for testing (11:00 AM, 13th May 2022)
     uint256 public rewardTime;                              // 30 minutes in epoch time
     uint256 public oneDayTime;                              // 1 day in epoch time
     uint256 public baseBattleTime;                          // 3 daays in epoch time
@@ -66,8 +63,8 @@ contract Battling is Ownable, BattleStruct {
 
     mapping(address => mapping(uint256 => Battle)) private addressForBattle;
     mapping(address => uint256) private numberOfBattles;
-    mapping(address => mapping(uint8 => uint256)) private addressForHeroBattle;
-    mapping(address => mapping(uint8 => uint256)) private addressForCavalryBattle;
+    mapping(address => mapping(uint256 => uint256)) private addressForHeroBattle;
+    mapping(address => mapping(uint256 => uint256)) private addressForCavalryBattle;
 
     // constructor
 
@@ -85,13 +82,12 @@ contract Battling is Ownable, BattleStruct {
 
         fortunasAssets = new FortunasAssets("", address(this));
 
-        contractStartTime = 1652421600;
         // rewardTime = 1800;
         // oneDayTime = 86400;
         // baseBattleTime = 259200;
-        rewardTime = 1;                                     // 1 second, only for testing
-        oneDayTime = 48;                                    // 48 seconds, only for testing
-        baseBattleTime = 144;                               // 2 minutes and 24 seconds, only for testing
+        rewardTime = 1;                                     // (unused) 1 second, only for testing
+        oneDayTime = 60;                                    // 1 minute, only for testing
+        baseBattleTime = 180;                               // 3 minutes, only for testing
 
         multiplier = 1000000;
         multiplierForReward = 10000000;
@@ -119,11 +115,11 @@ contract Battling is Ownable, BattleStruct {
 
     // getters
 
-    function getAddressForBattle(address _walletAddress, uint _battleNumber) external view onlyOwner returns (Battle memory) {
-        return addressForBattle[_walletAddress][_battleNumber];
+    function getAddressForBattle(address _walletAddress, uint _battleNumber) external view returns (Battle memory) {
+        return addressForBattle[_walletAddress][_battleNumber - 1];
     }
 
-    function getNumberOfBattles(address _walletAddress) external view onlyOwner returns (uint256) {
+    function getNumberOfBattles(address _walletAddress) external view returns (uint256) {
         return numberOfBattles[_walletAddress];
     }
 
@@ -187,7 +183,7 @@ contract Battling is Ownable, BattleStruct {
     // functions
 
     function battleStart(uint256 _tokens, uint8 _battleType) external {
-        require(_tokens >= 13334, "battleStart::Minimum amount of tokens for battle is 0.000000000000013334 FRTNA");
+        require(_tokens >= 10000, "battleStart::Minimum amount of tokens for battle is 0.00000000000001 FRTNA");
         require(2 <= _battleType && _battleType <= 6, "battleStart::No such battle type exists");
         uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
         require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::Insufficient funds");
@@ -221,7 +217,7 @@ contract Battling is Ownable, BattleStruct {
         if (block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
             require(false, "sendRations::Cannot send rations to battles that have already finished");
         }
-        else {
+        else if (tempBattle.battleDaysExpended >= 3) {
             uint256 rationsExpended = block.timestamp.sub(tempBattle.battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
             uint256 currentRationsDays = tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
             require(currentRationsDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
@@ -237,7 +233,8 @@ contract Battling is Ownable, BattleStruct {
         uint256 tempTotalTokens = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
         uint256 tempRations;
         uint256 totalPercentage;
-        if (tempBattle.rationsDaysTotal + _rationDays >= tempBattle.dayForLimitReached) {
+        if (tempBattle.rationsDaysTotal + _rationDays >= tempBattle.dayForLimitReached
+        && tempBattle.dayForLimitReached != 0) {
             if (tempBattle.rationsDaysTotal < tempBattle.dayForLimitReached) {
                 uint256 daysPreIncrease = tempBattle.dayForLimitReached - tempBattle.rationsDaysTotal;
                 tempRations = tempTotalTokens.mul(rationsBase[daysPreIncrease - 1]).div(multiplier);
@@ -316,7 +313,7 @@ contract Battling is Ownable, BattleStruct {
         addressForBattle[msg.sender][_battleType - 1] = tempBattle;
     }
 
-    function purchaseHero(uint8 _heroToPurchase) external {
+    function purchaseHero(uint256 _heroToPurchase) external {
         require(1 <= _heroToPurchase && _heroToPurchase <= 6, "purchaseHero::Incorrect hero specified");
 
 
@@ -358,7 +355,7 @@ contract Battling is Ownable, BattleStruct {
         fortunasAssets.mint(msg.sender, _heroToPurchase, 1, "");
     }
 
-    function purchaseCavalry(uint8 _cavalryToPurchase) external {
+    function purchaseCavalry(uint256 _cavalryToPurchase) external {
         require(6 <= _cavalryToPurchase && _cavalryToPurchase <= 10, "purchaseCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToPurchase) == false, "purchaseCavalry::You already own this cavalry");
 
@@ -371,7 +368,7 @@ contract Battling is Ownable, BattleStruct {
         fortunasAssets.mint(msg.sender, _cavalryToPurchase, 1, "");
     }
 
-    function addHero(uint8 _heroToAdd, uint8 _battleType, uint256 _battleNumber) external {
+    function addHero(uint256 _heroToAdd, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(1 <= _heroToAdd && _heroToAdd <= 5, "addHero::Incorrect hero specified");
         require(fortunasAssets.ownershipOf(msg.sender, _heroToAdd), "addHero::User does not own this hero");
@@ -396,7 +393,7 @@ contract Battling is Ownable, BattleStruct {
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
     }
 
-    function removeHero(uint8 _heroToRemove, uint8 _battleType, uint256 _battleNumber) public {
+    function removeHero(uint256 _heroToRemove, uint8 _battleType, uint256 _battleNumber) public {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(1 <= _heroToRemove && _heroToRemove <= 5, "removeHero::Incorrect hero specified");
         require(fortunasAssets.ownershipOf(msg.sender, _heroToRemove), "removeHero::User does not own this hero");
@@ -418,7 +415,7 @@ contract Battling is Ownable, BattleStruct {
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
     }
 
-    function addCavalry(uint8 _cavalryToAdd, uint8 _battleType, uint256 _battleNumber) external {
+    function addCavalry(uint256 _cavalryToAdd, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(6 <= _cavalryToAdd && _cavalryToAdd <= 10, "addCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToAdd), "addCavalry::User does not own this cavalry");
@@ -444,7 +441,7 @@ contract Battling is Ownable, BattleStruct {
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
     }
 
-    function removeCavalry(uint8 _cavalryToRemove, uint8 _battleType, uint256 _battleNumber) public {
+    function removeCavalry(uint256 _cavalryToRemove, uint8 _battleType, uint256 _battleNumber) public {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(6 <= _cavalryToRemove && _cavalryToRemove <= 10, "removeCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToRemove), "removeCavalry::User does not own this cavalry");

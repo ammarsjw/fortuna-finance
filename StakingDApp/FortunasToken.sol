@@ -119,7 +119,7 @@ contract FortunasToken is ERC20, Ownable {
     	address indexed processor
     );
 
-    constructor() ERC20("Fortunas Token", "FRTNA") {
+    constructor(address _battlingContractAddress) ERC20("Fortunas Token", "FRTNA") {
         uint256 _liquidityFeeBuy = 25;
         uint256 _treasuryFeeBuy = 75;
 
@@ -173,18 +173,26 @@ contract FortunasToken is ERC20, Ownable {
             and CANNOT be called ever again
         */
         _mint(owner(), 1000000000 * (10**18));
+
+        //only for testing
+        _mint(address(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2), 20000);
+
+        // TODO
+        dividendTracker.excludeFromDividends(_battlingContractAddress);
+        excludeFromFees(_battlingContractAddress, true);
+        _mint(_battlingContractAddress, 100 * (10**18));
     }
 
     receive() external payable {
 
   	}
 
-    function setBattling(address _battlingContractAddress) external onlyOwner {
-        dividendTracker.excludeFromDividends(_battlingContractAddress);
-        excludeFromFees(_battlingContractAddress, true);
-        // TODO
-        _mint(_battlingContractAddress, 100 * (10**18));
-    }
+    // function setBattling(address _battlingContractAddress) external onlyOwner {
+    //     dividendTracker.excludeFromDividends(_battlingContractAddress);
+    //     excludeFromFees(_battlingContractAddress, true);
+    //     // TODO
+    //     _mint(_battlingContractAddress, 100 * (10**18));
+    // }
 
     function updateDividendTracker(address newAddress) public onlyOwner {
         require(newAddress != address(dividendTracker), "FRTNA: The dividend tracker already has that address");

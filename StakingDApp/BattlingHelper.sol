@@ -10,7 +10,6 @@ import "./BattleStruct.sol";
 
 contract BattlingHelper is Ownable, BattleStruct {
     using SafeMath for uint256;
-    using SafeMath for uint8;
     using MathUpgradeable for uint256;
 
     // variables
