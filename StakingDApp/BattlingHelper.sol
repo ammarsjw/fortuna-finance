@@ -34,7 +34,7 @@ contract BattlingHelper is Ownable, BattleStruct {
 
         multiplierForReward = 10000000;
 
-        // setAllRewards
+        // setting all rewards in battling contract
     }
 
     // setters
