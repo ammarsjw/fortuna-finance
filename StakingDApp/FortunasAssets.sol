@@ -16,24 +16,20 @@ contract FortunasAssets is ERC1155 {
 
     // constructor
 
-    constructor(string memory _uri, address _battlingContractAddress) ERC1155(_uri) {
-        battlingContractAddress = _battlingContractAddress;
-    }
-
-    // getters
-
-    function ownershipOf(address _account, uint256 _id) external view returns (bool) {
-        require(_account != address(0), "ownershipOf::Address zero is not a valid owner");
-        return _ownership[_id][_account];
-    }
-
-    // setters
-
-    function setBattling(address _battlingContractAddress) external onlyContract {
+    constructor(
+    string memory _uri,
+    address _battlingContractAddress) ERC1155(_uri) {
         battlingContractAddress = _battlingContractAddress;
     }
 
     // functions
+
+    function ownershipOf(
+        address _account,
+        uint256 _id) external view returns (bool) {
+        require(_account != address(0), "ownershipOf::Address zero is not a valid owner");
+        return _ownership[_id][_account];
+    }
 
     function mint(
     address _to,

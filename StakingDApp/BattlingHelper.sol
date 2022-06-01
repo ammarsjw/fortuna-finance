@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
-import "./FortunasToken.sol";
 import "./ABDKMath64x64.sol";
 import "./BattleStruct.sol";
 
@@ -15,7 +14,7 @@ contract BattlingHelper is Ownable, BattleStruct {
     // variables
 
     uint256 public oneDayTime;                              // 1 day in epoch time
-    uint256 public baseBattleTime;
+    uint256 public baseBattleTime;                          // 3 days in epoch time
 
     uint256 multiplierForReward;
 

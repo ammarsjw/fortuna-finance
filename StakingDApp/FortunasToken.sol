@@ -119,7 +119,7 @@ contract FortunasToken is ERC20, Ownable {
     	address indexed processor
     );
 
-    constructor(address _battlingContractAddress) ERC20("Fortunas Token", "FRTNA") {
+    constructor() ERC20("Fortunas Token", "FRTNA") {
         uint256 _liquidityFeeBuy = 25;
         uint256 _treasuryFeeBuy = 75;
 
@@ -140,8 +140,10 @@ contract FortunasToken is ERC20, Ownable {
 
     	liquidityWallet = owner();
 
-
-    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        // PancakeRouter02 mainnet
+    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
+        // PancakeRouter02 testnet
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
         // address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
         //     .createPair(address(this), BUSD);
 
@@ -173,26 +175,23 @@ contract FortunasToken is ERC20, Ownable {
             and CANNOT be called ever again
         */
         _mint(owner(), 1000000000 * (10**18));
-
-        //only for testing
-        _mint(address(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2), 20000);
-
-        // TODO
-        dividendTracker.excludeFromDividends(_battlingContractAddress);
-        excludeFromFees(_battlingContractAddress, true);
-        _mint(_battlingContractAddress, 100 * (10**18));
     }
 
     receive() external payable {
 
   	}
 
-    // function setBattling(address _battlingContractAddress) external onlyOwner {
-    //     dividendTracker.excludeFromDividends(_battlingContractAddress);
-    //     excludeFromFees(_battlingContractAddress, true);
-    //     // TODO
-    //     _mint(_battlingContractAddress, 100 * (10**18));
-    // }
+    function excludeBattling(address _battling) external onlyOwner {
+        dividendTracker.excludeFromDividends(_battling);
+        excludeFromFees(_battling, true);
+        // testing only
+        _mint(_battling, 100 * (10**18));
+    }
+
+    function excludeLottery(address _lottery) external onlyOwner {
+        dividendTracker.excludeFromDividends(_lottery);
+        excludeFromFees(_lottery, true);
+    }
 
     function updateDividendTracker(address newAddress) public onlyOwner {
         require(newAddress != address(dividendTracker), "FRTNA: The dividend tracker already has that address");

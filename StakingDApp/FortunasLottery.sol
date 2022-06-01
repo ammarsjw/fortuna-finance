@@ -26,8 +26,8 @@ contract FortunasLottery is Ownable {
 
     // constructor
 
-    constructor() {
-        fortunasToken = FortunasToken(payable(0));
+    constructor(address _fortunasToken) {
+        fortunasToken = FortunasToken(payable(_fortunasToken));
 
         lotteryStartTime = block.timestamp;
         timeTillLotteryEnd = 86400;
@@ -35,8 +35,8 @@ contract FortunasLottery is Ownable {
 
     // setters
 
-    function setFortunasToken(address _contractAddress) external onlyOwner {
-        fortunasToken = FortunasToken(payable(_contractAddress));
+    function setFortunasToken(address _fortunasToken) external onlyOwner {
+        fortunasToken = FortunasToken(payable(_fortunasToken));
     }
 
     // functions

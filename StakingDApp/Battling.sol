@@ -28,15 +28,17 @@ contract Battling is Ownable, BattleStruct {
     FortunasAssets public fortunasAssets;
     
     // FRTNA
-    FortunasToken public fortunasToken = FortunasToken(payable(0));
-    address treasuryWallet = address(fortunasToken);
+    FortunasToken public fortunasToken;
+    address treasuryWallet;
 
-    // BUSD
-    address public BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
+    // BUSD mainnet
+    // address public immutable BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
+    // BUSD testnet
+    address public BUSD = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
     uint256 public rewardTime;                              // 30 minutes in epoch time
     uint256 public oneDayTime;                              // 1 day in epoch time
-    uint256 public baseBattleTime;                          // 3 daays in epoch time
+    uint256 public baseBattleTime;                          // 3 days in epoch time
 
     uint256 multiplier;
     uint256 multiplierForReward;
@@ -76,11 +78,14 @@ contract Battling is Ownable, BattleStruct {
 
     // constructor
 
-    constructor(address _battlingHelper) {
+    constructor(address _fortunasToken) {
         bribeToEmeperor = 5000;
 
         // TODO (for mainnet) rather than using the constructor, use the setter function to initialize all the below variables to hide the values from the public eye
+        // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
+        // PancakeRouter02 testnet
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
         // address _addressForPancakePair = IPancakeFactory(pancakeRouter.factory()).getPair(address(fortunasToken), BUSD);
 
         // pancakeRouter = _pancakeRouter;
@@ -89,6 +94,9 @@ contract Battling is Ownable, BattleStruct {
         // LPToken = IERC20(_addressForPancakePair);
 
         fortunasAssets = new FortunasAssets("", address(this));
+
+        fortunasToken = FortunasToken(payable(_fortunasToken));
+        treasuryWallet = address(fortunasToken);
 
         // rewardTime = 1800;
         // oneDayTime = 86400;
@@ -105,11 +113,7 @@ contract Battling is Ownable, BattleStruct {
         rationsBase = [2500, 5000, 7500, 10000, 12500];
         setRations();                                       // setting ration related variables
 
-        rewardBasePercentages = [100, 100, 75, 50, 20, 10];
-        rewardIncreasePerDay = 5;
-
-        rewardLimit = [25000, 50000, 1000, 1250, 2000, 2940];
-        setRewards();                                       // setting reward related variables
+        // setAllRewards
 
         assetPercentages = [20, 40, 60, 80, 100,            // each hero's effect on current APY
                             10, 20, 30, 40, 50];            // each cavalry's effect on total APY
@@ -118,7 +122,7 @@ contract Battling is Ownable, BattleStruct {
 
         randomAssetPrice = 5000;
 
-        battlingHelper = BattlingHelper(_battlingHelper);
+        battlingHelper = new BattlingHelper();
     }
 
     // getters
@@ -133,13 +137,13 @@ contract Battling is Ownable, BattleStruct {
 
     // setters
 
-    function setFortunasToken(address _contractAddress) external onlyOwner {
-        fortunasToken = FortunasToken(payable(_contractAddress));
+    function setFortunasToken(address _fortunasToken) external onlyOwner {
+        fortunasToken = FortunasToken(payable(_fortunasToken));
         treasuryWallet = address(fortunasToken);
     }
 
-    function setFortunasAssets(address _contractAddress) external onlyOwner {
-        fortunasAssets = FortunasAssets(_contractAddress);
+    function setFortunasAssets(address _fortunasAssets) external onlyOwner {
+        fortunasAssets = FortunasAssets(_fortunasAssets);
     }
 
     function setLPToken(address _LPToken) external onlyOwner {
@@ -184,6 +188,14 @@ contract Battling is Ownable, BattleStruct {
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
         }
+    }
+
+    function setAllRewards(uint256[6] memory _basePercentages, uint256 _increasePerDay, uint256[6] memory _limit) external onlyOwner {
+        rewardBasePercentages = _basePercentages;
+        rewardIncreasePerDay = _increasePerDay;
+
+        rewardLimit = _limit;
+        setRewards();
     }
 
     // functions
@@ -563,37 +575,3 @@ contract Battling is Ownable, BattleStruct {
         return tempRewards;
     }
 }
-
-// IMPORTANT TODO - can I have more than 1 hero in a battle or similarly can I have more than 1 cavalry in a battle
-
-// TODO/Done LP staking
-// TODO/Done conditions for addHero/addCavalry (owned or not) -> mapping?
-// TODO/Done pancake pair reserve for purchasing/selling heroes/cavalry (maybe selling not needed)
-// TODO/Done Fortunas Chance. Random Hero (L1 to L5)
-// TODO/NotNeeded 33% chance of losing heroes, cavalry, rations when unstaking after battle finished
-// TODO/Done 50% chance of losing heroes, cavalry, rations when unstaking before battle finished
-// TODO/Done decrease in .5% chance of losing heroes, cavalry, rations after every ration day when unstaking before battle finished
-// TODO/Done dividend tracking token
-// TODO/Done cavalry increase in max limit
-// TODO/Done check if isLimitReached is done properly
-// TODO/Done math upgradeable -> add a function for round off and safe Sub -> ".roundDiv", ".safeSub" to make the code less clogged
-// TODO/Done adjust getters (how do mappings and getters work) (do i even need so many getters)
-// TODO/Done adjust setters (do i even need so many setters)
-// TODO/Done Losses on remove troops and 50% of losses when unstaking after battle finished
-// TODO/Done check with wasif for some TODOs about liquidity, LP Staking and pancake swap
-// TODO/Done buy/sell fees
-// TODO/Done Ludos? Lottery? Similar to Titano PLAY (https://app.sphere.finance/games)
-// TODO/Done Heroes and cavalry -> NFTs (ERC1155)
-// TODO/Done Heroes and cavalry -> make sure to add checks so that more than 1 of any type of NFT cant be owned (1 x L1 hero, 1 x L1 cavalry etc)
-// TODO/Done FortunasToken -> make sure tax is only on selling/buying and not on every transfer -> add this contract's address to excludedFromFees mapping
-// TODO/Done divide normal reward function into 2 (normal + extra)
-// TODO/Done islimitreached and reconfigure reward reset for additional troops not rations
-// TODO/Done nft transfer and mapping in assets for ownership
-// TODO/Done adjust calculation for price of heroes/cavalry
-// TODO/Done Reward -> Compound interest
-// TODO/Done battlingHelper.calculateRewardsForBattleEnd...
-// TODO/Done set all required values for testing in Battling, FortunasToken, FortunasAssets and FortunasLottery
-// TODO Chainlink randomizer or api/oracle randomizer
-// TODO FortunasToken -> clean unnecassery code in dividend tracking/paying token
-// TODO shorten require statements
-// TODO code optimization and code cleaning
