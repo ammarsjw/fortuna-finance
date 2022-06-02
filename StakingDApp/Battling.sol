@@ -36,9 +36,9 @@ contract Battling is Ownable, BattleStruct {
     // BUSD testnet
     address public BUSD = address(0x3B00Ef435fA4FcFF5C209a37d1f3dcff37c705aD);
 
-    uint256 public rewardTime;                              // 30 minutes in epoch time
-    uint256 public oneDayTime;                              // 1 day in epoch time
-    uint256 public baseBattleTime;                          // 3 days in epoch time
+    uint256 public rewardTime;                              // 30 minutes in seconds
+    uint256 public oneDayTime;                              // 1 day in seconds
+    uint256 public baseBattleTime;                          // 3 days in seconds
 
     uint256 multiplier;
     uint256 multiplierForReward;
@@ -183,9 +183,9 @@ contract Battling is Ownable, BattleStruct {
         // rewardTime = 1800;
         // oneDayTime = 86400;
         // baseBattleTime = 259200;
-        rewardTime = 1;                                     // (unused) 1 second, only for testing
-        oneDayTime = 60;                                    // 1 minute, only for testing
-        baseBattleTime = 180;                               // 3 minutes, only for testing
+        rewardTime = 1;                                     // only for testing
+        oneDayTime = 48;                                    // only for testing
+        baseBattleTime = 144;                               // only for testing
 
         multiplier = 1000000;
         multiplierForReward = 10000000;
@@ -796,3 +796,5 @@ contract Battling is Ownable, BattleStruct {
         return tempRewards;
     }
 }
+
+// TODO add another argument in calculateReward (isExactRequire) and use it for both battleEnd and viewRewards

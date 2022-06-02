@@ -13,8 +13,9 @@ contract BattlingHelper is Ownable, BattleStruct {
 
     // variables
 
-    uint256 public oneDayTime;                              // 1 day in epoch time
-    uint256 public baseBattleTime;                          // 3 days in epoch time
+    uint256 public rewardTime;                              // 30 minutes in seconds
+    uint256 public oneDayTime;                              // 1 day in seconds
+    uint256 public baseBattleTime;                          // 3 days in seconds
 
     uint256 multiplierForReward;
 
@@ -27,10 +28,12 @@ contract BattlingHelper is Ownable, BattleStruct {
     // constructor
 
     constructor() {
+        // rewardTime = 1800;
         // oneDayTime = 86400;
         // baseBattleTime = 259200;
-        oneDayTime = 60;                                    // 1 minute, only for testing
-        baseBattleTime = 180;                               // 3 minutes, only for testing
+        rewardTime = 1;                                     // only for testing
+        oneDayTime = 48;                                    // only for testing
+        baseBattleTime = 144;                               // only for testing
 
         multiplierForReward = 10000000;
 
