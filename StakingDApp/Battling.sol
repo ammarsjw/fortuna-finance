@@ -16,7 +16,7 @@ contract Battling is Ownable, BattleStruct {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
-    uint256 public bribeToEmeperor;                         // percentage of staked amount sent to treasury every time battling or training occurs
+    uint256 public bribeToEmeperor;
 
     IPancakeRouter02 pancakeRouter;
     IPancakePair pancakePair;
@@ -784,7 +784,12 @@ contract Battling is Ownable, BattleStruct {
         Battle memory tempBattle;
         for (uint256 i = 2 ; i <= 6 ; i++) {
             tempBattle = addressForBattle[_user][i];
-            tempBattle = battlingHelper.calculateRewards(tempBattle);
+            if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
+                tempBattle = battlingHelper.calculateRewards(tempBattle);
+            }
+            else {
+                tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
+            }
             tempRewards[i] = tempBattle.rewards;
         }
 

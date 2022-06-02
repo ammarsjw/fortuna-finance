@@ -207,8 +207,6 @@ contract BattlingHelper is Ownable, BattleStruct {
             _tempBattle.battleDaysExpended = daysWagingBattle;
         }
 
-        require(block.timestamp < _tempBattle.battleStartTime.add(baseBattleTime).add(_tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewardsForBattleEnd::Battle already finished");
-
         return _tempBattle;
     }
 

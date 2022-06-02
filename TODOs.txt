@@ -27,8 +27,11 @@
 // TODO/Done Reward -> Compound interest
 // TODO/Done battlingHelper.calculateRewardsForBattleEnd...
 // TODO/Done set all required values for testing in Battling, FortunasToken, FortunasAssets and FortunasLottery
-// TODO Replace some imports with Interfaces for less code size (FortunasToken, FortunasAssets)?
-// TODO Chainlink randomizer or api/oracle randomizer
-// TODO FortunasToken -> clean unnecassery code in dividend tracking/paying token
-// TODO shorten require statements if needed
-// TODO code optimization and code cleaning
+// TODO Battling - Replace some imports with Interfaces for less code size (FortunasToken, FortunasAssets)?
+// TODO Randomizer - Chainlink randomizer or api/oracle randomizer
+// TODO Battling - Shorten require statements if needed
+// TODO Battling - Code optimization and code cleaning
+Need a favour to solve these issues please. Whenever you have a free day let me know:
+FortunasToken - Remove minimumRequired balance for dividends eligibility, add functionality for percentage of user's current balance rather than percentage of pool owned by user
+FortunasToken - Remove unnecessary fields such as preSale etc.
+PancakeSwap - How to implement for testnet (need to test all PancakeSwap functionalities before we move on)
