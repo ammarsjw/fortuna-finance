@@ -10,66 +10,16 @@ import {
   BigInt
 } from "@graphprotocol/graph-ts";
 
-export class BattleEnd extends ethereum.Event {
-  get params(): BattleEnd__Params {
-    return new BattleEnd__Params(this);
+export class BattleEnded extends ethereum.Event {
+  get params(): BattleEnded__Params {
+    return new BattleEnded__Params(this);
   }
 }
 
-export class BattleEnd__Params {
-  _event: BattleEnd;
+export class BattleEnded__Params {
+  _event: BattleEnded;
 
-  constructor(event: BattleEnd) {
-    this._event = event;
-  }
-
-  get user(): Address {
-    return this._event.parameters[0].value.toAddress();
-  }
-
-  get battleNumber(): BigInt {
-    return this._event.parameters[1].value.toBigInt();
-  }
-
-  get status(): BigInt {
-    return this._event.parameters[2].value.toBigInt();
-  }
-
-  get initialTokensStaked(): BigInt {
-    return this._event.parameters[3].value.toBigInt();
-  }
-
-  get battleStartTime(): BigInt {
-    return this._event.parameters[4].value.toBigInt();
-  }
-
-  get rewards(): BigInt {
-    return this._event.parameters[5].value.toBigInt();
-  }
-
-  get rations(): BigInt {
-    return this._event.parameters[6].value.toBigInt();
-  }
-
-  get hero(): BigInt {
-    return this._event.parameters[7].value.toBigInt();
-  }
-
-  get cavalry(): BigInt {
-    return this._event.parameters[8].value.toBigInt();
-  }
-}
-
-export class BattleStart extends ethereum.Event {
-  get params(): BattleStart__Params {
-    return new BattleStart__Params(this);
-  }
-}
-
-export class BattleStart__Params {
-  _event: BattleStart;
-
-  constructor(event: BattleStart) {
+  constructor(event: BattleEnded) {
     this._event = event;
   }
 
@@ -81,11 +31,11 @@ export class BattleStart__Params {
     return this._event.parameters[1].value.toBigInt();
   }
 
-  get status(): BigInt {
-    return this._event.parameters[2].value.toBigInt();
+  get battleStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
   }
 
-  get initialTokensStaked(): BigInt {
+  get tokensStaked(): BigInt {
     return this._event.parameters[3].value.toBigInt();
   }
 
@@ -93,83 +43,29 @@ export class BattleStart__Params {
     return this._event.parameters[4].value.toBigInt();
   }
 
-  get rewards(): BigInt {
+  get battleDurationInDays(): BigInt {
     return this._event.parameters[5].value.toBigInt();
   }
 
-  get rations(): BigInt {
-    return this._event.parameters[6].value.toBigInt();
-  }
-
-  get hero(): BigInt {
-    return this._event.parameters[7].value.toBigInt();
-  }
-
-  get cavalry(): BigInt {
-    return this._event.parameters[8].value.toBigInt();
-  }
-}
-
-export class BattleUpdate extends ethereum.Event {
-  get params(): BattleUpdate__Params {
-    return new BattleUpdate__Params(this);
-  }
-}
-
-export class BattleUpdate__Params {
-  _event: BattleUpdate;
-
-  constructor(event: BattleUpdate) {
-    this._event = event;
-  }
-
-  get user(): Address {
-    return this._event.parameters[0].value.toAddress();
-  }
-
-  get battleNumber(): BigInt {
-    return this._event.parameters[1].value.toBigInt();
-  }
-
-  get status(): BigInt {
-    return this._event.parameters[2].value.toBigInt();
-  }
-
-  get initialTokensStaked(): BigInt {
-    return this._event.parameters[3].value.toBigInt();
-  }
-
-  get battleStartTime(): BigInt {
-    return this._event.parameters[4].value.toBigInt();
-  }
-
   get rewards(): BigInt {
-    return this._event.parameters[5].value.toBigInt();
-  }
-
-  get rations(): BigInt {
     return this._event.parameters[6].value.toBigInt();
   }
 
-  get hero(): BigInt {
+  get rations(): BigInt {
     return this._event.parameters[7].value.toBigInt();
   }
+}
 
-  get cavalry(): BigInt {
-    return this._event.parameters[8].value.toBigInt();
+export class BattleStarted extends ethereum.Event {
+  get params(): BattleStarted__Params {
+    return new BattleStarted__Params(this);
   }
 }
 
-export class CavalryStatus extends ethereum.Event {
-  get params(): CavalryStatus__Params {
-    return new CavalryStatus__Params(this);
-  }
-}
+export class BattleStarted__Params {
+  _event: BattleStarted;
 
-export class CavalryStatus__Params {
-  _event: CavalryStatus;
-
-  constructor(event: CavalryStatus) {
+  constructor(event: BattleStarted) {
     this._event = event;
   }
 
@@ -181,21 +77,41 @@ export class CavalryStatus__Params {
     return this._event.parameters[1].value.toBigInt();
   }
 
-  get cavalry(): BigInt {
-    return this._event.parameters[2].value.toBigInt();
+  get battleStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get tokensStaked(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+
+  get battleStartTime(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get battleDurationInDays(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+
+  get rewards(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
+  }
+
+  get rations(): BigInt {
+    return this._event.parameters[7].value.toBigInt();
   }
 }
 
-export class HeroStatus extends ethereum.Event {
-  get params(): HeroStatus__Params {
-    return new HeroStatus__Params(this);
+export class BattleUpdated extends ethereum.Event {
+  get params(): BattleUpdated__Params {
+    return new BattleUpdated__Params(this);
   }
 }
 
-export class HeroStatus__Params {
-  _event: HeroStatus;
+export class BattleUpdated__Params {
+  _event: BattleUpdated;
 
-  constructor(event: HeroStatus) {
+  constructor(event: BattleUpdated) {
     this._event = event;
   }
 
@@ -207,8 +123,268 @@ export class HeroStatus__Params {
     return this._event.parameters[1].value.toBigInt();
   }
 
+  get battleStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get tokensStaked(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+
+  get battleStartTime(): BigInt {
+    return this._event.parameters[4].value.toBigInt();
+  }
+
+  get battleDurationInDays(): BigInt {
+    return this._event.parameters[5].value.toBigInt();
+  }
+
+  get rewards(): BigInt {
+    return this._event.parameters[6].value.toBigInt();
+  }
+
+  get rations(): BigInt {
+    return this._event.parameters[7].value.toBigInt();
+  }
+}
+
+export class CavalryDeployed extends ethereum.Event {
+  get params(): CavalryDeployed__Params {
+    return new CavalryDeployed__Params(this);
+  }
+}
+
+export class CavalryDeployed__Params {
+  _event: CavalryDeployed;
+
+  constructor(event: CavalryDeployed) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get cavalryStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get cavalry(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class CavalryLost extends ethereum.Event {
+  get params(): CavalryLost__Params {
+    return new CavalryLost__Params(this);
+  }
+}
+
+export class CavalryLost__Params {
+  _event: CavalryLost;
+
+  constructor(event: CavalryLost) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get cavalryStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get cavalry(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class CavalryPurchased extends ethereum.Event {
+  get params(): CavalryPurchased__Params {
+    return new CavalryPurchased__Params(this);
+  }
+}
+
+export class CavalryPurchased__Params {
+  _event: CavalryPurchased;
+
+  constructor(event: CavalryPurchased) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get cavalryStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get cavalry(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class CavalryReturned extends ethereum.Event {
+  get params(): CavalryReturned__Params {
+    return new CavalryReturned__Params(this);
+  }
+}
+
+export class CavalryReturned__Params {
+  _event: CavalryReturned;
+
+  constructor(event: CavalryReturned) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get cavalryStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get cavalry(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class HeroDeployed extends ethereum.Event {
+  get params(): HeroDeployed__Params {
+    return new HeroDeployed__Params(this);
+  }
+}
+
+export class HeroDeployed__Params {
+  _event: HeroDeployed;
+
+  constructor(event: HeroDeployed) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get heroStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
   get hero(): BigInt {
-    return this._event.parameters[2].value.toBigInt();
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class HeroLost extends ethereum.Event {
+  get params(): HeroLost__Params {
+    return new HeroLost__Params(this);
+  }
+}
+
+export class HeroLost__Params {
+  _event: HeroLost;
+
+  constructor(event: HeroLost) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get heroStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get hero(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class HeroPurchased extends ethereum.Event {
+  get params(): HeroPurchased__Params {
+    return new HeroPurchased__Params(this);
+  }
+}
+
+export class HeroPurchased__Params {
+  _event: HeroPurchased;
+
+  constructor(event: HeroPurchased) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get heroStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get hero(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
+  }
+}
+
+export class HeroReturned extends ethereum.Event {
+  get params(): HeroReturned__Params {
+    return new HeroReturned__Params(this);
+  }
+}
+
+export class HeroReturned__Params {
+  _event: HeroReturned;
+
+  constructor(event: HeroReturned) {
+    this._event = event;
+  }
+
+  get user(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get battleType(): BigInt {
+    return this._event.parameters[1].value.toBigInt();
+  }
+
+  get heroStatus(): boolean {
+    return this._event.parameters[2].value.toBoolean();
+  }
+
+  get hero(): BigInt {
+    return this._event.parameters[3].value.toBigInt();
   }
 }
 

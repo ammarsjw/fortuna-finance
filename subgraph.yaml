@@ -6,34 +6,49 @@ dataSources:
     name: Battling
     network: rinkeby
     source:
-      address: "0x69548Adb16759852315E2C16C94b9a5228BA4F48"
+      address: "0xfc2d7eE1a5587A0F2529C8cA3FaE26d3E451bddE"
       abi: Battling
-      startBlock: 000000000
+      startBlock: 10781071
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
-        - BattleEnd
-        - BattleStart
-        - BattleUpdate
-        - CavalryStatus
-        - HeroStatus
-        - OwnershipTransferred
+        - BattleStarted
+        - BattleUpdated
+        - BattleEnded
+        - HeroPurchased
+        - HeroDeployed
+        - HeroReturned
+        - HeroLost
+        - CavalryPurchased
+        - CavalryDeployed
+        - CavalryReturned
+        - CavalryLost
       abis:
         - name: Battling
           file: ./abis/Battling.json
       eventHandlers:
-        - event: BattleEnd(indexed address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
-          handler: handleBattleEnd
-        - event: BattleStart(indexed address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
-          handler: handleBattleStart
-        - event: BattleUpdate(indexed address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
-          handler: handleBattleUpdate
-        - event: CavalryStatus(indexed address,uint256,uint256)
-          handler: handleCavalryStatus
-        - event: HeroStatus(indexed address,uint256,uint256)
-          handler: handleHeroStatus
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
+        - event: BattleStarted(indexed address,uint256,bool,uint256,uint256,uint256,uint256,uint256)
+          handler: handleBattleStarted
+        - event: BattleUpdated(indexed address,uint256,bool,uint256,uint256,uint256,uint256,uint256)
+          handler: handleBattleUpdated
+        - event: BattleEnded(indexed address,uint256,bool,uint256,uint256,uint256,uint256,uint256)
+          handler: handleBattleEnded
+        - event: HeroPurchased(indexed address,uint256,bool,uint256)
+          handler: handleHeroPurchased
+        - event: HeroDeployed(indexed address,uint256,bool,uint256)
+          handler: handleHeroDeployed
+        - event: HeroReturned(indexed address,uint256,bool,uint256)
+          handler: handleHeroReturned
+        - event: HeroLost(indexed address,uint256,bool,uint256)
+          handler: handleHeroLost
+        - event: CavalryPurchased(indexed address,uint256,bool,uint256)
+          handler: handleCavalryPurchased
+        - event: CavalryDeployed(indexed address,uint256,bool,uint256)
+          handler: handleCavalryDeployed
+        - event: CavalryReturned(indexed address,uint256,bool,uint256)
+          handler: handleCavalryReturned
+        - event: CavalryLost(indexed address,uint256,bool,uint256)
+          handler: handleCavalryLost
       file: ./src/mapping.ts

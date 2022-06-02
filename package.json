@@ -7,7 +7,8 @@
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ ammarsjw/fortunas-finance-staking-dapp",
     "create-local": "graph create --node http://localhost:8020/ ammarsjw/fortunas-finance-staking-dapp",
     "remove-local": "graph remove --node http://localhost:8020/ ammarsjw/fortunas-finance-staking-dapp",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ammarsjw/fortunas-finance-staking-dapp"
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ammarsjw/fortunas-finance-staking-dapp",
+    "deploy-hosted": "graph deploy --product hosted-service ammarsjw/fortunas-finance-staking-dapp"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.29.0",

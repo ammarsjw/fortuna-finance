@@ -11,30 +11,33 @@ import {
   BigDecimal
 } from "@graphprotocol/graph-ts";
 
-export class ExampleEntity extends Entity {
+export class Transaction extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
 
-    this.set("count", Value.fromBigInt(BigInt.zero()));
-    this.set("user", Value.fromBytes(Bytes.empty()));
-    this.set("battleNumber", Value.fromBigInt(BigInt.zero()));
+    this.set("timestamp", Value.fromBigInt(BigInt.zero()));
+    this.set("blockNumber", Value.fromBigInt(BigInt.zero()));
+    this.set("blockHash", Value.fromBytes(Bytes.empty()));
+    this.set("from", Value.fromBytes(Bytes.empty()));
+    this.set("value", Value.fromBigInt(BigInt.zero()));
+    this.set("gasPrice", Value.fromBigInt(BigInt.zero()));
   }
 
   save(): void {
     let id = this.get("id");
-    assert(id != null, "Cannot save ExampleEntity entity without an ID");
+    assert(id != null, "Cannot save Transaction entity without an ID");
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        `Entities of type ExampleEntity must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        `Entities of type Transaction must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("ExampleEntity", id.toString(), this);
+      store.set("Transaction", id.toString(), this);
     }
   }
 
-  static load(id: string): ExampleEntity | null {
-    return changetype<ExampleEntity | null>(store.get("ExampleEntity", id));
+  static load(id: string): Transaction | null {
+    return changetype<Transaction | null>(store.get("Transaction", id));
   }
 
   get id(): string {
@@ -46,13 +49,126 @@ export class ExampleEntity extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get count(): BigInt {
-    let value = this.get("count");
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
     return value!.toBigInt();
   }
 
-  set count(value: BigInt) {
-    this.set("count", Value.fromBigInt(value));
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get blockNumber(): BigInt {
+    let value = this.get("blockNumber");
+    return value!.toBigInt();
+  }
+
+  set blockNumber(value: BigInt) {
+    this.set("blockNumber", Value.fromBigInt(value));
+  }
+
+  get blockHash(): Bytes {
+    let value = this.get("blockHash");
+    return value!.toBytes();
+  }
+
+  set blockHash(value: Bytes) {
+    this.set("blockHash", Value.fromBytes(value));
+  }
+
+  get from(): Bytes {
+    let value = this.get("from");
+    return value!.toBytes();
+  }
+
+  set from(value: Bytes) {
+    this.set("from", Value.fromBytes(value));
+  }
+
+  get to(): Bytes | null {
+    let value = this.get("to");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set to(value: Bytes | null) {
+    if (!value) {
+      this.unset("to");
+    } else {
+      this.set("to", Value.fromBytes(<Bytes>value));
+    }
+  }
+
+  get value(): BigInt {
+    let value = this.get("value");
+    return value!.toBigInt();
+  }
+
+  set value(value: BigInt) {
+    this.set("value", Value.fromBigInt(value));
+  }
+
+  get gasPrice(): BigInt {
+    let value = this.get("gasPrice");
+    return value!.toBigInt();
+  }
+
+  set gasPrice(value: BigInt) {
+    this.set("gasPrice", Value.fromBigInt(value));
+  }
+}
+
+export class BattleStarted extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("battleStatus", Value.fromBoolean(false));
+    this.set("tokensStaked", Value.fromBigInt(BigInt.zero()));
+    this.set("battleStartTime", Value.fromBigInt(BigInt.zero()));
+    this.set("battleDurationInDays", Value.fromBigInt(BigInt.zero()));
+    this.set("rewards", Value.fromBigInt(BigInt.zero()));
+    this.set("rations", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save BattleStarted entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type BattleStarted must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("BattleStarted", id.toString(), this);
+    }
+  }
+
+  static load(id: string): BattleStarted | null {
+    return changetype<BattleStarted | null>(store.get("BattleStarted", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
   }
 
   get user(): Bytes {
@@ -64,12 +180,978 @@ export class ExampleEntity extends Entity {
     this.set("user", Value.fromBytes(value));
   }
 
-  get battleNumber(): BigInt {
-    let value = this.get("battleNumber");
+  get battleType(): BigInt {
+    let value = this.get("battleType");
     return value!.toBigInt();
   }
 
-  set battleNumber(value: BigInt) {
-    this.set("battleNumber", Value.fromBigInt(value));
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get battleStatus(): boolean {
+    let value = this.get("battleStatus");
+    return value!.toBoolean();
+  }
+
+  set battleStatus(value: boolean) {
+    this.set("battleStatus", Value.fromBoolean(value));
+  }
+
+  get tokensStaked(): BigInt {
+    let value = this.get("tokensStaked");
+    return value!.toBigInt();
+  }
+
+  set tokensStaked(value: BigInt) {
+    this.set("tokensStaked", Value.fromBigInt(value));
+  }
+
+  get battleStartTime(): BigInt {
+    let value = this.get("battleStartTime");
+    return value!.toBigInt();
+  }
+
+  set battleStartTime(value: BigInt) {
+    this.set("battleStartTime", Value.fromBigInt(value));
+  }
+
+  get battleDurationInDays(): BigInt {
+    let value = this.get("battleDurationInDays");
+    return value!.toBigInt();
+  }
+
+  set battleDurationInDays(value: BigInt) {
+    this.set("battleDurationInDays", Value.fromBigInt(value));
+  }
+
+  get rewards(): BigInt {
+    let value = this.get("rewards");
+    return value!.toBigInt();
+  }
+
+  set rewards(value: BigInt) {
+    this.set("rewards", Value.fromBigInt(value));
+  }
+
+  get rations(): BigInt {
+    let value = this.get("rations");
+    return value!.toBigInt();
+  }
+
+  set rations(value: BigInt) {
+    this.set("rations", Value.fromBigInt(value));
+  }
+}
+
+export class BattleUpdated extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("battleStatus", Value.fromBoolean(false));
+    this.set("tokensStaked", Value.fromBigInt(BigInt.zero()));
+    this.set("battleStartTime", Value.fromBigInt(BigInt.zero()));
+    this.set("battleDurationInDays", Value.fromBigInt(BigInt.zero()));
+    this.set("rewards", Value.fromBigInt(BigInt.zero()));
+    this.set("rations", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save BattleUpdated entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type BattleUpdated must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("BattleUpdated", id.toString(), this);
+    }
+  }
+
+  static load(id: string): BattleUpdated | null {
+    return changetype<BattleUpdated | null>(store.get("BattleUpdated", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get battleStatus(): boolean {
+    let value = this.get("battleStatus");
+    return value!.toBoolean();
+  }
+
+  set battleStatus(value: boolean) {
+    this.set("battleStatus", Value.fromBoolean(value));
+  }
+
+  get tokensStaked(): BigInt {
+    let value = this.get("tokensStaked");
+    return value!.toBigInt();
+  }
+
+  set tokensStaked(value: BigInt) {
+    this.set("tokensStaked", Value.fromBigInt(value));
+  }
+
+  get battleStartTime(): BigInt {
+    let value = this.get("battleStartTime");
+    return value!.toBigInt();
+  }
+
+  set battleStartTime(value: BigInt) {
+    this.set("battleStartTime", Value.fromBigInt(value));
+  }
+
+  get battleDurationInDays(): BigInt {
+    let value = this.get("battleDurationInDays");
+    return value!.toBigInt();
+  }
+
+  set battleDurationInDays(value: BigInt) {
+    this.set("battleDurationInDays", Value.fromBigInt(value));
+  }
+
+  get rewards(): BigInt {
+    let value = this.get("rewards");
+    return value!.toBigInt();
+  }
+
+  set rewards(value: BigInt) {
+    this.set("rewards", Value.fromBigInt(value));
+  }
+
+  get rations(): BigInt {
+    let value = this.get("rations");
+    return value!.toBigInt();
+  }
+
+  set rations(value: BigInt) {
+    this.set("rations", Value.fromBigInt(value));
+  }
+}
+
+export class BattleEnded extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("battleStatus", Value.fromBoolean(false));
+    this.set("tokensStaked", Value.fromBigInt(BigInt.zero()));
+    this.set("battleStartTime", Value.fromBigInt(BigInt.zero()));
+    this.set("battleDurationInDays", Value.fromBigInt(BigInt.zero()));
+    this.set("rewards", Value.fromBigInt(BigInt.zero()));
+    this.set("rations", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save BattleEnded entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type BattleEnded must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("BattleEnded", id.toString(), this);
+    }
+  }
+
+  static load(id: string): BattleEnded | null {
+    return changetype<BattleEnded | null>(store.get("BattleEnded", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get battleStatus(): boolean {
+    let value = this.get("battleStatus");
+    return value!.toBoolean();
+  }
+
+  set battleStatus(value: boolean) {
+    this.set("battleStatus", Value.fromBoolean(value));
+  }
+
+  get tokensStaked(): BigInt {
+    let value = this.get("tokensStaked");
+    return value!.toBigInt();
+  }
+
+  set tokensStaked(value: BigInt) {
+    this.set("tokensStaked", Value.fromBigInt(value));
+  }
+
+  get battleStartTime(): BigInt {
+    let value = this.get("battleStartTime");
+    return value!.toBigInt();
+  }
+
+  set battleStartTime(value: BigInt) {
+    this.set("battleStartTime", Value.fromBigInt(value));
+  }
+
+  get battleDurationInDays(): BigInt {
+    let value = this.get("battleDurationInDays");
+    return value!.toBigInt();
+  }
+
+  set battleDurationInDays(value: BigInt) {
+    this.set("battleDurationInDays", Value.fromBigInt(value));
+  }
+
+  get rewards(): BigInt {
+    let value = this.get("rewards");
+    return value!.toBigInt();
+  }
+
+  set rewards(value: BigInt) {
+    this.set("rewards", Value.fromBigInt(value));
+  }
+
+  get rations(): BigInt {
+    let value = this.get("rations");
+    return value!.toBigInt();
+  }
+
+  set rations(value: BigInt) {
+    this.set("rations", Value.fromBigInt(value));
+  }
+}
+
+export class HeroPurchased extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("heroStatus", Value.fromBoolean(false));
+    this.set("hero", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save HeroPurchased entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type HeroPurchased must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("HeroPurchased", id.toString(), this);
+    }
+  }
+
+  static load(id: string): HeroPurchased | null {
+    return changetype<HeroPurchased | null>(store.get("HeroPurchased", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get heroStatus(): boolean {
+    let value = this.get("heroStatus");
+    return value!.toBoolean();
+  }
+
+  set heroStatus(value: boolean) {
+    this.set("heroStatus", Value.fromBoolean(value));
+  }
+
+  get hero(): BigInt {
+    let value = this.get("hero");
+    return value!.toBigInt();
+  }
+
+  set hero(value: BigInt) {
+    this.set("hero", Value.fromBigInt(value));
+  }
+}
+
+export class HeroDeployed extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("heroStatus", Value.fromBoolean(false));
+    this.set("hero", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save HeroDeployed entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type HeroDeployed must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("HeroDeployed", id.toString(), this);
+    }
+  }
+
+  static load(id: string): HeroDeployed | null {
+    return changetype<HeroDeployed | null>(store.get("HeroDeployed", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get heroStatus(): boolean {
+    let value = this.get("heroStatus");
+    return value!.toBoolean();
+  }
+
+  set heroStatus(value: boolean) {
+    this.set("heroStatus", Value.fromBoolean(value));
+  }
+
+  get hero(): BigInt {
+    let value = this.get("hero");
+    return value!.toBigInt();
+  }
+
+  set hero(value: BigInt) {
+    this.set("hero", Value.fromBigInt(value));
+  }
+}
+
+export class HeroReturned extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("heroStatus", Value.fromBoolean(false));
+    this.set("hero", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save HeroReturned entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type HeroReturned must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("HeroReturned", id.toString(), this);
+    }
+  }
+
+  static load(id: string): HeroReturned | null {
+    return changetype<HeroReturned | null>(store.get("HeroReturned", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get heroStatus(): boolean {
+    let value = this.get("heroStatus");
+    return value!.toBoolean();
+  }
+
+  set heroStatus(value: boolean) {
+    this.set("heroStatus", Value.fromBoolean(value));
+  }
+
+  get hero(): BigInt {
+    let value = this.get("hero");
+    return value!.toBigInt();
+  }
+
+  set hero(value: BigInt) {
+    this.set("hero", Value.fromBigInt(value));
+  }
+}
+
+export class HeroLost extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("heroStatus", Value.fromBoolean(false));
+    this.set("hero", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save HeroLost entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type HeroLost must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("HeroLost", id.toString(), this);
+    }
+  }
+
+  static load(id: string): HeroLost | null {
+    return changetype<HeroLost | null>(store.get("HeroLost", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get heroStatus(): boolean {
+    let value = this.get("heroStatus");
+    return value!.toBoolean();
+  }
+
+  set heroStatus(value: boolean) {
+    this.set("heroStatus", Value.fromBoolean(value));
+  }
+
+  get hero(): BigInt {
+    let value = this.get("hero");
+    return value!.toBigInt();
+  }
+
+  set hero(value: BigInt) {
+    this.set("hero", Value.fromBigInt(value));
+  }
+}
+
+export class CavalryPurchased extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("cavalryStatus", Value.fromBoolean(false));
+    this.set("cavalry", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save CavalryPurchased entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type CavalryPurchased must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("CavalryPurchased", id.toString(), this);
+    }
+  }
+
+  static load(id: string): CavalryPurchased | null {
+    return changetype<CavalryPurchased | null>(
+      store.get("CavalryPurchased", id)
+    );
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get cavalryStatus(): boolean {
+    let value = this.get("cavalryStatus");
+    return value!.toBoolean();
+  }
+
+  set cavalryStatus(value: boolean) {
+    this.set("cavalryStatus", Value.fromBoolean(value));
+  }
+
+  get cavalry(): BigInt {
+    let value = this.get("cavalry");
+    return value!.toBigInt();
+  }
+
+  set cavalry(value: BigInt) {
+    this.set("cavalry", Value.fromBigInt(value));
+  }
+}
+
+export class CavalryDeployed extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("cavalryStatus", Value.fromBoolean(false));
+    this.set("cavalry", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save CavalryDeployed entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type CavalryDeployed must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("CavalryDeployed", id.toString(), this);
+    }
+  }
+
+  static load(id: string): CavalryDeployed | null {
+    return changetype<CavalryDeployed | null>(store.get("CavalryDeployed", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get cavalryStatus(): boolean {
+    let value = this.get("cavalryStatus");
+    return value!.toBoolean();
+  }
+
+  set cavalryStatus(value: boolean) {
+    this.set("cavalryStatus", Value.fromBoolean(value));
+  }
+
+  get cavalry(): BigInt {
+    let value = this.get("cavalry");
+    return value!.toBigInt();
+  }
+
+  set cavalry(value: BigInt) {
+    this.set("cavalry", Value.fromBigInt(value));
+  }
+}
+
+export class CavalryReturned extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("cavalryStatus", Value.fromBoolean(false));
+    this.set("cavalry", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save CavalryReturned entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type CavalryReturned must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("CavalryReturned", id.toString(), this);
+    }
+  }
+
+  static load(id: string): CavalryReturned | null {
+    return changetype<CavalryReturned | null>(store.get("CavalryReturned", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get cavalryStatus(): boolean {
+    let value = this.get("cavalryStatus");
+    return value!.toBoolean();
+  }
+
+  set cavalryStatus(value: boolean) {
+    this.set("cavalryStatus", Value.fromBoolean(value));
+  }
+
+  get cavalry(): BigInt {
+    let value = this.get("cavalry");
+    return value!.toBigInt();
+  }
+
+  set cavalry(value: BigInt) {
+    this.set("cavalry", Value.fromBigInt(value));
+  }
+}
+
+export class CavalryLost extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+
+    this.set("transaction", Value.fromString(""));
+    this.set("user", Value.fromBytes(Bytes.empty()));
+    this.set("battleType", Value.fromBigInt(BigInt.zero()));
+    this.set("cavalryStatus", Value.fromBoolean(false));
+    this.set("cavalry", Value.fromBigInt(BigInt.zero()));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save CavalryLost entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type CavalryLost must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("CavalryLost", id.toString(), this);
+    }
+  }
+
+  static load(id: string): CavalryLost | null {
+    return changetype<CavalryLost | null>(store.get("CavalryLost", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get transaction(): string {
+    let value = this.get("transaction");
+    return value!.toString();
+  }
+
+  set transaction(value: string) {
+    this.set("transaction", Value.fromString(value));
+  }
+
+  get user(): Bytes {
+    let value = this.get("user");
+    return value!.toBytes();
+  }
+
+  set user(value: Bytes) {
+    this.set("user", Value.fromBytes(value));
+  }
+
+  get battleType(): BigInt {
+    let value = this.get("battleType");
+    return value!.toBigInt();
+  }
+
+  set battleType(value: BigInt) {
+    this.set("battleType", Value.fromBigInt(value));
+  }
+
+  get cavalryStatus(): boolean {
+    let value = this.get("cavalryStatus");
+    return value!.toBoolean();
+  }
+
+  set cavalryStatus(value: boolean) {
+    this.set("cavalryStatus", Value.fromBoolean(value));
+  }
+
+  get cavalry(): BigInt {
+    let value = this.get("cavalry");
+    return value!.toBigInt();
+  }
+
+  set cavalry(value: BigInt) {
+    this.set("cavalry", Value.fromBigInt(value));
   }
 }

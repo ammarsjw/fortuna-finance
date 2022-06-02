@@ -1,6 +1,121 @@
-type ExampleEntity @entity {
+type Transaction @entity {
   id: ID!
-  count: BigInt!
-  user: Bytes! # address
-  battleNumber: BigInt! # uint256
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  from: Bytes!
+  to: Bytes
+  value: BigInt!
+  gasPrice: BigInt!
+}
+
+type BattleStarted @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  battleStatus: Boolean!
+  tokensStaked: BigInt!
+  battleStartTime: BigInt!
+  battleDurationInDays: BigInt!
+  rewards: BigInt!
+  rations: BigInt!
+}
+
+type BattleUpdated @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  battleStatus: Boolean!
+  tokensStaked: BigInt!
+  battleStartTime: BigInt!
+  battleDurationInDays: BigInt!
+  rewards: BigInt!
+  rations: BigInt!
+}
+
+type BattleEnded @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  battleStatus: Boolean!
+  tokensStaked: BigInt!
+  battleStartTime: BigInt!
+  battleDurationInDays: BigInt!
+  rewards: BigInt!
+  rations: BigInt!
+}
+
+type HeroPurchased @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  heroStatus: Boolean!
+  hero: BigInt!
+}
+
+type HeroDeployed @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  heroStatus: Boolean!
+  hero: BigInt!
+}
+
+type HeroReturned @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  heroStatus: Boolean!
+  hero: BigInt!
+}
+
+type HeroLost @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  heroStatus: Boolean!
+  hero: BigInt!
+}
+
+type CavalryPurchased @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  cavalryStatus: Boolean!
+  cavalry: BigInt!
+}
+
+type CavalryDeployed @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  cavalryStatus: Boolean!
+  cavalry: BigInt!
+}
+
+type CavalryReturned @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  cavalryStatus: Boolean!
+  cavalry: BigInt!
+}
+
+type CavalryLost @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  cavalryStatus: Boolean!
+  cavalry: BigInt!
 }

@@ -22,25 +22,31 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "battleNumber",
+        "name": "battleType",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "status",
-        "type": "uint256"
+        "internalType": "bool",
+        "name": "battleStatus",
+        "type": "bool"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "initialTokensStaked",
+        "name": "tokensStaked",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
         "name": "battleStartTime",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleDurationInDays",
         "type": "uint256"
       },
       {
@@ -54,21 +60,9 @@
         "internalType": "uint256",
         "name": "rations",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "hero",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "cavalry",
-        "type": "uint256"
       }
     ],
-    "name": "BattleEnd",
+    "name": "BattleEnded",
     "type": "event"
   },
   {
@@ -88,20 +82,26 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "status",
-        "type": "uint256"
+        "internalType": "bool",
+        "name": "battleStatus",
+        "type": "bool"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "initialTokensStaked",
+        "name": "tokensStaked",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
         "name": "battleStartTime",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleDurationInDays",
         "type": "uint256"
       },
       {
@@ -115,82 +115,9 @@
         "internalType": "uint256",
         "name": "rations",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "hero",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "cavalry",
-        "type": "uint256"
       }
     ],
-    "name": "BattleStart",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "battleNumber",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "status",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "initialTokensStaked",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "battleStartTime",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewards",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rations",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "hero",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "cavalry",
-        "type": "uint256"
-      }
-    ],
-    "name": "BattleUpdate",
+    "name": "BattleStarted",
     "type": "event"
   },
   {
@@ -210,12 +137,42 @@
       },
       {
         "indexed": false,
+        "internalType": "bool",
+        "name": "battleStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "cavalry",
+        "name": "tokensStaked",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleStartTime",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleDurationInDays",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rewards",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rations",
         "type": "uint256"
       }
     ],
-    "name": "CavalryStatus",
+    "name": "BattleUpdated",
     "type": "event"
   },
   {
@@ -235,12 +192,235 @@
       },
       {
         "indexed": false,
+        "internalType": "bool",
+        "name": "cavalryStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cavalry",
+        "type": "uint256"
+      }
+    ],
+    "name": "CavalryDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "cavalryStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cavalry",
+        "type": "uint256"
+      }
+    ],
+    "name": "CavalryLost",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "cavalryStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cavalry",
+        "type": "uint256"
+      }
+    ],
+    "name": "CavalryPurchased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "cavalryStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cavalry",
+        "type": "uint256"
+      }
+    ],
+    "name": "CavalryReturned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "heroStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
         "name": "hero",
         "type": "uint256"
       }
     ],
-    "name": "HeroStatus",
+    "name": "HeroDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "heroStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "hero",
+        "type": "uint256"
+      }
+    ],
+    "name": "HeroLost",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "heroStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "hero",
+        "type": "uint256"
+      }
+    ],
+    "name": "HeroPurchased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "battleType",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "heroStatus",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "hero",
+        "type": "uint256"
+      }
+    ],
+    "name": "HeroReturned",
     "type": "event"
   },
   {

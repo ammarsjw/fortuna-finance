@@ -1,72 +1,176 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { Bytes, BigInt } from "@graphprotocol/graph-ts"
+
 import {
-  Battling,
-  BattleEnd,
-  BattleStart,
-  BattleUpdate,
-  CavalryStatus,
-  HeroStatus,
-  OwnershipTransferred
+  BattleStarted as BattleStartedEvent,
+  BattleUpdated as BattleUpdatedEvent,
+  BattleEnded as BattleEndedEvent,
+  HeroPurchased as HeroPurchasedEvent,
+  HeroDeployed as HeroDeployedEvent,
+  HeroReturned as HeroReturnedEvent,
+  HeroLost as HeroLostEvent,
+  CavalryPurchased as CavalryPurchasedEvent,
+  CavalryDeployed as CavalryDeployedEvent,
+  CavalryReturned as CavalryReturnedEvent,
+  CavalryLost as CavalryLostEvent
 } from "../generated/Battling/Battling"
-import { ExampleEntity } from "../generated/schema"
 
-export function handleBattleEnd(event: BattleEnd): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
+import {
+  BattleStarted,
+  BattleUpdated,
+  BattleEnded,
+  HeroPurchased,
+  HeroDeployed,
+  HeroReturned,
+  HeroLost,
+  CavalryPurchased,
+  CavalryDeployed,
+  CavalryReturned,
+  CavalryLost
+} from "../generated/schema"
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
+import { loadOrCreateTransaction } from "./utils/Transactions"
 
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+export function handleBattleStarted(event: BattleStartedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.battleType.toString());
+  let battle = BattleStarted.load(id);
+  if (!battle) {
+    battle = new BattleStarted(id);
+    battle.transaction = transaction.id
+    battle.user = event.params.user
+    battle.battleType = event.params.battleType
   }
-
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.user = event.params.user
-  entity.battleNumber = event.params.battleNumber
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.BUSD(...)
-  // - contract.baseBattleTime(...)
-  // - contract.bribeToEmeperor(...)
-  // - contract.fortunasAssets(...)
-  // - contract.fortunasToken(...)
-  // - contract.getAddressForBattle(...)
-  // - contract.oneDayTime(...)
-  // - contract.owner(...)
-  // - contract.rewardTime(...)
-  // - contract.viewRewards(...)
+  battle.battleStatus = event.params.battleStatus
+  battle.tokensStaked = event.params.tokensStaked
+  battle.battleStartTime = event.params.battleStartTime
+  battle.battleDurationInDays = event.params.battleDurationInDays
+  battle.rewards = event.params.rewards
+  battle.rations = event.params.rations
+  battle.save()
 }
 
-export function handleBattleStart(event: BattleStart): void {}
+export function handleBattleUpdated(event: BattleUpdatedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.battleType.toString());
+  let battle = BattleStarted.load(id);
+  if (battle) {
+    battle.transaction = transaction.id
+    battle.battleStatus = event.params.battleStatus
+    battle.tokensStaked = event.params.tokensStaked
+    battle.battleStartTime = event.params.battleStartTime
+    battle.battleDurationInDays = event.params.battleDurationInDays
+    battle.rewards = event.params.rewards
+    battle.rations = event.params.rations
+    battle.save()
+  }
+}
 
-export function handleBattleUpdate(event: BattleUpdate): void {}
+export function handleBattleEnded(event: BattleEndedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.battleType.toString());
+  let battle = BattleStarted.load(id);
+  if (battle) {
+    battle.transaction = transaction.id
+    battle.battleStatus = event.params.battleStatus
+    battle.tokensStaked = event.params.tokensStaked
+    battle.battleStartTime = event.params.battleStartTime
+    battle.battleDurationInDays = event.params.battleDurationInDays
+    battle.rewards = event.params.rewards
+    battle.rations = event.params.rations
+    battle.save()
+  }
+}
 
-export function handleCavalryStatus(event: CavalryStatus): void {}
+export function handleHeroPurchased(event: HeroPurchasedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.hero.toString());
+  let hero = HeroPurchased.load(id);
+  if (!hero) {
+    hero = new HeroPurchased(id);
+    hero.transaction = transaction.id
+    hero.user = event.params.user
+    hero.hero = event.params.hero
+  }
+  hero.battleType = event.params.battleType
+  hero.heroStatus = event.params.heroStatus
+}
 
-export function handleHeroStatus(event: HeroStatus): void {}
+export function handleHeroDeployed(event: HeroDeployedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.hero.toString());
+  let hero = HeroPurchased.load(id);
+  if (hero) {
+    hero.transaction = transaction.id
+    hero.battleType = event.params.battleType
+    hero.heroStatus = event.params.heroStatus
+  }
+}
 
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
+export function handleHeroReturned(event: HeroReturnedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.hero.toString());
+  let hero = HeroPurchased.load(id);
+  if (hero) {
+    hero.transaction = transaction.id
+    hero.battleType = event.params.battleType
+    hero.heroStatus = event.params.heroStatus
+  }
+}
+
+export function handleHeroLost(event: HeroLostEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.hero.toString());
+  let hero = HeroPurchased.load(id);
+  if (hero) {
+    hero.transaction = transaction.id
+    hero.battleType = event.params.battleType
+    hero.heroStatus = event.params.heroStatus
+  }
+}
+
+export function handleCavalryPurchased(event: CavalryPurchasedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.cavalry.toString());
+  let cavalry = CavalryPurchased.load(id);
+  if (!cavalry) {
+    cavalry = new CavalryPurchased(id);
+    cavalry.transaction = transaction.id
+    cavalry.user = event.params.user
+    cavalry.cavalry = event.params.cavalry
+  }
+  cavalry.battleType = event.params.battleType
+  cavalry.cavalryStatus = event.params.cavalryStatus
+}
+
+export function handleCavalryDeployed(event: CavalryDeployedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.cavalry.toString());
+  let cavalry = CavalryPurchased.load(id);
+  if (cavalry) {
+    cavalry.transaction = transaction.id
+    cavalry.battleType = event.params.battleType
+    cavalry.cavalryStatus = event.params.cavalryStatus
+  }
+}
+
+export function handleCavalryReturned(event: CavalryReturnedEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.cavalry.toString());
+  let cavalry = CavalryPurchased.load(id);
+  if (cavalry) {
+    cavalry.transaction = transaction.id
+    cavalry.battleType = event.params.battleType
+    cavalry.cavalryStatus = event.params.cavalryStatus
+  }
+}
+
+export function handleCavalryLost(event: CavalryLostEvent): void {
+  let transaction = loadOrCreateTransaction(event.transaction, event.block);
+  let id = event.params.user.toHexString().concat(event.params.cavalry.toString());
+  let cavalry = CavalryPurchased.load(id);
+  if (cavalry) {
+    cavalry.transaction = transaction.id
+    cavalry.battleType = event.params.battleType
+    cavalry.cavalryStatus = event.params.cavalryStatus
+  }
+}
