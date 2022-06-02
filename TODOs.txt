@@ -27,7 +27,7 @@
 // TODO/Done Reward -> Compound interest
 // TODO/Done battlingHelper.calculateRewardsForBattleEnd...
 // TODO/Done set all required values for testing in Battling, FortunasToken, FortunasAssets and FortunasLottery
-// TODO Replace some imports with Interfaces for less code size (FortunasToken, FortunasAssets)
+// TODO Replace some imports with Interfaces for less code size (FortunasToken, FortunasAssets)?
 // TODO Chainlink randomizer or api/oracle randomizer
 // TODO FortunasToken -> clean unnecassery code in dividend tracking/paying token
 // TODO shorten require statements if needed
