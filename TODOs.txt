@@ -29,6 +29,7 @@
 // TODO/Done set all required values for testing in Battling, FortunasToken, FortunasAssets and FortunasLottery
 
 // W - Hourly on last day or not?
+// FortunasToken and Battling - Ctrl + F for "immutable" and adjust these for mainnet
 
 // TODO Randomizer - Chainlink VRF randomizer
 // TODO FortunasToken - Remove minimumRequired balance for dividends eligibility, add functionality for percentage of user's current balance rather than percentage of pool owned by user

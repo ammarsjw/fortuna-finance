@@ -168,7 +168,7 @@ contract Battling is Ownable, BattleStruct {
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        // address _addressForPancakePair = IPancakeFactory(pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
+        // address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
         // pancakeRouter = _pancakeRouter;
         // pancakePair = IPancakePair(_addressForPancakePair);
