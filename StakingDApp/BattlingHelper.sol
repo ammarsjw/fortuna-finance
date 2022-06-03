@@ -64,7 +64,7 @@ contract BattlingHelper is Ownable, BattleStruct {
         uint256 daysWagingBattle = block.timestamp.sub(_tempBattle.battleStartTime).div(oneDayTime);
         uint256 daysForReward;
 
-        uint256 ratio = rewardBase[_tempBattle.battleType - 1].mul(10 ** 18).div(multiplierForReward);
+        uint256 ratio = _tempBattle.currentRewardPercentage.mul(10 ** 18).div(multiplierForReward);
         uint256 accruedInterest;
         if (daysWagingBattle.sub(_tempBattle.battleDaysExpended) != 0) {
             if (daysWagingBattle < 3) {
@@ -93,12 +93,14 @@ contract BattlingHelper is Ownable, BattleStruct {
 
                     _tempBattle.battleDaysExpended = 3;
                 }
+
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
                 uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
+                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit
+                    && _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit) {
                         _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
 
                         singleReward = tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
@@ -111,13 +113,13 @@ contract BattlingHelper is Ownable, BattleStruct {
                     }
 
                     if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
-                        exponent++;
+                        exponent = daysForReward - i;
+                        break;
                     }
                 }
 
                 if (exponent > 0) {
-                    ratio = _tempBattle.currentRewardLimit;
-                    compoundReward(
+                    accruedInterest = compoundReward(
                         tempTotalTokens,
                         ratio,
                         exponent
@@ -140,9 +142,12 @@ contract BattlingHelper is Ownable, BattleStruct {
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
             _tempBattle = calculateRewards(_tempBattle);
 
+            // IMPORTANT: also add this part to sendRations
             // for remaining reward cycles
             // uint256 cyclesRemaining = battleEndTime.sub(_tempBattle.battleStartTime.add(_tempBattle.battleDaysExpended.mul(oneDayTime))).div(rewardTime);
-            // accruedInterest
+            // uint256 ratio = _tempBattle.currentRewardPercentage.div(cyclesRemaining);
+            // ratio = ratio.mul(10 ** 18).div(multiplierForReward);
+            // accruedInterest where exponent will be 1 and ratio will handle correct reward calculation
         }
         else {
             uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
@@ -150,7 +155,7 @@ contract BattlingHelper is Ownable, BattleStruct {
             uint256 daysWagingBattle = _tempBattle.rationsDaysTotal.add(3);
             uint256 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
-            uint256 ratio = rewardBase[_tempBattle.battleType - 1].mul(10 ** 18).div(multiplierForReward);
+            uint256 ratio = _tempBattle.currentRewardPercentage.mul(10 ** 18).div(multiplierForReward);
             uint256 accruedInterest;
             if (_tempBattle.battleType == 2) {
                 require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::Training of troops lasts a fixed 3 days");
@@ -176,12 +181,14 @@ contract BattlingHelper is Ownable, BattleStruct {
 
                     _tempBattle.battleDaysExpended = 3;
                 }
+
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
                 uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
+                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit
+                    && _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit) {
                         _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
 
                         singleReward = tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
@@ -194,13 +201,13 @@ contract BattlingHelper is Ownable, BattleStruct {
                     }
 
                     if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
-                        exponent++;
+                        exponent = daysForReward - i;
+                        break;
                     }
                 }
 
                 if (exponent > 0) {
-                    ratio = _tempBattle.currentRewardLimit;
-                    compoundReward(
+                    accruedInterest = compoundReward(
                         tempTotalTokens,
                         ratio,
                         exponent
@@ -216,6 +223,10 @@ contract BattlingHelper is Ownable, BattleStruct {
     }
 
     function compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
+        if (_exponent == 0) {
+            return _principal;
+        }
+
         return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
     }
 }
