@@ -16,20 +16,20 @@ contract Battling is Ownable, BattleStruct {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
-    uint256 public bribeToEmeperor;
+    uint256 bribeToEmeperor;
 
-    IPancakeRouter02 pancakeRouter;
-    IPancakePair pancakePair;
+    IPancakeRouter02 public pancakeRouter;
+    IPancakePair public pancakePair;
 
     // LP Token for FRTNA-BUSD pair
-    IERC20 LPToken;
+    IERC20 public LPToken;
 
     // Fortunas Multi Token for heroes and cavalry
     FortunasAssets public fortunasAssets;
     
     // FRTNA
     FortunasToken public fortunasToken;
-    address treasuryWallet;
+    address public treasuryWallet;
 
     // BUSD mainnet
     // address public immutable BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
