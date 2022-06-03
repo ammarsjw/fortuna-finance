@@ -139,6 +139,10 @@ contract BattlingHelper is Ownable, BattleStruct {
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
             _tempBattle = calculateRewards(_tempBattle);
+
+            // for remaining reward cycles
+            // uint256 cyclesRemaining = battleEndTime.sub(_tempBattle.battleStartTime.add(_tempBattle.battleDaysExpended.mul(oneDayTime))).div(rewardTime);
+            // accruedInterest
         }
         else {
             uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
