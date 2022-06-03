@@ -75,7 +75,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                     ratio,
                     daysForReward
                 );
-                _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
+                _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
             }
             else if (daysWagingBattle >= 3
             && daysWagingBattle < _tempBattle.rationsDaysTotal.add(3)
@@ -88,8 +88,8 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         daysForReward
                     );
-                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
-                    tempTotalTokens += tempTotalTokens.sub(accruedInterest);
+                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                    tempTotalTokens += _tempBattle.rewards;
 
                     _tempBattle.battleDaysExpended = 3;
                 }
@@ -98,10 +98,6 @@ contract BattlingHelper is Ownable, BattleStruct {
                 uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
-                        exponent++;
-                    }
-
                     if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
                         _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
 
@@ -113,6 +109,10 @@ contract BattlingHelper is Ownable, BattleStruct {
                         _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.add(i + 1);
                         _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
                     }
+
+                    if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
+                        exponent++;
+                    }
                 }
 
                 if (exponent > 0) {
@@ -122,7 +122,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         exponent
                     );
-                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
+                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
                 }
             }
 
@@ -167,8 +167,8 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         daysForReward
                     );
-                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
-                    tempTotalTokens += tempTotalTokens.sub(accruedInterest);
+                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                    tempTotalTokens += _tempBattle.rewards;
 
                     _tempBattle.battleDaysExpended = 3;
                 }
@@ -177,10 +177,6 @@ contract BattlingHelper is Ownable, BattleStruct {
                 uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
-                        exponent++;
-                    }
-
                     if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit) {
                         _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
 
@@ -192,6 +188,10 @@ contract BattlingHelper is Ownable, BattleStruct {
                         _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.add(i + 1);
                         _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
                     }
+
+                    if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
+                        exponent++;
+                    }
                 }
 
                 if (exponent > 0) {
@@ -201,7 +201,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         exponent
                     );
-                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
+                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
                 }
             }
 
