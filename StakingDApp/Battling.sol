@@ -689,7 +689,7 @@ contract Battling is Ownable, BattleStruct {
         );
     }
 
-    function battleEnd(uint8 _battleType) external returns (uint256) {
+    function battleEnd(uint8 _battleType) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(2 <= _battleType && _battleType <= 6, "battleEnd::Incorrect battle type");
         require(tempBattle.initialTokensStaked != 0, "battleEnd::No such battle is currently taking place");
@@ -724,8 +724,6 @@ contract Battling is Ownable, BattleStruct {
             0,
             0
         );
-
-        return tokensToTransfer;
     }
 
     function calculateLosses(Battle memory _tempBattle) internal {
