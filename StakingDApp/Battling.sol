@@ -189,11 +189,11 @@ contract Battling is Ownable, BattleStruct {
 
         multiplier = 1000000;
         multiplierForReward = 10000000;
-        
+
         rationsIncreasePercentage = 125000;
 
         rationsBase = [2500, 5000, 7500, 10000, 12500];
-        setRations();                                       // setting ration related variables
+        setRations();
 
         assetPercentages = [20, 40, 60, 80, 100,            // each hero's effect on current APY
                             10, 20, 30, 40, 50];            // each cavalry's effect on total APY
@@ -280,7 +280,7 @@ contract Battling is Ownable, BattleStruct {
     // functions
 
     function battleStart(uint256 _tokens, uint8 _battleType) external {
-        require(_tokens >= 10000, "battleStart::Minimum amount of tokens for battle is 0.00000000000001 FRTNA");
+        require(_tokens >= 13333, "battleStart::Minimum amount of tokens for battle is 0.000000000000013333 FRTNA");
         require(2 <= _battleType && _battleType <= 6, "battleStart::No such battle type exists");
         uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
         require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::Insufficient funds");
@@ -301,7 +301,7 @@ contract Battling is Ownable, BattleStruct {
             fortunasToken.transferFrom(msg.sender, address(this), _tokens);
         }
 
-        addressForBattle[msg.sender][_battleType] = Battle(_battleType, _tokens, 0, 0, 0, rewardLimit[_battleType], rewardBase[_battleType], block.timestamp, 0, 0, 0, 0, 0);
+        addressForBattle[msg.sender][_battleType] = Battle(_battleType, _tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, 0, 0);
 
         emit BattleStarted (
             msg.sender,
@@ -385,7 +385,7 @@ contract Battling is Ownable, BattleStruct {
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
         if (tempBattle.additionalTokens + _tokensToAdd > tempBattle.initialTokensStaked) {
-            tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType];
+            tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
             if (tempBattle.hero > 0) {
                 tempBattle.currentRewardPercentage += assetPercentages[tempBattle.hero - 1];
             }
@@ -411,10 +411,12 @@ contract Battling is Ownable, BattleStruct {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "removeTroops::No such battle is currently taking place");
         require(block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::Cannot remove tokens from battles that have already finished");
-        require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::Not enough tokens in this battle");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
+        require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::Not enough tokens in this battle");
+        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= 13333, "removeTroops::Total staked amount cannot be lower than 0.000000000000013333 FRTNA");
+
         if (_tokensToRemove > tempBattle.additionalTokens) {
             _tokensToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
@@ -780,15 +782,17 @@ contract Battling is Ownable, BattleStruct {
      * @dev Function "battleEnd" should be called if unstaking
      */
     function viewRewards(address _user) external view returns (uint256[] memory) {
-        uint256[] memory tempRewards = new uint256[](7);
+        uint256[] memory tempRewards = new uint256[](5);
         Battle memory tempBattle;
-        for (uint256 i = 2 ; i <= 6 ; i++) {
-            tempBattle = addressForBattle[_user][i];
-            if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
-                tempBattle = battlingHelper.calculateRewards(tempBattle);
-            }
-            else {
-                tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
+        for (uint256 i = 0 ; i < 5 ; i++) {
+            tempBattle = addressForBattle[_user][i + 2];
+            if (tempBattle.initialTokensStaked != 0) {
+                if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
+                    tempBattle = battlingHelper.calculateRewards(tempBattle);
+                }
+                else {
+                    tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
+                }
             }
             tempRewards[i] = tempBattle.rewards;
         }
@@ -796,5 +800,3 @@ contract Battling is Ownable, BattleStruct {
         return tempRewards;
     }
 }
-
-// TODO add another argument in calculateReward (isExactRequire) and use it for both battleEnd and viewRewards
