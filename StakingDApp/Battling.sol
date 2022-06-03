@@ -317,7 +317,7 @@ contract Battling is Ownable, BattleStruct {
 
     function sendRations(uint8 _battleType, uint256 _rationDays) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "sendRations::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "sendRations::No such battle is currently taking place");
         if (block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
             require(false, "sendRations::Cannot send rations to battles that have already finished");
         }
@@ -379,7 +379,7 @@ contract Battling is Ownable, BattleStruct {
 
     function addTroops(uint256 _tokensToAdd, uint8 _battleType) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "addTroops::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "addTroops::No such battle is currently taking place");
         require(block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::Cannot remove tokens from battles that have already finished");
 
 
@@ -409,7 +409,7 @@ contract Battling is Ownable, BattleStruct {
 
     function removeTroops(uint256 _tokensToRemove, uint8 _battleType) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "removeTroops::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "removeTroops::No such battle is currently taking place");
         require(block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::Cannot remove tokens from battles that have already finished");
 
 
@@ -525,7 +525,7 @@ contract Battling is Ownable, BattleStruct {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(1 <= _heroToAdd && _heroToAdd <= 5, "addHero::Incorrect hero specified");
         require(fortunasAssets.ownershipOf(msg.sender, _heroToAdd), "addHero::User does not own this hero");
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "addHero::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "addHero::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addHero::User can only add hero to easy, medium, hard or very hard battles");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addHero::Cannot add heroes to battles that have already finished");
         require(addressForHeroBattle[msg.sender][_heroToAdd] == 0, "addHero::This hero is currently in another battle");
@@ -568,7 +568,7 @@ contract Battling is Ownable, BattleStruct {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(1 <= _heroToRemove && _heroToRemove <= 5, "removeHero::Incorrect hero specified");
         require(fortunasAssets.ownershipOf(msg.sender, _heroToRemove), "removeHero::User does not own this hero");
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "removeHero::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "removeHero::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeHero::User can only remove hero from easy, medium, hard or very hard battles");
         require(addressForHeroBattle[msg.sender][_heroToRemove] == _battleType, "removeHero::Incorrect hero or battle number given");
 
@@ -608,7 +608,7 @@ contract Battling is Ownable, BattleStruct {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(6 <= _cavalryToAdd && _cavalryToAdd <= 10, "addCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToAdd), "addCavalry::User does not own this cavalry");
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "addCavalry::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "addCavalry::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addCavalry::User can only add cavalry to easy, medium, hard or very hard battles");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::Cannot add cavalries to battles that have already finished");
         require(addressForCavalryBattle[msg.sender][_cavalryToAdd] == 0, "addCavalry::This cavalry unit is currently in another battle");
@@ -652,7 +652,7 @@ contract Battling is Ownable, BattleStruct {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(6 <= _cavalryToRemove && _cavalryToRemove <= 10, "removeCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToRemove), "removeCavalry::User does not own this cavalry");
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "removeCavalry::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "removeCavalry::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeCavalry::User can only remove cavalry from easy, medium, hard or very hard battles");
         require(addressForCavalryBattle[msg.sender][_cavalryToRemove] == _battleType, "removeCavalry::Incorrect cavalry unit or battle number given");
 
@@ -692,7 +692,7 @@ contract Battling is Ownable, BattleStruct {
     function battleEnd(uint8 _battleType) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(2 <= _battleType && _battleType <= 6, "battleEnd::Incorrect battle type");
-        require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "battleEnd::No such battle is currently taking place");
+        require(tempBattle.initialTokensStaked != 0, "battleEnd::No such battle is currently taking place");
 
 
         tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
