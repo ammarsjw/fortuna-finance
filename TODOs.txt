@@ -31,14 +31,14 @@
 // W - Hourly on last day or not?
 // FortunasToken and Battling - Ctrl + F for "immutable" and adjust these for mainnet
 
+// TODO Testing
+// TODO PancakeSwap - implement for testnet so we can test all PancakeSwap functionalities
 // TODO Randomizer - Chainlink VRF randomizer
 // TODO FortunasToken - Remove minimumRequired balance for dividends eligibility, add functionality for percentage of user's current balance rather than percentage of pool owned by user
 // TODO FortunasToken - Remove unnecessary fields such as preSale etc.
-// TODO PancakeSwap - How to implement for testnet (need to test all PancakeSwap functionalities before we move on)
-// TODO Testing
 
-// ? - Code optimization/code cleaning
+// ? - Code optimization/cleaning
 
 // Code Size? - Replace some imports with Interfaces (IFortunasToken, IFortunasAssets)?
 // Code Size? - Shorten require statements after testing
-// Code Size? - move send rations calculations to helper function
+// Code Size? - move sendRations calculations to battlingHelper contract
