@@ -75,7 +75,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                     ratio,
                     daysForReward
                 );
-                _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
             }
             else if (daysWagingBattle >= 3
             && daysWagingBattle < _tempBattle.rationsDaysTotal.add(3)
@@ -88,14 +88,14 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         daysForReward
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
+                    tempTotalTokens += tempTotalTokens.sub(accruedInterest);
 
                     _tempBattle.battleDaysExpended = 3;
                 }
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
-                uint256 exponent = 0;
+                uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
                     if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
@@ -122,8 +122,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         exponent
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
                 }
             }
 
@@ -168,14 +167,14 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         daysForReward
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
+                    tempTotalTokens += tempTotalTokens.sub(accruedInterest);
 
                     _tempBattle.battleDaysExpended = 3;
                 }
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
-                uint256 exponent = 0;
+                uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
                     if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
@@ -202,8 +201,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                         ratio,
                         exponent
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += tempTotalTokens.sub(accruedInterest);
                 }
             }
 

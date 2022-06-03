@@ -280,7 +280,7 @@ contract Battling is Ownable, BattleStruct {
     // functions
 
     function battleStart(uint256 _tokens, uint8 _battleType) external {
-        require(_tokens >= 13333, "battleStart::Minimum amount of tokens for battle is 0.000000000000013333 FRTNA");
+        require(_tokens >= 13334, "battleStart::Minimum amount of tokens for battle is 0.000000000000013334 FRTNA");
         require(2 <= _battleType && _battleType <= 6, "battleStart::No such battle type exists");
         uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
         require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::Insufficient funds");
@@ -415,7 +415,7 @@ contract Battling is Ownable, BattleStruct {
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
         require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::Not enough tokens in this battle");
-        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= 13333, "removeTroops::Total staked amount cannot be lower than 0.000000000000013333 FRTNA");
+        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= 13334, "removeTroops::Total staked amount cannot be lower than 0.000000000000013334 FRTNA");
 
         if (_tokensToRemove > tempBattle.additionalTokens) {
             _tokensToRemove -= tempBattle.additionalTokens;
