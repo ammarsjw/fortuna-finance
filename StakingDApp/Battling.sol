@@ -689,14 +689,14 @@ contract Battling is Ownable, BattleStruct {
         );
     }
 
-    function battleEnd(uint8 _battleType) external {
+    function battleEnd(uint8 _battleType) external returns (uint256) {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(2 <= _battleType && _battleType <= 6, "battleEnd::Incorrect battle type");
         require(tempBattle.initialTokensStaked != 0, "battleEnd::No such battle is currently taking place");
 
 
         tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
-        uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.rewards);
+        uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
 
         if (_battleType == 2) {
             require(LPToken.balanceOf(address(this)) >= tokensToTransfer, "battleEnd::Contract has insufficient LP Tokens");
@@ -724,6 +724,8 @@ contract Battling is Ownable, BattleStruct {
             0,
             0
         );
+
+        return tokensToTransfer;
     }
 
     function calculateLosses(Battle memory _tempBattle) internal {
