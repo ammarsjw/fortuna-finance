@@ -481,7 +481,13 @@ contract Battling is Ownable, BattleStruct {
         require(fortunasAssets.ownershipOf(msg.sender, _heroToPurchase) == false, "purchaseHero::You already own this hero");
 
 
-        (uint256 reserves, , ) = pancakePair.getReserves();
+        uint256 reserves;
+        if (pancakePair.token0() == address(fortunasToken)) {
+            (reserves, , ) = pancakePair.getReserves();
+        }
+        else {
+            (, reserves, ) = pancakePair.getReserves();
+        }
 
         uint256 price = reserves.mul(cost).roundDiv(multiplier);
         fortunasToken.transferFrom(msg.sender, address(this), price);
@@ -501,7 +507,13 @@ contract Battling is Ownable, BattleStruct {
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToPurchase) == false, "purchaseCavalry::You already own this cavalry");
 
 
-        (uint256 reserves, , ) = pancakePair.getReserves();
+        uint256 reserves;
+        if (pancakePair.token0() == address(fortunasToken)) {
+            (reserves, , ) = pancakePair.getReserves();
+        }
+        else {
+            (, reserves, ) = pancakePair.getReserves();
+        }
 
         uint256 price = reserves.mul(assetPrices[_cavalryToPurchase - 1]).roundDiv(multiplier);
         fortunasToken.transferFrom(msg.sender, address(this), price);

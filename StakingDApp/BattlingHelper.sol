@@ -165,7 +165,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                     ratio,
                     daysForReward
                 );
-                _tempBattle.rewards += accruedInterest;
+                _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
             }
             else {
                 if (_tempBattle.battleDaysExpended < 3) {
