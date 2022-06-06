@@ -175,7 +175,7 @@ contract BattlingHelper is Ownable, BattleStruct {
             _tempBattle.battleDaysExpended = daysWagingBattle;
         }
 
-        require(block.timestamp < _tempBattle.battleStartTime.add(baseBattleTime).add(_tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewards::Battle already finished");
+        require(block.timestamp < _tempBattle.battleStartTime.add(baseBattleTime).add(_tempBattle.rationsDaysTotal.mul(oneDayTime)), "calculateRewards::BE");
 
         return _tempBattle;
     }
@@ -202,7 +202,7 @@ contract BattlingHelper is Ownable, BattleStruct {
             uint256 ratio = _tempBattle.currentRewardPercentage.mul(10 ** 18).div(multiplierForReward);
             uint256 accruedInterest;
             if (_tempBattle.battleType == 2) {
-                require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::Training of troops lasts a fixed 3 days");
+                require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::BNE");
 
                 accruedInterest = compoundReward(
                     tempTotalTokens,
