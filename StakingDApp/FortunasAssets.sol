@@ -17,8 +17,9 @@ contract FortunasAssets is Ownable, ERC1155 {
     // constructor
 
     constructor(
-    string memory _uri,
-    address _battlingContractAddress) ERC1155(_uri) {
+        string memory _uri,
+        address _battlingContractAddress
+    ) ERC1155(_uri) {
         battlingContractAddress = _battlingContractAddress;
     }
 
@@ -26,27 +27,30 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     function ownershipOf(
         address _account,
-        uint256 _id) external view returns (bool) {
+        uint256 _id
+    ) external view returns (bool) {
         require(_account != address(0), "ownershipOf::Address zero is not a valid owner");
         return _ownership[_id][_account];
     }
 
     function mint(
-    address _to,
-    uint256 _tokenId,
-    uint256 _amount,
-    bytes memory _data) external onlyContract {
+        address _to,
+        uint256 _tokenId,
+        uint256 _amount,
+        bytes memory _data
+    ) external onlyContract {
         _mint(_to, _tokenId, _amount, _data);
 
         _ownership[_tokenId][_to] = true;
     }
 
     function safeTransferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId,
-    uint256 _amount,
-    bytes calldata _data) public override {
+        address _from,
+        address _to,
+        uint256 _tokenId,
+        uint256 _amount,
+        bytes memory _data
+    ) public override {
         require(_ownership[_tokenId][_to] == false, "safeTransferFrom::Cannot have more than 1 of any hero or cavalry type");
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
 
@@ -79,7 +83,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         address _to,
         uint256 _tokenId,
         uint256 _amount,
-        bytes calldata _data
+        bytes memory _data
     ) public onlyContract {
         require(_to == battlingContractAddress || _from == battlingContractAddress, "safeTransferFromWithoutCheck::Either sender or recipient must be contract");
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
