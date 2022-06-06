@@ -33,8 +33,8 @@ contract Battling is Ownable, BattleStruct {
 
     // BUSD mainnet
     // address public immutable BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
-    // BUSD testnet
-    address public BUSD = address(0x3B00Ef435fA4FcFF5C209a37d1f3dcff37c705aD);
+    // BUSD testnet (TestnetERC20Token)
+    address public BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     uint256 public rewardTime;                              // 30 minutes in seconds
     uint256 public oneDayTime;                              // 1 day in seconds
@@ -167,13 +167,13 @@ contract Battling is Ownable, BattleStruct {
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        // address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
-        // pancakeRouter = _pancakeRouter;
-        // pancakePair = IPancakePair(_addressForPancakePair);
+        pancakeRouter = _pancakeRouter;
+        pancakePair = IPancakePair(_addressForPancakePair);
 
-        // LPToken = IERC20(_addressForPancakePair);
+        LPToken = IERC20(_addressForPancakePair);
 
         fortunasAssets = new FortunasAssets("", address(this));
 
@@ -431,7 +431,7 @@ contract Battling is Ownable, BattleStruct {
 
         calculateLosses(tempBattle);
 
-        fortunasToken.transferFrom(address(this), msg.sender, _tokensToRemove);
+        fortunasToken.transfer(msg.sender, _tokensToRemove);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 

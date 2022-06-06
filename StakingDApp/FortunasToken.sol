@@ -23,9 +23,9 @@ contract FortunasToken is ERC20, Ownable {
     // BUSD mainnet
     // address public immutable BUSD =
     //     address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
-    // BUSD testnet
+    // BUSD testnet (TestnetERC20Token)
     address public BUSD =
-        address(0x3B00Ef435fA4FcFF5C209a37d1f3dcff37c705aD);
+        address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     FRTNADividendTracker public dividendTracker;
 
@@ -147,14 +147,14 @@ contract FortunasToken is ERC20, Ownable {
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        // address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
-        //     .createPair(address(this), BUSD);
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
+            .createPair(address(this), BUSD);
 
-        // pancakeRouter = _pancakeRouter;
-        // pancakePair = _pancakePair;
+        pancakeRouter = _pancakeRouter;
+        pancakePair = _pancakePair;
 
-        // _setAutomatedMarketMakerPair(_pancakePair, true);
+        _setAutomatedMarketMakerPair(_pancakePair, true);
 
         address _bounceFixedSaleWallet = 0x4Fc4bFeDc5c82644514fACF716C7F888a0C73cCc;
         bounceFixedSaleWallet = _bounceFixedSaleWallet;
@@ -163,7 +163,7 @@ contract FortunasToken is ERC20, Ownable {
         dividendTracker.excludeFromDividends(address(dividendTracker));
         dividendTracker.excludeFromDividends(address(this));
         dividendTracker.excludeFromDividends(owner());
-        // dividendTracker.excludeFromDividends(address(_pancakeRouter));
+        dividendTracker.excludeFromDividends(address(_pancakeRouter));
         dividendTracker.excludeFromDividends(_bounceFixedSaleWallet);
 
         // exclude from paying fees or having max transaction amount
