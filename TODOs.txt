@@ -34,7 +34,7 @@
 // TODO Testing
 // TODO PancakeSwap - implement for testnet so we can test all PancakeSwap functionalities
 // TODO Randomizer - Chainlink VRF randomizer
-// TODO FortunasToken - Remove minimumRequired balance for dividends eligibility, add functionality for percentage of user's current balance rather than percentage of pool owned by user
+// TODO FortunasToken - Remove minimum required balance for dividends eligibility, add functionality for percentage of user's current balance rather than percentage of pool owned by user
 // TODO FortunasToken - Remove unnecessary fields such as preSale etc.
 
 // ? - Code optimization/cleaning

@@ -163,7 +163,7 @@ contract Battling is Ownable, BattleStruct {
     constructor(address _fortunasToken) {
         bribeToEmeperor = 5000;
 
-        // TODO (for mainnet) rather than using the constructor, use the setter function to initialize all the below variables to hide the values from the public eye
+        // TODO (for mainnet) rather than using the constructor, use the setter function to initialize some of the below variables to hide sensitive information
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
@@ -282,9 +282,7 @@ contract Battling is Ownable, BattleStruct {
     function battleStart(uint256 _tokens, uint8 _battleType) external {
         require(_tokens >= 13334, "battleStart::Minimum amount of tokens for battle is 0.000000000000013334 FRTNA");
         require(2 <= _battleType && _battleType <= 6, "battleStart::No such battle type exists");
-        uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
         require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::Insufficient funds");
-        require(allowance >= _tokens, "battleStart::Not enough allowance to send tokens");
 
 
         uint256 bribe = _tokens.mul(bribeToEmeperor).div(multiplier);
@@ -330,8 +328,6 @@ contract Battling is Ownable, BattleStruct {
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
 
 
-        uint256 allowance = fortunasToken.allowance(msg.sender, address(this));
-
         tempBattle = battlingHelper.calculateRewards(tempBattle);
 
         uint256 tempTotalTokens = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
@@ -355,9 +351,6 @@ contract Battling is Ownable, BattleStruct {
         else {
             tempRations = tempTotalTokens.mul(rationsBase[_rationDays - 1]).div(multiplier);
         }
-        require(fortunasToken.balanceOf(msg.sender) >= tempRations, "calculateRations::Not enough balance to send rations");
-        require(allowance >= tempRations, "calculateRations::Not enough allowance to send rations");
-
 
         fortunasToken.transferFrom(msg.sender, address(this), tempRations);
 
@@ -380,10 +373,12 @@ contract Battling is Ownable, BattleStruct {
     function addTroops(uint256 _tokensToAdd, uint8 _battleType) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "addTroops::No such battle is currently taking place");
-        require(block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::Cannot remove tokens from battles that have already finished");
+        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::Cannot add tokens to battles that have already finished");
+        require(fortunasToken.balanceOf(msg.sender) >= _tokensToAdd, "addTroops::Insufficient funds");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle.additionalTokens += _tokensToAdd;
         if (tempBattle.additionalTokens + _tokensToAdd > tempBattle.initialTokensStaked) {
             tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
             if (tempBattle.hero > 0) {
@@ -410,32 +405,32 @@ contract Battling is Ownable, BattleStruct {
     function removeTroops(uint256 _tokensToRemove, uint8 _battleType) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "removeTroops::No such battle is currently taking place");
-        require(block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::Cannot remove tokens from battles that have already finished");
+        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::Cannot remove tokens from battles that have already finished");
+        require(fortunasToken.balanceOf(address(this)) >= _tokensToRemove, "removeTroops::Contract has insufficient balance. Please try again later");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
         require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::Not enough tokens in this battle");
         require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= 13334, "removeTroops::Total staked amount cannot be lower than 0.000000000000013334 FRTNA");
 
-        if (_tokensToRemove > tempBattle.additionalTokens) {
-            _tokensToRemove -= tempBattle.additionalTokens;
-            tempBattle.additionalTokens = 0;
-            if (_tokensToRemove > tempBattle.rewards) {
-                _tokensToRemove -= tempBattle.rewards;
-                tempBattle.rewards = 0;
+        if (_tokensToRemove > tempBattle.rewards) {
+            _tokensToRemove -= tempBattle.rewards;
+            tempBattle.rewards = 0;
+            if (_tokensToRemove > tempBattle.additionalTokens) {
+                _tokensToRemove -= tempBattle.additionalTokens;
+                tempBattle.additionalTokens = 0;
                 tempBattle.initialTokensStaked -= _tokensToRemove;
             }
             else {
-                tempBattle.rewards -= _tokensToRemove;
+                tempBattle.additionalTokens -= _tokensToRemove;
             }
         }
         else {
-            tempBattle.additionalTokens -= _tokensToRemove;
+            tempBattle.rewards -= _tokensToRemove;
         }
 
         calculateLosses(tempBattle);
 
-        require(fortunasToken.balanceOf(address(this)) >= _tokensToRemove, "removeTroops::Contract has insufficient balance. Please try again later");
         fortunasToken.transferFrom(address(this), msg.sender, _tokensToRemove);
 
         addressForBattle[msg.sender][_battleType] = tempBattle;
