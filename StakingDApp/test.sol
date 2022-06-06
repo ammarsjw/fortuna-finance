@@ -7,7 +7,15 @@ import "./MathUpgradeable.sol";
 import "./FortunasToken.sol";
 import "./ABDKMath64x64.sol";
 
-contract test is Ownable {
+abstract contract baseTest {
+
+    function adding(uint256 a, uint256 b) public virtual returns (uint256) {
+        return a + b;
+    }
+
+}
+
+contract test is Ownable, baseTest {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
@@ -19,7 +27,7 @@ contract test is Ownable {
 
     uint256[] public arr;
 
-    mapping(uint256 => uint256) map;
+    mapping(uint256 => uint256) public map;
 
     FortunasToken public fortunasToken;
 
@@ -173,6 +181,10 @@ contract test is Ownable {
         return things[x];
     }
 
+    function getMapping2(uint256 x) external view returns (uint256) {
+        return map[x];
+    }
+
     function fun13(uint256 a, uint256 b) external pure returns (uint256) {
         return a.roundDiv(b);
     }
@@ -256,5 +268,15 @@ contract test is Ownable {
         }
 
         return (rationsExpended, currentRationsDays);
+    }
+
+    function fun22() external pure returns (uint256) {
+        uint256 x = 0;
+        
+        return x.add(3);
+    }
+
+    function fun23() external {
+        map[1] = super.adding(1, 2);
     }
 }
