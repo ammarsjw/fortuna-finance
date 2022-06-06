@@ -63,9 +63,9 @@ contract Battling is Ownable, BattleStruct {
 
     // mappings
 
-    mapping(address => mapping(uint256 => Battle)) private addressForBattle;
-    mapping(address => mapping(uint256 => uint256)) private addressForHeroBattle;
-    mapping(address => mapping(uint256 => uint256)) private addressForCavalryBattle;
+    mapping(address => mapping(uint256 => Battle)) private battleForAddress;
+    mapping(address => mapping(uint256 => uint256)) private heroBattleForAddress;
+    mapping(address => mapping(uint256 => uint256)) private cavalryBattleForAddress;
 
     // events
 
@@ -209,8 +209,8 @@ contract Battling is Ownable, BattleStruct {
 
     // getters
 
-    function getAddressForBattle(address _walletAddress, uint _battleType) external view returns (Battle memory) {
-        return addressForBattle[_walletAddress][_battleType];
+    function getBattleForAddress(address _walletAddress, uint _battleType) external view returns (Battle memory) {
+        return battleForAddress[_walletAddress][_battleType];
     }
 
     // setters
@@ -299,14 +299,14 @@ contract Battling is Ownable, BattleStruct {
             fortunasToken.transferFrom(msg.sender, address(this), _tokens);
         }
 
-        addressForBattle[msg.sender][_battleType] = Battle(_battleType, _tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, 0, 0);
+        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, 0, 0);
 
         emit BattleStarted (
             msg.sender,
             _battleType,
             true,
             _tokens,
-            addressForBattle[msg.sender][_battleType].battleStartTime,
+            battleForAddress[msg.sender][_battleType].battleStartTime,
             3,
             0,
             0
@@ -314,7 +314,7 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function sendRations(uint8 _battleType, uint256 _rationDays) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "sendRations::No such battle is currently taking place");
         if (block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
             require(false, "sendRations::Cannot send rations to battles that have already finished");
@@ -322,10 +322,10 @@ contract Battling is Ownable, BattleStruct {
         else if (tempBattle.battleDaysExpended >= 3) {
             uint256 rationsExpended = block.timestamp.sub(tempBattle.battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
             uint256 currentRationsDays = tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
-            require(currentRationsDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
+            require(currentRationsDays <= 5, "sendRations::RCE5-2");
         }
         require(3 <= _battleType && _battleType <= 6, "sendRations::User can only add rations to easy, medium, hard or very hard battles");
-        require(1 <= _rationDays && _rationDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
+        require(1 <= _rationDays && _rationDays <= 5, "sendRations::RCE5-1");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
@@ -356,7 +356,7 @@ contract Battling is Ownable, BattleStruct {
 
         tempBattle.rations += tempRations;
         tempBattle.rationsDaysTotal += _rationDays;
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit BattleUpdated (
             msg.sender,
@@ -371,7 +371,7 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function addTroops(uint256 _tokensToAdd, uint8 _battleType) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "addTroops::No such battle is currently taking place");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::Cannot add tokens to battles that have already finished");
         require(fortunasToken.balanceOf(msg.sender) >= _tokensToAdd, "addTroops::Insufficient funds");
@@ -388,7 +388,7 @@ contract Battling is Ownable, BattleStruct {
 
         fortunasToken.transferFrom(msg.sender, address(this), _tokensToAdd);
 
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit BattleUpdated (
             msg.sender,
@@ -403,7 +403,7 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function removeTroops(uint256 _tokensToRemove, uint8 _battleType) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "removeTroops::No such battle is currently taking place");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::Cannot remove tokens from battles that have already finished");
         require(fortunasToken.balanceOf(address(this)) >= _tokensToRemove, "removeTroops::Contract has insufficient balance. Please try again later");
@@ -433,7 +433,7 @@ contract Battling is Ownable, BattleStruct {
 
         fortunasToken.transferFrom(address(this), msg.sender, _tokensToRemove);
 
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit BattleUpdated (
             msg.sender,
@@ -517,13 +517,13 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function addHero(uint256 _heroToAdd, uint8 _battleType) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(1 <= _heroToAdd && _heroToAdd <= 5, "addHero::Incorrect hero specified");
         require(fortunasAssets.ownershipOf(msg.sender, _heroToAdd), "addHero::User does not own this hero");
         require(tempBattle.initialTokensStaked != 0, "addHero::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addHero::User can only add hero to easy, medium, hard or very hard battles");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addHero::Cannot add heroes to battles that have already finished");
-        require(addressForHeroBattle[msg.sender][_heroToAdd] == 0, "addHero::This hero is currently in another battle");
+        require(heroBattleForAddress[msg.sender][_heroToAdd] == 0, "addHero::This hero is currently in another battle");
         require(tempBattle.hero == 0, "addHero::A hero is already in this battle");
 
 
@@ -537,8 +537,8 @@ contract Battling is Ownable, BattleStruct {
 
         fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _heroToAdd, 1, "");
 
-        addressForHeroBattle[msg.sender][_heroToAdd] = _battleType;
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        heroBattleForAddress[msg.sender][_heroToAdd] = _battleType;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit HeroDeployed (
             msg.sender,
@@ -560,12 +560,12 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function removeHero(uint256 _heroToRemove, uint8 _battleType) public {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(1 <= _heroToRemove && _heroToRemove <= 5, "removeHero::Incorrect hero specified");
         require(fortunasAssets.ownershipOf(msg.sender, _heroToRemove), "removeHero::User does not own this hero");
         require(tempBattle.initialTokensStaked != 0, "removeHero::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeHero::User can only remove hero from easy, medium, hard or very hard battles");
-        require(addressForHeroBattle[msg.sender][_heroToRemove] == _battleType, "removeHero::Incorrect hero or battle number given");
+        require(heroBattleForAddress[msg.sender][_heroToRemove] == _battleType, "removeHero::Incorrect hero or battle number given");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
@@ -577,8 +577,8 @@ contract Battling is Ownable, BattleStruct {
 
         fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _heroToRemove, 1, "");
 
-        addressForHeroBattle[msg.sender][_heroToRemove] = 0;
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        heroBattleForAddress[msg.sender][_heroToRemove] = 0;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit HeroReturned (
             msg.sender,
@@ -600,13 +600,13 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function addCavalry(uint256 _cavalryToAdd, uint8 _battleType) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(6 <= _cavalryToAdd && _cavalryToAdd <= 10, "addCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToAdd), "addCavalry::User does not own this cavalry");
         require(tempBattle.initialTokensStaked != 0, "addCavalry::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addCavalry::User can only add cavalry to easy, medium, hard or very hard battles");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::Cannot add cavalries to battles that have already finished");
-        require(addressForCavalryBattle[msg.sender][_cavalryToAdd] == 0, "addCavalry::This cavalry unit is currently in another battle");
+        require(cavalryBattleForAddress[msg.sender][_cavalryToAdd] == 0, "addCavalry::This cavalry unit is currently in another battle");
         require(tempBattle.cavalry == 0, "addCavalry::A cavalry unit is already in this battle");
 
 
@@ -621,8 +621,8 @@ contract Battling is Ownable, BattleStruct {
         
         fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _cavalryToAdd, 1, "");
 
-        addressForCavalryBattle[msg.sender][_cavalryToAdd] = _battleType;
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        cavalryBattleForAddress[msg.sender][_cavalryToAdd] = _battleType;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit CavalryDeployed (
             msg.sender,
@@ -644,12 +644,12 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function removeCavalry(uint256 _cavalryToRemove, uint8 _battleType) public {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(6 <= _cavalryToRemove && _cavalryToRemove <= 10, "removeCavalry::Incorrect cavalry specified");
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToRemove), "removeCavalry::User does not own this cavalry");
         require(tempBattle.initialTokensStaked != 0, "removeCavalry::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeCavalry::User can only remove cavalry from easy, medium, hard or very hard battles");
-        require(addressForCavalryBattle[msg.sender][_cavalryToRemove] == _battleType, "removeCavalry::Incorrect cavalry unit or battle number given");
+        require(cavalryBattleForAddress[msg.sender][_cavalryToRemove] == _battleType, "removeCavalry::Incorrect cavalry unit or battle number given");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
@@ -662,8 +662,8 @@ contract Battling is Ownable, BattleStruct {
 
         fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _cavalryToRemove, 1, "");
 
-        addressForCavalryBattle[msg.sender][_cavalryToRemove] = 0;
-        addressForBattle[msg.sender][_battleType] = tempBattle;
+        cavalryBattleForAddress[msg.sender][_cavalryToRemove] = 0;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit CavalryReturned (
             msg.sender,
@@ -685,7 +685,7 @@ contract Battling is Ownable, BattleStruct {
     }
 
     function battleEnd(uint8 _battleType) external {
-        Battle memory tempBattle = addressForBattle[msg.sender][_battleType];
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(2 <= _battleType && _battleType <= 6, "battleEnd::Incorrect battle type");
         require(tempBattle.initialTokensStaked != 0, "battleEnd::No such battle is currently taking place");
 
@@ -704,10 +704,10 @@ contract Battling is Ownable, BattleStruct {
             calculateLosses(tempBattle);
         }
 
-        addressForHeroBattle[msg.sender][tempBattle.hero] = 0;
-        addressForCavalryBattle[msg.sender][tempBattle.cavalry] = 0;
+        heroBattleForAddress[msg.sender][tempBattle.hero] = 0;
+        cavalryBattleForAddress[msg.sender][tempBattle.cavalry] = 0;
         Battle memory emptyBattle;
-        addressForBattle[msg.sender][_battleType] = emptyBattle;
+        battleForAddress[msg.sender][_battleType] = emptyBattle;
 
         emit BattleEnded (
             msg.sender,
@@ -766,7 +766,7 @@ contract Battling is Ownable, BattleStruct {
         if (_tempBattle.rations > 0) {
             if (0 < randRations && randRations <= chanceToLoose) {
                 fortunasToken.burn(address(this), _tempBattle.rations);
-                addressForBattle[msg.sender][_tempBattle.battleType].rations = 0;
+                battleForAddress[msg.sender][_tempBattle.battleType].rations = 0;
             }
         }
     }
@@ -780,7 +780,7 @@ contract Battling is Ownable, BattleStruct {
         uint256[] memory tempRewards = new uint256[](5);
         Battle memory tempBattle;
         for (uint256 i = 0 ; i < 5 ; i++) {
-            tempBattle = addressForBattle[_user][i + 2];
+            tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
                 if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
                     tempBattle = battlingHelper.calculateRewards(tempBattle);

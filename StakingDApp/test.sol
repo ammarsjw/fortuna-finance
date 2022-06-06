@@ -12,7 +12,10 @@ contract test is Ownable {
     using MathUpgradeable for uint256;
 
     uint256 public contractStartTime = 1652421600; // a certain epoch time for testing (11:00 AM, 13th May 2022) 
-    uint256 public rebaseTime = 1800; // 30 minutes difference in epoch time
+    
+    uint256 rewardTime;
+    uint256 oneDayTime;
+    uint256 baseBattleTime;
 
     uint256[] public arr;
 
@@ -30,6 +33,13 @@ contract test is Ownable {
     constructor() {
         arr = [1, 2, 3];
         map[1] = 5;
+
+        // rewardTime = 1800;
+        // oneDayTime = 86400;
+        // baseBattleTime = 259200;
+        rewardTime = 1;                                     // only for testing
+        oneDayTime = 48;                                    // only for testing
+        baseBattleTime = 144;                               // only for testing
     }
 
     function setFortunasTokenContractAddress(address payable _contractAddress) public onlyOwner {
@@ -45,7 +55,7 @@ contract test is Ownable {
 
     function test2() public view returns (uint256) {
         // uint256 contractStartTime = 1652421600;
-        uint256 temp = block.timestamp.sub(contractStartTime).div(rebaseTime); //number of rebases
+        uint256 temp = block.timestamp.sub(contractStartTime).div(rewardTime); //number of rewards
 
         return temp;
     }
@@ -205,13 +215,11 @@ contract test is Ownable {
         return x;
     }
 
-    function fun17() external pure returns (uint256) {
+    function fun17() external view returns (uint256) {
         uint256 a = 1653910671;
-        uint256 threeDayTime = 144;
         uint256 c = 1653910671;
-        uint256 rewardTime = 1;
 
-        uint256 numberOfRewardCycles = a.add(threeDayTime).sub(c).div(rewardTime);
+        uint256 numberOfRewardCycles = a.add(baseBattleTime).sub(c).div(rewardTime);
 
         return numberOfRewardCycles;
     }
@@ -222,16 +230,31 @@ contract test is Ownable {
         return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
     }
 
-    function fun19(uint256 a, uint256 b) external pure returns (uint256) {
-        uint256 baseBattleTime = 180;
-        uint256 oneDayTime = 60;
-
+    function fun19(uint256 a, uint256 b) external view returns (uint256) {
         return a.add(baseBattleTime).add(b.mul(oneDayTime));
     }
 
     function fun20(uint256 a) external view returns (uint256) {
-        uint256 oneDayTime = 60;
-
         return block.timestamp.sub(a).div(oneDayTime);
+    }
+
+    function fun21(uint256 _rationDays) external view returns (uint256, uint256) {
+        uint256 currentTime = 1654499252;
+        uint256 battleStartTime = 1654499098;
+        uint256 rationsDaysTotal = 1;
+        uint256 battleDaysExpended = 3;
+        uint256 rationsExpended;
+        uint256 currentRationsDays;
+
+        if (currentTime >= battleStartTime.add(baseBattleTime).add(rationsDaysTotal.mul(oneDayTime))) {
+            require(false, "sendRations::Cannot send rations to battles that have already finished");
+        }
+        else if (battleDaysExpended >= 3) {
+            rationsExpended = currentTime.sub(battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
+            currentRationsDays = rationsDaysTotal.sub(rationsExpended).add(_rationDays);
+            require(currentRationsDays <= 5, "sendRations::Rations cannot exceed 5 days at a single given time");
+        }
+
+        return (rationsExpended, currentRationsDays);
     }
 }
