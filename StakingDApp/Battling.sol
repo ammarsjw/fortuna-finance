@@ -200,8 +200,8 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         rationsBase = [2500, 5000, 7500, 10000, 12500];
         _setRations();
 
-        assetPercentages = [20, 40, 60, 80, 100,            // each hero's effect on current APY
-                            10, 20, 30, 40, 50];            // each cavalry's effect on total APY
+        assetPercentages = [20, 40, 60, 80, 100,            // each hero's effect on current battle APY
+                            10, 20, 30, 40, 50];            // each cavalry's effect on total battle APY
         assetPrices = [2500, 5000, 7500, 10000, 12500,      // percentage cost of LP for purchasing each hero
                         2500, 5000, 7500, 10000, 12500];    // percentage cost of LP for purchasing each cavalry
 
@@ -256,7 +256,6 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     function battleStart(uint256 _tokens, uint8 _battleType) external {
         require(_tokens >= 13334, "battleStart::MIN");
         require(2 <= _battleType && _battleType <= 6, "battleStart::WBT1");
-        require(fortunasToken.balanceOf(msg.sender) >= _tokens, "battleStart::IF1");
 
 
         uint256 bribe = _tokens.mul(bribeToEmeperor).div(multiplier);
@@ -304,10 +303,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
 
-        uint256 tempRations;
-        (tempBattle, tempRations) = battlingHelper.calculateRations(tempBattle, _rationDays);
+        uint256 extraRewards = battlingHelper.calculateExtraRewards(tempBattle);
 
-        fortunasToken.transferFrom(msg.sender, address(this), tempRations);
+        uint256 tempRations;
+        (tempBattle, tempRations) = battlingHelper.calculateRations(tempBattle, extraRewards, _rationDays);
+
+        fortunasToken.burn(msg.sender, tempRations);
 
         tempBattle.rations += tempRations;
         tempBattle.rationsDaysTotal += _rationDays;
@@ -328,8 +329,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     function addTroops(uint256 _tokensToAdd, uint8 _battleType) external {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "addTroops::WB");
-        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::Cannot add tokens to battles that have already finished");
-        require(fortunasToken.balanceOf(msg.sender) >= _tokensToAdd, "addTroops::IF1");
+        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::BE");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
@@ -361,7 +361,6 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "removeTroops::WB");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::BE");
-        require(fortunasToken.balanceOf(address(this)) >= _tokensToRemove, "removeTroops::IF2");
 
 
         tempBattle = battlingHelper.calculateRewards(tempBattle);
@@ -386,6 +385,11 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
         tempBattle = _calculateLosses(tempBattle);
 
+        uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
+        if (totalContractBalance < _tokensToRemove) {
+            uint256 toMint = _tokensToRemove.sub(totalContractBalance);
+            fortunasToken.mint(address(this), toMint);
+        }
         fortunasToken.transfer(msg.sender, _tokensToRemove);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
@@ -572,7 +576,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(fortunasAssets.ownershipOf(msg.sender, _cavalryToAdd), "addCavalry::CNO");
         require(tempBattle.initialTokensStaked != 0, "addCavalry::WB");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addCavalry::WBT2");
-        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::BF");
+        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::BE");
         require(cavalryBattleForAddress[msg.sender][_cavalryToAdd] == 0, "addCavalry::CAB1");
         require(tempBattle.cavalry == 0, "addCavalry::CAB2");
 
@@ -665,7 +669,11 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             LPToken.transfer(msg.sender, tokensToTransfer);
         }
         else {
-            require(fortunasToken.balanceOf(address(this)) >= tokensToTransfer, "battleEnd::IF2");
+            uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
+            if (totalContractBalance < tokensToTransfer) {
+                uint256 toMint = tokensToTransfer.sub(totalContractBalance);
+                fortunasToken.mint(address(this), toMint);
+            }
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
             tempBattle = _calculateLosses(tempBattle);
@@ -752,14 +760,6 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             }
         }
 
-        if (_tempBattle.rations > 0) {
-            if (0 < randRations && randRations <= chanceToLoose) {
-                fortunasToken.burn(address(this), _tempBattle.rations);
-
-                _tempBattle.rations = 0;
-            }
-        }
-
         return _tempBattle;
     }
 
@@ -776,6 +776,8 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             if (tempBattle.initialTokensStaked != 0) {
                 if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
                     tempBattle = battlingHelper.calculateRewards(tempBattle);
+
+                    tempBattle.rewards += battlingHelper.calculateExtraRewards(tempBattle);
                 }
                 else {
                     tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);

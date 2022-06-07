@@ -13,8 +13,7 @@ contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;
 
     IPancakeRouter02 public pancakeRouter;
-    // address public immutable pancakePair;
-    address public pancakePair;
+    address public immutable pancakePair;
 
     address public immutable bounceFixedSaleWallet;
 
@@ -45,7 +44,7 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public sellFeeTotalAmount;
     
-    uint256 public totalFees;
+    uint256 public totalBuyingFees;
     uint256 public immutable multiplierForFees;
 
     // use by default 300,000 gas to process auto-claiming dividends
@@ -136,7 +135,7 @@ contract FortunasToken is ERC20, Ownable {
         liquidityFeeSell = _liquidityFeeSell;
         treasuryFeeSell = _treasuryFeeSell;
 
-        totalFees = _treasuryFeeBuy.add(_liquidityFeeBuy);
+        totalBuyingFees = _treasuryFeeBuy.add(_liquidityFeeBuy);
 
         multiplierForFees = 1000;
 
@@ -426,7 +425,7 @@ contract FortunasToken is ERC20, Ownable {
             contractTokenBalance -= sellFeeTotalAmount;
 
             if (contractTokenBalance != 0) {
-                uint256 swapTokens = contractTokenBalance.mul(liquidityFeeBuy).div(totalFees);
+                uint256 swapTokens = contractTokenBalance.mul(liquidityFeeBuy).div(totalBuyingFees);
                 swapAndLiquify(swapTokens);
 
                 uint256 sellTokens = balanceOf(address(this));
@@ -434,7 +433,7 @@ contract FortunasToken is ERC20, Ownable {
             }
 
             if (sellPortionOfContractTokenBalance != 0) {
-                uint256 swapTokens = contractTokenBalance.mul(liquidityFeeSell).div(totalFees);
+                uint256 swapTokens = contractTokenBalance.mul(liquidityFeeSell).div(totalBuyingFees);
                 swapAndLiquify(swapTokens);
 
                 uint256 sellTokens = balanceOf(address(this));
@@ -453,7 +452,7 @@ contract FortunasToken is ERC20, Ownable {
         }
 
         if(takeFee) {
-        	uint256 fees = amount.mul(totalFees).div(multiplierForFees);
+        	uint256 fees = amount.mul(totalBuyingFees).div(multiplierForFees);
 
             // if sell
             if(automatedMarketMakerPairs[to]) {

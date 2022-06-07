@@ -76,8 +76,8 @@ contract BattlingHelper is Ownable, BattleStruct {
 
     // functions
 
-    function calculateRations(Battle memory _tempBattle, uint256 _rationDays) external view returns (Battle memory, uint256) {
-        uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
+    function calculateRations(Battle memory _tempBattle, uint256 _extraRewards, uint256 _rationDays) external view returns (Battle memory, uint256) {
+        uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards).add(_extraRewards);
         uint256 tempRations;
         uint256 totalPercentage;
         if (_tempBattle.rationsDaysTotal + _rationDays >= _tempBattle.dayForLimitReached
@@ -180,18 +180,29 @@ contract BattlingHelper is Ownable, BattleStruct {
         return _tempBattle;
     }
 
+    function calculateExtraRewards(Battle memory _tempBattle) public view returns (uint256) {
+        uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
+
+        uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        uint256 ratio = _tempBattle.currentRewardPercentage.div(48).mul(cyclesRemaining);
+        ratio = ratio.mul(10 ** 18).div(multiplierForReward);
+
+        uint256 accruedInterest = _compoundReward(
+            tempTotalTokens,
+            ratio,
+            1
+        );
+
+        return accruedInterest.sub(tempTotalTokens);
+    }
+
     function calculateRewardsForBattleEnd(Battle memory _tempBattle) external view returns (Battle memory) {
         uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
             _tempBattle = calculateRewards(_tempBattle);
 
-            // IMPORTANT: also add this part to sendRations
-            // for remaining reward cycles
-            // uint256 cyclesRemaining = battleEndTime.sub(_tempBattle.battleStartTime.add(_tempBattle.battleDaysExpended.mul(oneDayTime))).div(rewardTime);
-            // uint256 ratio = _tempBattle.currentRewardPercentage.div(cyclesRemaining);
-            // ratio = ratio.mul(10 ** 18).div(multiplierForReward);
-            // accruedInterest where exponent will be 1 and ratio will handle correct reward calculation
+            _tempBattle.rewards += calculateExtraRewards(_tempBattle);
         }
         else {
             uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
