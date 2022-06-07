@@ -95,7 +95,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _tokenId,
         uint256 _amount
     ) external onlyContract {
-        require(_from != battlingContractAddress,"burnWithoutCheck::Incorrect _from argument");
+        require(_from != battlingContractAddress, "burnWithoutCheck::Incorrect arguments given");
         _burn(msg.sender, _tokenId, _amount);
 
         _ownership[_tokenId][_from] = false;
