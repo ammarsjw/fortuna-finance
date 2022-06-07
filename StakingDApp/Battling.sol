@@ -66,9 +66,9 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
     // mappings
 
-    mapping(address => mapping(uint256 => Battle)) private battleForAddress;
-    mapping(address => mapping(uint256 => uint8)) private heroBattleForAddress;
-    mapping(address => mapping(uint256 => uint8)) private cavalryBattleForAddress;
+    mapping (address => mapping(uint256 => Battle)) private battleForAddress;
+    mapping (address => mapping(uint256 => uint8)) private heroBattleForAddress;
+    mapping (address => mapping(uint256 => uint8)) private cavalryBattleForAddress;
 
     // events
 

@@ -102,7 +102,7 @@ contract FortunasAssets is Ownable, ERC1155 {
     }
 
     modifier onlyContract {
-        require(msg.sender == battlingContractAddress, "onlyContract::Only Fortunas Battling contract can call this function");
+        require(msg.sender == battlingContractAddress, "onlyContract::Only Fortunas Battling Contract can call this function");
         _;
     }
 }
