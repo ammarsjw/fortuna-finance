@@ -36,16 +36,16 @@ contract FortunasToken is ERC20, Ownable {
     uint256 public swapTokensAtAmount = 200000 * (10**18);
 
     // buy fees
-    uint256 public immutable liquidityFeeBuy;
-    uint256 public immutable treasuryFeeBuy;
+    uint256 public liquidityFeeBuy;
+    uint256 public treasuryFeeBuy;
 
     // sell fees
-    uint256 public immutable liquidityFeeSell;
-    uint256 public immutable treasuryFeeSell;
+    uint256 public liquidityFeeSell;
+    uint256 public treasuryFeeSell;
 
     uint256 public sellFeeTotalAmount;
     
-    uint256 public immutable totalFees;
+    uint256 public totalFees;
     uint256 public immutable multiplierForFees;
 
     // use by default 300,000 gas to process auto-claiming dividends
@@ -197,6 +197,16 @@ contract FortunasToken is ERC20, Ownable {
         excludeFromFees(_lottery, true);
     }
 
+    function updateBuyFees(uint256 _liquidityFeeBuy, uint256 _treasuryFeeBuy) public onlyOwner {
+        liquidityFeeBuy = _liquidityFeeBuy;
+        treasuryFeeBuy = _treasuryFeeBuy;
+    }
+
+    function updateSellFees(uint256 _liquidityFeeSell, uint256 _treasuryFeeSell) public onlyOwner {
+        liquidityFeeSell = _liquidityFeeSell;
+        treasuryFeeSell = _treasuryFeeSell;
+    }
+
     function updateDividendTracker(address newAddress) public onlyOwner {
         require(newAddress != address(dividendTracker), "FRTNA: The dividend tracker already has that address");
 
@@ -259,7 +269,6 @@ contract FortunasToken is ERC20, Ownable {
 
         emit SetAutomatedMarketMakerPair(pair, value);
     }
-
 
     function updateLiquidityWallet(address newLiquidityWallet) public onlyOwner {
         require(newLiquidityWallet != liquidityWallet, "FRTNA: The liquidity wallet is already this address");
@@ -593,7 +602,7 @@ contract FRTNADividendTracker is DividendPayingToken, Ownable {
     }
 
     function updateClaimWait(uint256 newClaimWait) external onlyOwner {
-        require(newClaimWait >= 3600 && newClaimWait <= 86400, "FRTNA_Dividend_Tracker: claimWait must be updated to between 1 and 24 hours");
+        require(newClaimWait >= 1800 && newClaimWait <= 86400, "FRTNA_Dividend_Tracker: claimWait must be updated to between 0.5 and 24 hours");
         require(newClaimWait != claimWait, "FRTNA_Dividend_Tracker: Cannot update claimWait to same value");
         emit ClaimWaitUpdated(newClaimWait, claimWait);
         claimWait = newClaimWait;

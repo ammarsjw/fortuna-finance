@@ -47,14 +47,14 @@ contract BattlingHelper is Ownable, BattleStruct {
         rationsIncreasePercentage = 125000;
 
         rationsBase = [2500, 5000, 7500, 10000, 12500];
-        setRations();
+        _setRations();
 
         // setting all rewards in battling contract
     }
 
     // setters
 
-    function setRations() internal {
+    function _setRations() internal {
         for (uint256 i = 0 ; i < 5 ; i++) {
             rationsIncrease[i] = rationsBase[i].mul(rationsIncreasePercentage).roundDiv(multiplier);
         }
@@ -65,10 +65,10 @@ contract BattlingHelper is Ownable, BattleStruct {
         rewardIncreasePerDay = _increasePerDay;
 
         rewardLimit = _limit;
-        setRewards();
+        _setRewards();
     }
 
-    function setRewards() internal {
+    function _setRewards() internal {
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
         }
@@ -114,7 +114,7 @@ contract BattlingHelper is Ownable, BattleStruct {
             if (daysWagingBattle < 3) {
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
-                accruedInterest = compoundReward(
+                accruedInterest = _compoundReward(
                     tempTotalTokens,
                     ratio,
                     daysForReward
@@ -127,7 +127,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
-                    accruedInterest = compoundReward(
+                    accruedInterest = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         daysForReward
@@ -163,7 +163,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                 }
 
                 if (exponent > 0) {
-                    accruedInterest = compoundReward(
+                    accruedInterest = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         exponent
@@ -204,7 +204,7 @@ contract BattlingHelper is Ownable, BattleStruct {
             if (_tempBattle.battleType == 2) {
                 require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::BNE");
 
-                accruedInterest = compoundReward(
+                accruedInterest = _compoundReward(
                     tempTotalTokens,
                     ratio,
                     daysForReward
@@ -215,7 +215,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
-                    accruedInterest = compoundReward(
+                    accruedInterest = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         daysForReward
@@ -251,7 +251,7 @@ contract BattlingHelper is Ownable, BattleStruct {
                 }
 
                 if (exponent > 0) {
-                    accruedInterest = compoundReward(
+                    accruedInterest = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         exponent
@@ -266,7 +266,7 @@ contract BattlingHelper is Ownable, BattleStruct {
         return _tempBattle;
     }
 
-    function compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
+    function _compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
         if (_exponent == 0) {
             return _principal;
         }

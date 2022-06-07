@@ -30,6 +30,8 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     
     // FRTNA
     FortunasToken public fortunasToken;
+    
+    // Treasury Wallet
     address public treasuryWallet;
 
     // BUSD mainnet
@@ -179,6 +181,8 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         fortunasAssets = new FortunasAssets("", address(this));
 
         fortunasToken = FortunasToken(payable(_fortunasToken));
+
+        // TODO
         treasuryWallet = address(fortunasToken);
 
         // rewardTime = 1800;
@@ -194,7 +198,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         rationsIncreasePercentage = 125000;
 
         rationsBase = [2500, 5000, 7500, 10000, 12500];
-        setRations();
+        _setRations();
 
         assetPercentages = [20, 40, 60, 80, 100,            // each hero's effect on current APY
                             10, 20, 30, 40, 50];            // each cavalry's effect on total APY
@@ -218,10 +222,13 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
     function setFortunasToken(address _fortunasToken) external onlyOwner {
         fortunasToken = FortunasToken(payable(_fortunasToken));
-        treasuryWallet = address(fortunasToken);
     }
 
-    function setRations() internal {
+    function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
+        treasuryWallet = _treasuryWallet;
+    }
+
+    function _setRations() internal {
         for (uint256 i = 0 ; i < 5 ; i++) {
             rationsIncrease[i] = rationsBase[i].mul(rationsIncreasePercentage).roundDiv(multiplier);
         }
@@ -232,11 +239,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         rewardIncreasePerDay = _increasePerDay;
 
         rewardLimit = _limit;
-        setRewards();
+        _setRewards();
+
         battlingHelper.setAllRewards(_basePercentages, _increasePerDay, _limit);
     }
 
-    function setRewards() internal {
+    function _setRewards() internal {
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
         }
@@ -376,7 +384,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             tempBattle.rewards -= _tokensToRemove;
         }
 
-        tempBattle = calculateLosses(tempBattle);
+        tempBattle = _calculateLosses(tempBattle);
 
         fortunasToken.transfer(msg.sender, _tokensToRemove);
 
@@ -660,7 +668,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             require(fortunasToken.balanceOf(address(this)) >= tokensToTransfer, "battleEnd::IF2");
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
-            tempBattle = calculateLosses(tempBattle);
+            tempBattle = _calculateLosses(tempBattle);
 
             if (tempBattle.hero != 0) {
                 fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.hero, 1, "");
@@ -687,7 +695,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         );
     }
 
-    function calculateLosses(Battle memory _tempBattle) internal returns (Battle memory) {
+    function _calculateLosses(Battle memory _tempBattle) internal returns (Battle memory) {
         // TODO
         uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
         uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
