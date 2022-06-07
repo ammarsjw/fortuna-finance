@@ -111,8 +111,8 @@ contract FortunasToken is ERC20, Ownable {
 
         multiplierForFee = 1000;
 
-    	liquidityWallet = address(0);
-        treasuryWallet = address(0);
+    	liquidityWallet = address(this);
+        treasuryWallet = address(this);
 
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));

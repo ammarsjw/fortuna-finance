@@ -250,7 +250,6 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
     }
 
-
     // functions
 
     function battleStart(uint256 _tokens, uint8 _battleType) external {
