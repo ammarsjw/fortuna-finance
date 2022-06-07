@@ -534,7 +534,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
         tempBattle.hero = 0;
 
-        fortunasAssets.safeTransferFrom(address(this), msg.sender, _heroToRemove, 1, "");
+        fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _heroToRemove, 1, "");
 
         heroBattleForAddress[msg.sender][_heroToRemove] = 0;
         battleForAddress[msg.sender][_battleType] = tempBattle;
@@ -619,7 +619,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
         tempBattle.cavalry = 0;
 
-        fortunasAssets.safeTransferFrom(address(this), msg.sender, _cavalryToRemove, 1, "");
+        fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _cavalryToRemove, 1, "");
 
         cavalryBattleForAddress[msg.sender][_cavalryToRemove] = 0;
         battleForAddress[msg.sender][_battleType] = tempBattle;
@@ -663,10 +663,10 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             calculateLosses(tempBattle);
 
             if (tempBattle.hero != 0) {
-                fortunasAssets.safeTransferFrom(address(this), msg.sender, tempBattle.hero, 1, "");
+                fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.hero, 1, "");
             }
             if (tempBattle.cavalry != 0) {
-                fortunasAssets.safeTransferFrom(address(this), msg.sender, tempBattle.cavalry, 1, "");
+                fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
             }
         }
 

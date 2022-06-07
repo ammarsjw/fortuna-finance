@@ -39,6 +39,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _amount,
         bytes memory _data
     ) external onlyContract {
+        require(_ownership[_tokenId][_to] == false, "mint::Cannot have more than 1 of any hero or cavalry type");
         _mint(_to, _tokenId, _amount, _data);
 
         _ownership[_tokenId][_to] = true;
