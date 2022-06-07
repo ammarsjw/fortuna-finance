@@ -376,7 +376,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             tempBattle.rewards -= _tokensToRemove;
         }
 
-        calculateLosses(tempBattle);
+        tempBattle = calculateLosses(tempBattle);
 
         fortunasToken.transfer(msg.sender, _tokensToRemove);
 
@@ -660,7 +660,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             require(fortunasToken.balanceOf(address(this)) >= tokensToTransfer, "battleEnd::IF2");
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
-            calculateLosses(tempBattle);
+            tempBattle = calculateLosses(tempBattle);
 
             if (tempBattle.hero != 0) {
                 fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.hero, 1, "");
@@ -687,7 +687,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         );
     }
 
-    function calculateLosses(Battle memory _tempBattle) internal {
+    function calculateLosses(Battle memory _tempBattle) internal returns (Battle memory) {
         // TODO
         uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
         uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
@@ -714,11 +714,11 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
                 heroBattleForAddress[msg.sender][_tempBattle.hero] = 0;
 
-                battleForAddress[msg.sender][_tempBattle.battleType].currentRewardPercentage -= assetPercentages[_tempBattle.hero - 1];
+                _tempBattle.currentRewardPercentage -= assetPercentages[_tempBattle.hero - 1];
                 if (_tempBattle.dayForLimitReached != 0) {
-                    battleForAddress[msg.sender][_tempBattle.battleType].dayForLimitReached = 0;
+                    _tempBattle.dayForLimitReached = 0;
                 }
-                battleForAddress[msg.sender][_tempBattle.battleType].hero = 0;
+                _tempBattle.hero = 0;
             }
         }
 
@@ -735,12 +735,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
                 cavalryBattleForAddress[msg.sender][_tempBattle.cavalry] = 0;
 
-                battleForAddress[msg.sender][_tempBattle.battleType].currentRewardLimit -= assetPercentages[_tempBattle.cavalry - 1];
+                _tempBattle.currentRewardLimit -= assetPercentages[_tempBattle.cavalry - 1];
                 if (_tempBattle.currentRewardPercentage >= _tempBattle.currentRewardLimit) {
-                    battleForAddress[msg.sender][_tempBattle.battleType].currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    battleForAddress[msg.sender][_tempBattle.battleType].dayForLimitReached = _tempBattle.battleDaysExpended;
+                    _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
+                    _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended;
                 }
-                battleForAddress[msg.sender][_tempBattle.battleType].cavalry = 0;
+                _tempBattle.cavalry = 0;
             }
         }
 
@@ -748,9 +748,11 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             if (0 < randRations && randRations <= chanceToLoose) {
                 fortunasToken.burn(address(this), _tempBattle.rations);
 
-                battleForAddress[msg.sender][_tempBattle.battleType].rations = 0;
+                _tempBattle.rations = 0;
             }
         }
+
+        return _tempBattle;
     }
 
     /**
