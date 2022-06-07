@@ -139,9 +139,6 @@ contract FortunasToken is ERC20, Ownable {
         battlingContractAddress = _battlingContractAddress;
         excludeFromFees(_battlingContractAddress, true);
         // excludeFromFees(_lotteryContractAddress, true);
-
-        // TODO testing only
-        _mint(_battlingContractAddress, 100 * (10**18));
     }
 
     function updateBuyFee(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
