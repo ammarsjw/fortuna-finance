@@ -41,6 +41,7 @@ contract test is Ownable, baseTest {
     constructor() {
         arr = [1, 2, 3];
         map[1] = 5;
+        things[1] = Thing(1, 2);
 
         // rewardTime = 1800;
         // oneDayTime = 86400;
@@ -278,5 +279,16 @@ contract test is Ownable, baseTest {
 
     function fun23() external {
         map[1] = super.adding(1, 2);
+    }
+
+    function fun24() external view returns (Thing memory) {
+        Thing memory tempThings = things[1];
+        fun25(tempThings);
+
+        return tempThings;
+    }
+
+    function fun25(Thing memory _tempThings) internal pure {
+        _tempThings = Thing(5, 6);
     }
 }

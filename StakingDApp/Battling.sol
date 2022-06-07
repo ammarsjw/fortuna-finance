@@ -65,8 +65,8 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     // mappings
 
     mapping(address => mapping(uint256 => Battle)) private battleForAddress;
-    mapping(address => mapping(uint256 => uint256)) private heroBattleForAddress;
-    mapping(address => mapping(uint256 => uint256)) private cavalryBattleForAddress;
+    mapping(address => mapping(uint256 => uint8)) private heroBattleForAddress;
+    mapping(address => mapping(uint256 => uint8)) private cavalryBattleForAddress;
 
     // events
 
@@ -710,14 +710,15 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
                     _tempBattle.hero
                 );
 
-                _tempBattle.currentRewardPercentage -= assetPercentages[_tempBattle.hero - 1];
-                if (_tempBattle.dayForLimitReached != 0) {
-                    _tempBattle.dayForLimitReached = 0;
-                }
-                _tempBattle.hero = 0;
+                fortunasAssets.burnWithoutCheck(msg.sender, _tempBattle.hero, 1);
+
                 heroBattleForAddress[msg.sender][_tempBattle.hero] = 0;
 
-                fortunasAssets.burn(address(this), _tempBattle.hero, 1);
+                battleForAddress[msg.sender][_tempBattle.battleType].currentRewardPercentage -= assetPercentages[_tempBattle.hero - 1];
+                if (_tempBattle.dayForLimitReached != 0) {
+                    battleForAddress[msg.sender][_tempBattle.battleType].dayForLimitReached = 0;
+                }
+                battleForAddress[msg.sender][_tempBattle.battleType].hero = 0;
             }
         }
 
@@ -730,21 +731,23 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
                     _tempBattle.cavalry
                 );
 
-                _tempBattle.currentRewardLimit -= assetPercentages[_tempBattle.cavalry - 1];
-                if (_tempBattle.currentRewardPercentage >= _tempBattle.currentRewardLimit) {
-                    _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended;
-                }
-                _tempBattle.cavalry = 0;
+                fortunasAssets.burnWithoutCheck(msg.sender, _tempBattle.cavalry, 1);
+
                 cavalryBattleForAddress[msg.sender][_tempBattle.cavalry] = 0;
 
-                fortunasAssets.burn(address(this), _tempBattle.cavalry, 1);
+                battleForAddress[msg.sender][_tempBattle.battleType].currentRewardLimit -= assetPercentages[_tempBattle.cavalry - 1];
+                if (_tempBattle.currentRewardPercentage >= _tempBattle.currentRewardLimit) {
+                    battleForAddress[msg.sender][_tempBattle.battleType].currentRewardPercentage = _tempBattle.currentRewardLimit;
+                    battleForAddress[msg.sender][_tempBattle.battleType].dayForLimitReached = _tempBattle.battleDaysExpended;
+                }
+                battleForAddress[msg.sender][_tempBattle.battleType].cavalry = 0;
             }
         }
 
         if (_tempBattle.rations > 0) {
             if (0 < randRations && randRations <= chanceToLoose) {
                 fortunasToken.burn(address(this), _tempBattle.rations);
+
                 battleForAddress[msg.sender][_tempBattle.battleType].rations = 0;
             }
         }

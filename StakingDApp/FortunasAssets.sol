@@ -90,12 +90,13 @@ contract FortunasAssets is Ownable, ERC1155 {
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
     }
 
-    function burn(
+    function burnWithoutCheck(
         address _from,
         uint256 _tokenId,
         uint256 _amount
-    ) external {
-        _burn(_from, _tokenId, _amount);
+    ) external onlyContract {
+        require(_from != battlingContractAddress,"burnWithoutCheck::Incorrect _from argument");
+        _burn(msg.sender, _tokenId, _amount);
 
         _ownership[_tokenId][_from] = false;
     }
