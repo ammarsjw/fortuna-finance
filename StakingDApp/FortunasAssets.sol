@@ -9,7 +9,9 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     address public battlingContractAddress;
 
-    mapping(uint256 => mapping(address => bool)) private _ownership;
+    // mappings
+
+    mapping (uint256 => mapping(address => bool)) private _ownership;
 
     // constructor
 
@@ -35,7 +37,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _tokenId,
         uint256 _amount,
         bytes memory _data
-    ) external onlyContract {
+    ) external onlyOwner {
         require(_ownership[_tokenId][_to] == false, "mint::Cannot have more than 1 of any hero or cavalry type");
         _mint(_to, _tokenId, _amount, _data);
 
@@ -82,7 +84,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _tokenId,
         uint256 _amount,
         bytes memory _data
-    ) public onlyContract {
+    ) public onlyOwner {
         require(_to == battlingContractAddress || _from == battlingContractAddress, "safeTransferFromWithoutCheck::Either sender or recipient must be contract");
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
     }
@@ -91,15 +93,10 @@ contract FortunasAssets is Ownable, ERC1155 {
         address _from,
         uint256 _tokenId,
         uint256 _amount
-    ) external onlyContract {
+    ) external onlyOwner {
         require(_from != battlingContractAddress, "burnWithoutCheck::Incorrect arguments given");
         _burn(msg.sender, _tokenId, _amount);
 
         _ownership[_tokenId][_from] = false;
-    }
-
-    modifier onlyContract {
-        require(msg.sender == battlingContractAddress, "onlyContract::Only Fortunas Battling Contract can call this function");
-        _;
     }
 }
