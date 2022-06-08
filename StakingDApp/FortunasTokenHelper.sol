@@ -34,28 +34,31 @@ contract FortunasTokenHelper is Ownable {
 
     // getters
 
-    function getLastUpdate(address _user) external view returns (uint256) {
-        return _lastUpdate[_user];
+    function getLastUpdate(address account) external view returns (uint256) {
+        return _lastUpdate[account];
     }
 
-    function getTotalPassiveRewards(address _user) external view returns (uint256) {
-        return _totalPassiveRewards[_user];
+    function getTotalPassiveRewards(address account) external view returns (uint256) {
+        return _totalPassiveRewards[account];
     }
 
     // functions
 
-    function updatePassiveRewards(address _user, uint256 _balance) public onlyOwner returns (uint256) {
-        require(_user != address(0), "updatePassiveRewards::User cannot be zero address");
-
-        uint256 tempTotalPassiveRewards = _totalPassiveRewards[_user];
-        uint256 tempLastUpdate = _lastUpdate[_user];
+    function updatePassiveRewards(address account, uint256 balance) public onlyOwner returns (uint256) {
+        uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
+        uint256 tempLastUpdate = _lastUpdate[account];
 
         uint256 currentTime = block.timestamp;
+        
+        if (balance == 0 && tempTotalPassiveRewards == 0) {
+            _lastUpdate[account] = currentTime;
+            return 0;
+        }
 
-        bool firstTransaction = tempLastUpdate == 0;
+        bool isFirstTransaction = tempLastUpdate == 0;
 
-        if (firstTransaction) {
-            _lastUpdate[_user] = currentTime;
+        if (isFirstTransaction) {
+            _lastUpdate[account] = currentTime;
             return 0;
         }
 
@@ -68,65 +71,68 @@ contract FortunasTokenHelper is Ownable {
             uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
 
             uint256 accruedInterest = _compoundReward(
-                _balance.add(tempTotalPassiveRewards),
+                balance.add(tempTotalPassiveRewards),
                 ratio,
                 1
             );
-            _totalPassiveRewards[_user] += accruedInterest.sub(_balance.add(tempTotalPassiveRewards));
+            tempTotalPassiveRewards += accruedInterest.sub(balance.add(tempTotalPassiveRewards));
 
-            _lastUpdate[_user] += rewardCycles.mul(rewardTime);
+            _totalPassiveRewards[account] = tempTotalPassiveRewards;
+            _lastUpdate[account] += rewardCycles.mul(rewardTime);
         }
 
-        return _totalPassiveRewards[_user];
+        return _totalPassiveRewards[account];
     }
 
-    function claimPassiveRewards(address _user, uint256 _balance) external onlyOwner returns (uint256) {
-        uint256 updatedPassiveRewards = updatePassiveRewards(_user, _balance);
+    function claimPassiveRewards(address account, uint256 balance) external onlyOwner returns (uint256) {
+        uint256 updatedPassiveRewards = updatePassiveRewards(account, balance);
 
         bool isClaimable = updatedPassiveRewards > 0;
 
         if (isClaimable) {
-            _totalPassiveRewards[_user] = 0;
+            _totalPassiveRewards[account] = 0;
         }
 
         return updatedPassiveRewards;
     }
 
-    function viewPassiveRewards(address _user, uint256 _balance) external view returns (uint256, uint256) {
-        require(_user != address(0), "updatePassiveRewards::User cannot be zero address");
-
-        uint256 tempTotalPassiveRewards = _totalPassiveRewards[_user];
+    function viewPassiveRewards(address account, uint256 balance) external view returns (uint256, uint256) {
+        uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
         uint256 nextPassiveReward;
 
         uint256 currentTime = block.timestamp;
 
-        bool firstTransaction = _lastUpdate[_user] == 0;
-
-        if (firstTransaction) {
+        if (balance == 0 && tempTotalPassiveRewards == 0) {
             return (0, 0);
         }
 
-        bool isValid = currentTime > _lastUpdate[_user].add(rewardTime);
+        bool isFirstTransaction = _lastUpdate[account] == 0;
+
+        if (isFirstTransaction) {
+            return (0, 0);
+        }
+
+        bool isValid = currentTime > _lastUpdate[account].add(rewardTime);
 
         if (isValid) {
-            uint256 timeToConsider = currentTime.sub(_lastUpdate[_user]);
+            uint256 timeToConsider = currentTime.sub(_lastUpdate[account]);
 
             uint256 rewardCycles = timeToConsider.div(rewardTime);
             uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
 
             uint256 accruedInterest = _compoundReward(
-                _balance.add(tempTotalPassiveRewards),
+                balance.add(tempTotalPassiveRewards),
                 ratio,
                 1
             );
-            tempTotalPassiveRewards += accruedInterest.sub(_balance.add(tempTotalPassiveRewards));
+            tempTotalPassiveRewards += accruedInterest.sub(balance.add(tempTotalPassiveRewards));
 
             accruedInterest = _compoundReward(
-                _balance.add(tempTotalPassiveRewards),
+                balance.add(tempTotalPassiveRewards),
                 rewardPercentagePerCycle,
                 1
             );
-            nextPassiveReward += accruedInterest.sub(_balance.add(tempTotalPassiveRewards));
+            nextPassiveReward += accruedInterest.sub(balance.add(tempTotalPassiveRewards));
         }
 
         return (tempTotalPassiveRewards, nextPassiveReward);

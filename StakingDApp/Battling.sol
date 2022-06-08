@@ -789,3 +789,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         return tempRewards;
     }
 }
+
+// TODO nextReward
+// TODO interface for FortunasToken
+// TODO OwnableUpgradeable

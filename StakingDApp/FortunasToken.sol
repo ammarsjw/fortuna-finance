@@ -7,6 +7,7 @@ import "./ERC20.sol";
 import "./IPancakeFactory.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakePair.sol";
+import "./FortunasTokenHelper.sol";
 
 contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;
@@ -24,6 +25,9 @@ contract FortunasToken is ERC20, Ownable {
     address public immutable BUSD =
         address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
+    // Bookkeeper for all FRTNA holders
+    FortunasTokenHelper public fortunasTokenHelper;
+    
     address public liquidityWallet;
     address public treasuryWallet;
 
@@ -53,6 +57,9 @@ contract FortunasToken is ERC20, Ownable {
     // exlcude from fees
     mapping (address => bool) private isExcludedFromFees;
 
+    // exclude from FRTNA holder's rewards
+    mapping (address => bool) private isExcludedFromPassiveRewards;
+
     // addresses that can make transfers before trading is enabled
     mapping (address => bool) private canTransferBeforeTradingIsEnabled;
 
@@ -65,7 +72,7 @@ contract FortunasToken is ERC20, Ownable {
 
     event ExcludeFromFees(address indexed account, bool isExcluded);
 
-    event ExcludeMultipleAccountsToFees(address[] accounts, bool isExcluded);
+    event ExcludeMultipleAccountsFromFees(address[] accounts, bool isExcluded);
 
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
 
@@ -78,6 +85,12 @@ contract FortunasToken is ERC20, Ownable {
     // constructor
 
     constructor() ERC20("Fortunas Token", "FRTNA") {
+        fortunasTokenHelper = new FortunasTokenHelper();
+
+        // TODO
+    	liquidityWallet = address(owner());
+        treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
+
         uint256 _liquidityBuyingFee = 25;
         uint256 _treasuryBuyingFee = 75;
         uint256 _burnBuyingFee = 0;
@@ -99,10 +112,6 @@ contract FortunasToken is ERC20, Ownable {
 
         multiplierForFee = 10 ** 3;
 
-        // TODO
-    	liquidityWallet = address(owner());
-        treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
-
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
@@ -114,6 +123,13 @@ contract FortunasToken is ERC20, Ownable {
         // pancakePair = _pancakePair;
 
         // _setAutomatedMarketMakerPair(_pancakePair, true);
+
+        // exclude from receiving rewards
+        excludeFromPassiveRewards(address(this), true);
+        excludeFromPassiveRewards(liquidityWallet, true);
+        excludeFromPassiveRewards(treasuryWallet, true);
+        // excludeFromPassiveRewards(_pancakePair, true);
+        excludeFromPassiveRewards(address(0), true);
 
         // exclude from paying fees
         excludeFromFees(address(this), true);
@@ -130,6 +146,10 @@ contract FortunasToken is ERC20, Ownable {
 
     function setAssociatedContracts(address _battlingContractAddress/*, address _lotteryContractAddress*/) external onlyOwner {
         battlingContractAddress = _battlingContractAddress;
+
+        excludeFromPassiveRewards(_battlingContractAddress, true);
+        // excludeFromPassiveRewards(_lotteryContractAddress, true);
+
         excludeFromFees(_battlingContractAddress, true);
         // excludeFromFees(_lotteryContractAddress, true);
     }
@@ -165,12 +185,24 @@ contract FortunasToken is ERC20, Ownable {
         emit ExcludeFromFees(account, excluded);
     }
 
-    function excludeMultipleAccountsToFees(address[] calldata accounts, bool excluded) public onlyOwner {
+    function excludeMultipleAccountsFromFees(address[] calldata accounts, bool excluded) public onlyOwner {
         for(uint256 i = 0; i < accounts.length; i++) {
             isExcludedFromFees[accounts[i]] = excluded;
         }
 
-        emit ExcludeMultipleAccountsToFees(accounts, excluded);
+        emit ExcludeMultipleAccountsFromFees(accounts, excluded);
+    }
+
+    function excludeFromPassiveRewards(address account, bool excluded) public onlyOwner {
+        require(isExcludedFromPassiveRewards[account] != excluded, "FRTNA: Account is already the value of 'excluded'");
+
+        isExcludedFromPassiveRewards[account] = excluded;
+    }
+
+    function excludeMultipleAccountsFromPassiveRewards(address[] calldata accounts, bool excluded) public onlyOwner {
+        for(uint256 i = 0; i < accounts.length; i++) {
+            isExcludedFromPassiveRewards[accounts[i]] = excluded;
+        }
     }
 
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
@@ -230,6 +262,14 @@ contract FortunasToken is ERC20, Ownable {
 
         if (!tradingIsEnabled) {
             require(canTransferBeforeTradingIsEnabled[from], "FRTNA: This account cannot send tokens until trading is enabled");
+        }
+
+        if (!isExcludedFromPassiveRewards[from]) {
+            fortunasTokenHelper.updatePassiveRewards(from, balanceOf(from));
+        }
+
+        if (!isExcludedFromPassiveRewards[to]) {
+            fortunasTokenHelper.updatePassiveRewards(to, balanceOf(to));
         }
 
         if(amount == 0) {
@@ -366,6 +406,28 @@ contract FortunasToken is ERC20, Ownable {
         );
     }
 
+    function claimPassiveRewards() external {
+        require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
+
+        uint256 totalPassiveRewards =
+            fortunasTokenHelper.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
+
+        if (totalPassiveRewards == 0) {
+            require(false, "FRTNA: No rewards to claim");
+        }
+
+        _mint(msg.sender, totalPassiveRewards);
+    }
+
+    function viewPassiveRewards(address account) external view returns (uint256, uint256) {
+        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
+
+        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
+            fortunasTokenHelper.viewPassiveRewards(account, balanceOf(account));
+
+        return (totalPassiveRewards, nextPassiveReward);
+    }
+
     function burn(address account, uint256 amount) external {
         _burn(account, amount);
     }
@@ -375,7 +437,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     modifier onlyContract {
-        require(msg.sender == battlingContractAddress, "onlyContract::Only Fortunas Battling Contract can call this function");
+        require(msg.sender == battlingContractAddress, "FRTNA: Only Fortunas Battling Contract can call this function");
         _;
     }
 
