@@ -253,7 +253,7 @@ contract FortunasToken is ERC20, Ownable {
                 toLiquidityAmount = totalSellingFeesAccumulated
                     .mul(liquiditySellingFee)
                     .div(multiplierForFee);
-                super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+                swapAndLiquify(toLiquidityAmount);
 
                 toTreasuryAmount = totalSellingFeesAccumulated
                     .mul(treasurySellingFee)
@@ -272,7 +272,7 @@ contract FortunasToken is ERC20, Ownable {
                 toLiquidityAmount = totalBuyingFeesAccumulated
                     .mul(liquidityBuyingFee)
                     .div(multiplierForFee);
-                super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+                swapAndLiquify(toLiquidityAmount);
 
                 toTreasuryAmount = totalBuyingFeesAccumulated
                     .mul(treasuryBuyingFee)

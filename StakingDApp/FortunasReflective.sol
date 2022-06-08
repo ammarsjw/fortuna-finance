@@ -29,8 +29,8 @@ contract Eloin is Context, IERC20, Ownable {
     uint256 private _tTotal = 100000000 * 10**6 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
-    
-     uint256 public buyLimit;
+
+    uint256 public buyLimit;
     uint256 public sellLimit;
     
     bool public timeLimit = true;
@@ -262,7 +262,6 @@ contract Eloin is Context, IERC20, Ownable {
         require(_maxTxAmount > 0, "maxTxAmount can't be zero");
     }
 
- 
     function setNumTokensSellToAddToLiquidity (uint256 value) external onlyOwner() {
       numTokensSellToAddToLiquidity = value;
     }
