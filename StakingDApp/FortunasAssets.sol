@@ -7,8 +7,6 @@ import "./ERC1155.sol";
 
 contract FortunasAssets is Ownable, ERC1155 {
 
-    // variables
-
     address public battlingContractAddress;
 
     mapping(uint256 => mapping(address => bool)) private _ownership;

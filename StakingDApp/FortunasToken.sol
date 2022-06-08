@@ -43,38 +43,20 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public totalSellingFeesAccumulated;
 
-    uint256 public transferTokensAtAmount = 100000 * (10**18);
-
-    /*   Fixed Sale   */
-
-    // timestamp for when purchases on the fixed-sale are available to early participants
-    uint256 public immutable fixedSaleStartTimestamp = 1623960000; //June 17, 20:00 UTC, 2021
-
-    // the fixed-sale will be open to the public 10 minutes after fixedSaleStartTimestamp,
-    // or after 600 buys, whichever comes first.
-    uint256 public immutable fixedSaleEarlyParticipantDuration = 600;
-    uint256 public immutable fixedSaleEarlyParticipantBuysThreshold = 600;
-
-    // track number of buys. once this reaches fixedSaleEarlyParticipantBuysThreshold,
-    // the fixed-sale will be open to the public even if it's still in the first 10 minutes
-    uint256 public numberOfFixedSaleBuys;
-    // track who has bought
-    mapping (address => bool) public fixedSaleBuyers;
-
-    /******************/
+    uint256 public transferTokensAtAmount = 10000 * (10**18);
 
     // timestamp for when the token can be traded freely on PanackeSwap
     uint256 public immutable tradingEnabledTimestamp = 1623967200; //June 17, 22:00 UTC, 2021
 
-    // exlcude from fees and max transaction amount
+    // mappings
+
+    // exlcude from fees
     mapping (address => bool) private isExcludedFromFees;
 
-    // addresses that can make transfers before presale is over
+    // addresses that can make transfers before trading is enabled
     mapping (address => bool) private canTransferBeforeTradingIsEnabled;
 
-    mapping (address => bool) public fixedSaleEarlyParticipants;
-
-    // store addresses that a automatic market maker pairs
+    // store addresses that are automatic market maker pairs
     mapping (address => bool) public automatedMarketMakerPairs;
 
     // events
@@ -82,17 +64,14 @@ contract FortunasToken is ERC20, Ownable {
     event UpdatePancakeRouter(address indexed newAddress, address indexed oldAddress);
 
     event ExcludeFromFees(address indexed account, bool isExcluded);
-    event ExcludeMultipleAccountsToFees(address[] accounts, bool isExcluded);
 
-    event FixedSaleEarlyParticipantsAdded(address[] participants);
+    event ExcludeMultipleAccountsToFees(address[] accounts, bool isExcluded);
 
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
 
     event LiquidityWalletUpdated(address indexed newLiquidityWallet, address indexed oldLiquidityWallet);
 
     event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
-
-    event FixedSaleBuy(address indexed account, uint256 indexed amount, bool indexed earlyParticipant, uint256 numberOfBuyers);
 
     // constructor
 
@@ -139,11 +118,13 @@ contract FortunasToken is ERC20, Ownable {
         excludeFromFees(treasuryWallet, true);
         excludeFromFees(owner(), true);
 
-        // enable owner and fixed-sale wallet to send tokens before presales are over
+        // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
 
         _mint(owner(), 1000000000 * (10**18));
     }
+
+    // getters and setters
 
     function postConstructor(address _battlingContractAddress/*, address _lotteryContractAddress*/) external onlyOwner {
         battlingContractAddress = _battlingContractAddress;
@@ -190,14 +171,6 @@ contract FortunasToken is ERC20, Ownable {
         emit ExcludeMultipleAccountsToFees(accounts, excluded);
     }
 
-    function addFixedSaleEarlyParticipants(address[] calldata accounts) external onlyOwner {
-        for(uint256 i = 0; i < accounts.length; i++) {
-            fixedSaleEarlyParticipants[accounts[i]] = true;
-        }
-
-        emit FixedSaleEarlyParticipantsAdded(accounts);
-    }
-
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
         require(pair != pancakePair, "FRTNA: The PancakeSwap pair cannot be removed from automatedMarketMakerPairs");
 
@@ -213,6 +186,7 @@ contract FortunasToken is ERC20, Ownable {
 
     function updateLiquidityWallet(address newLiquidityWallet) public onlyOwner {
         require(newLiquidityWallet != liquidityWallet, "FRTNA: The liquidity wallet is already this address");
+        excludeFromFees(liquidityWallet, false);
         excludeFromFees(newLiquidityWallet, true);
         emit LiquidityWalletUpdated(newLiquidityWallet, liquidityWallet);
         liquidityWallet = newLiquidityWallet;
@@ -220,6 +194,7 @@ contract FortunasToken is ERC20, Ownable {
 
     function updateTreasuryWallet(address newTreasuryWallet) public onlyOwner {
         require(newTreasuryWallet != treasuryWallet, "FRTNA: The treasury wallet is already this address");
+        excludeFromFees(treasuryWallet, false);
         excludeFromFees(newTreasuryWallet, true);
         emit TreasuryWalletUpdated(newTreasuryWallet, treasuryWallet);
         treasuryWallet = newTreasuryWallet;
@@ -228,6 +203,8 @@ contract FortunasToken is ERC20, Ownable {
     function getTradingIsEnabled() public view returns (bool) {
         return block.timestamp >= tradingEnabledTimestamp;
     }
+
+    // functions
 
     function _isBuy(address from) internal view returns (bool) {
         // Transfer from pair is a buy swap
@@ -285,6 +262,8 @@ contract FortunasToken is ERC20, Ownable {
                     .mul(burnSellingFee)
                     .div(multiplierForFee);
                 _burn(address(this), toBurnAmount);
+
+                totalSellingFeesAccumulated = 0;
             }
             
             if (totalBuyingFeesAccumulated > 0) {
@@ -303,8 +282,6 @@ contract FortunasToken is ERC20, Ownable {
                     .div(multiplierForFee);
                 _burn(address(this), toBurnAmount);
             }
-
-            totalSellingFeesAccumulated = 0;
         }
 
         if (

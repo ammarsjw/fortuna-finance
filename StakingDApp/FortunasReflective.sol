@@ -75,8 +75,8 @@ contract Eloin is Context, IERC20, Ownable {
     }
     
     constructor () {
-          _rOwned[_msgSender()] = _rTotal;
-            
+        _rOwned[_msgSender()] = _rTotal;
+
         IPancakeRouter02 _uniswapV2Router = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
          // Create a uniswap pair for this new token
         uniswapV2Pair = IPancakeFactory(_uniswapV2Router.factory())
