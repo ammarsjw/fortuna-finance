@@ -41,8 +41,8 @@ contract BattlingHelper is Ownable, BattleStruct {
         oneDayTime = 48;                                    // only for testing
         baseBattleTime = 144;                               // only for testing
 
-        multiplier = 1000000;
-        multiplierForReward = 10000000;
+        multiplier = 10 ** 6;
+        multiplierForReward = 10 ** 7;
 
         rationsIncreasePercentage = 125000;
 

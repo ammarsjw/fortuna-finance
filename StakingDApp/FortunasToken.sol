@@ -95,7 +95,7 @@ contract FortunasToken is ERC20, Ownable {
         totalBuyingFee = _liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee);
         totalSellingFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
 
-        multiplierForFee = 1000;
+        multiplierForFee = 10 ** 3;
 
         // TODO
     	liquidityWallet = address(0x45faf7923BAb5A5380515E055CA700519B3e4705);
@@ -121,7 +121,7 @@ contract FortunasToken is ERC20, Ownable {
         // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
 
-        _mint(owner(), 1000000000 * (10**18));
+        _mint(owner(), 1000000000 * (10 ** 18));
     }
 
     // getters and setters

@@ -192,8 +192,8 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         oneDayTime = 48;                                    // only for testing
         baseBattleTime = 144;                               // only for testing
 
-        multiplier = 1000000;
-        multiplierForReward = 10000000;
+        multiplier = 10 ** 6;
+        multiplierForReward = 10 ** 7;
 
         rationsIncreasePercentage = 125000;
 
