@@ -40,7 +40,6 @@ contract FortunasToken is ERC20, Ownable {
     uint256 public totalSellingFee;
     uint256 public immutable multiplierForFee;
 
-    uint256 public totalBuyingFeesAccumulated;
     uint256 public totalSellingFeesAccumulated;
 
     uint256 public transferTokensAtAmount = 100000 * (10**18);
@@ -67,23 +66,30 @@ contract FortunasToken is ERC20, Ownable {
     uint256 public immutable tradingEnabledTimestamp = 1623967200; //June 17, 22:00 UTC, 2021
 
     // exlcude from fees and max transaction amount
-    mapping (address => bool) private _isExcludedFromFees;
+    mapping (address => bool) private isExcludedFromFees;
 
     // addresses that can make transfers before presale is over
     mapping (address => bool) private canTransferBeforeTradingIsEnabled;
 
     mapping (address => bool) public fixedSaleEarlyParticipants;
 
+    // store addresses that a automatic market maker pairs
+    mapping (address => bool) public automatedMarketMakerPairs;
+
     // events
 
     event UpdatePancakeRouter(address indexed newAddress, address indexed oldAddress);
 
     event ExcludeFromFees(address indexed account, bool isExcluded);
-    event ExcludeMultipleAccountsFromFees(address[] accounts, bool isExcluded);
+    event ExcludeMultipleAccountsToFees(address[] accounts, bool isExcluded);
 
     event FixedSaleEarlyParticipantsAdded(address[] participants);
 
+    event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
+
     event LiquidityWalletUpdated(address indexed newLiquidityWallet, address indexed oldLiquidityWallet);
+
+    event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
 
     event FixedSaleBuy(address indexed account, uint256 indexed amount, bool indexed earlyParticipant, uint256 numberOfBuyers);
 
@@ -124,10 +130,12 @@ contract FortunasToken is ERC20, Ownable {
         pancakeRouter = _pancakeRouter;
         pancakePair = _pancakePair;
 
-        // exclude from paying fees or having max transaction amount
+        setAutomatedMarketMakerPair(_pancakePair, true);
+
+        // exclude from paying fees
         excludeFromFees(liquidityWallet, true);
         excludeFromFees(treasuryWallet, true);
-        excludeFromFees(address(this), true);
+        excludeFromFees(owner(), true);
 
         // enable owner and fixed-sale wallet to send tokens before presales are over
         canTransferBeforeTradingIsEnabled[owner()] = true;
@@ -142,7 +150,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function updateBuyFee(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
-        require(_liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee) < totalBuyingFee,
+        require(_liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee) == totalBuyingFee,
             "FRTNA: Cannot exceed total selling fees");
 
         liquidityBuyingFee = _liquidityBuyingFee;
@@ -151,7 +159,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function updateSellingFee(uint256 _liquiditySellingFee, uint256 _treasurySellingFee, uint256 _burnSellingFee) public onlyOwner {
-        require(_liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee) < totalSellingFee,
+        require(_liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee) == totalSellingFee,
             "FRTNA: Cannot exceed total selling fees");
 
         liquiditySellingFee = _liquiditySellingFee;
@@ -166,18 +174,18 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function excludeFromFees(address account, bool excluded) public onlyOwner {
-        require(_isExcludedFromFees[account] != excluded, "FRTNA: Account is already the value of 'excluded'");
-        _isExcludedFromFees[account] = excluded;
+        require(isExcludedFromFees[account] != excluded, "FRTNA: Account is already the value of 'excluded'");
+        isExcludedFromFees[account] = excluded;
 
         emit ExcludeFromFees(account, excluded);
     }
 
-    function excludeMultipleAccountsFromFees(address[] calldata accounts, bool excluded) public onlyOwner {
+    function excludeMultipleAccountsToFees(address[] calldata accounts, bool excluded) public onlyOwner {
         for(uint256 i = 0; i < accounts.length; i++) {
-            _isExcludedFromFees[accounts[i]] = excluded;
+            isExcludedFromFees[accounts[i]] = excluded;
         }
 
-        emit ExcludeMultipleAccountsFromFees(accounts, excluded);
+        emit ExcludeMultipleAccountsToFees(accounts, excluded);
     }
 
     function addFixedSaleEarlyParticipants(address[] calldata accounts) external onlyOwner {
@@ -188,15 +196,43 @@ contract FortunasToken is ERC20, Ownable {
         emit FixedSaleEarlyParticipantsAdded(accounts);
     }
 
+    function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
+        require(pair != pancakePair, "FRTNA: The PancakeSwap pair cannot be removed from automatedMarketMakerPairs");
+
+        require(automatedMarketMakerPairs[pair] != value, "FRTNA: Automated market maker pair is already set to that value");
+        automatedMarketMakerPairs[pair] = value;
+
+        emit SetAutomatedMarketMakerPair(pair, value);
+    }
+
     function updateLiquidityWallet(address newLiquidityWallet) public onlyOwner {
         require(newLiquidityWallet != liquidityWallet, "FRTNA: The liquidity wallet is already this address");
+        excludeFromFees(liquidityWallet, false);
         excludeFromFees(newLiquidityWallet, true);
         emit LiquidityWalletUpdated(newLiquidityWallet, liquidityWallet);
         liquidityWallet = newLiquidityWallet;
     }
 
+    function updateTreasuryWallet(address newTreasuryWallet) public onlyOwner {
+        require(newTreasuryWallet != treasuryWallet, "FRTNA: The treasury wallet is already this address");
+        excludeFromFees(treasuryWallet, false);
+        excludeFromFees(newTreasuryWallet, true);
+        emit TreasuryWalletUpdated(newTreasuryWallet, treasuryWallet);
+        treasuryWallet = newTreasuryWallet;
+    }
+
     function getTradingIsEnabled() public view returns (bool) {
         return block.timestamp >= tradingEnabledTimestamp;
+    }
+
+    function _isBuy(address from) internal view returns (bool) {
+        // Transfer from pair is a buy swap
+        return automatedMarketMakerPairs[from];
+    }
+
+    function _isSell(address from, address to) internal view returns (bool) {
+        // Transfer to pair from non-router address is a sell swap
+        return from != address(pancakeRouter) && automatedMarketMakerPairs[to];
     }
 
     function _transfer(
@@ -204,6 +240,91 @@ contract FortunasToken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
+        require(from != address(0), "ERC20: transfer from the zero address");
+        require(to != address(0), "ERC20: transfer to the zero address");
+
+        bool tradingIsEnabled = getTradingIsEnabled();
+
+        if (!tradingIsEnabled) {
+            require(canTransferBeforeTradingIsEnabled[from], "FRTNA: This account cannot send tokens until trading is enabled");
+        }
+
+        if(amount == 0) {
+            super._transfer(from, to, 0);
+            return;
+        }
+
+        uint256 contractTokenBalance = balanceOf(address(this));
+
+        bool canTransfer = contractTokenBalance >= transferTokensAtAmount;
+
+        if (canTransfer) {
+            uint256 totalBuyingFeesAccumulated = contractTokenBalance;
+            uint256 toLiquidityAmount;
+            uint256 toTreasuryAmount;
+            uint256 toBurnAmount;
+
+            if (totalSellingFeesAccumulated > 0) {
+                totalBuyingFeesAccumulated -= totalSellingFeesAccumulated;
+
+                toLiquidityAmount = totalSellingFeesAccumulated
+                    .mul(liquiditySellingFee)
+                    .div(multiplierForFee);
+                super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+
+                toTreasuryAmount = totalSellingFeesAccumulated
+                    .mul(treasurySellingFee)
+                    .div(multiplierForFee);
+                super._transfer(address(this), treasuryWallet, toTreasuryAmount);
+
+                toBurnAmount = totalSellingFeesAccumulated
+                    .mul(burnSellingFee)
+                    .div(multiplierForFee);
+                _burn(address(this), toBurnAmount);
+            }
+            
+            if (totalBuyingFeesAccumulated > 0) {
+                toLiquidityAmount = totalBuyingFeesAccumulated
+                    .mul(liquidityBuyingFee)
+                    .div(multiplierForFee);
+                super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+
+                toTreasuryAmount = totalBuyingFeesAccumulated
+                    .mul(treasuryBuyingFee)
+                    .div(multiplierForFee);
+                super._transfer(address(this), treasuryWallet, toTreasuryAmount);
+
+                toBurnAmount = totalBuyingFeesAccumulated
+                    .mul(burnBuyingFee)
+                    .div(multiplierForFee);
+                _burn(address(this), toBurnAmount);
+            }
+
+            totalSellingFeesAccumulated = 0;
+        }
+
+        if (
+            _isBuy(from)
+            && !isExcludedFromFees[to]
+        ) {
+            uint256 buyingFee = amount.mul(totalBuyingFee).div(multiplierForFee);
+            amount -= buyingFee;
+
+            super._transfer(from, address(this), buyingFee);
+        }
+
+        if (
+            _isSell(from, to)
+            && !isExcludedFromFees[from]
+        ) {
+            uint256 sellingFee = amount.mul(totalSellingFee).div(multiplierForFee);
+            totalSellingFeesAccumulated += sellingFee;
+            amount -= sellingFee;
+
+            super._transfer(from, address(this), sellingFee);
+        }
+
+        super._transfer(from, to, amount);
     }
 
     function burn(address account, uint256 amount) external {
