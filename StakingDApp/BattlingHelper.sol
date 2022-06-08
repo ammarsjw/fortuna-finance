@@ -184,7 +184,7 @@ contract BattlingHelper is Ownable, BattleStruct {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
         uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
-        uint256 ratio = _tempBattle.currentRewardPercentage.div(48).mul(cyclesRemaining);
+        uint256 ratio = _tempBattle.currentRewardPercentage.roundDiv(48).mul(cyclesRemaining);
         ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
         uint256 accruedInterest = _compoundReward(

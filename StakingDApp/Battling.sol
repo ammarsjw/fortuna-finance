@@ -200,10 +200,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         rationsBase = [2500, 5000, 7500, 10000, 12500];
         _setRations();
 
-        assetPercentages = [200000, 400000, 600000, 800000, 1000000,            // each hero's effect on current battle APY
-                            100000, 200000, 300000, 400000, 500000];            // each cavalry's effect on total battle APY
-        assetPrices = [2500, 5000, 7500, 10000, 12500,      // percentage cost of LP for purchasing each hero
-                        2500, 5000, 7500, 10000, 12500];    // percentage cost of LP for purchasing each cavalry
+        // each hero's/cavalry's effect on current/total battle APY
+        assetPercentages = [200000, 400000, 600000, 800000, 1000000,
+                            100000, 200000, 300000, 400000, 500000];
+        // percentage cost of LP for purchasing each hero/cavalry
+        assetPrices = [2500, 5000, 7500, 10000, 12500,
+                        2500, 5000, 7500, 10000, 12500];
 
         randomAssetPrice = 5000;
 
