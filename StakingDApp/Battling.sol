@@ -170,20 +170,20 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        // address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
-        pancakeRouter = _pancakeRouter;
-        pancakePair = IPancakePair(_addressForPancakePair);
+        // pancakeRouter = _pancakeRouter;
+        // pancakePair = IPancakePair(_addressForPancakePair);
 
-        LPToken = IERC20(_addressForPancakePair);
+        // LPToken = IERC20(_addressForPancakePair);
 
         fortunasAssets = new FortunasAssets("", address(this));
 
         fortunasToken = FortunasToken(payable(_fortunasToken));
 
         // TODO
-        treasuryWallet = address(fortunasToken);
+        treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
 
         // rewardTime = 1800;
         // oneDayTime = 86400;
@@ -255,6 +255,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     function battleStart(uint256 _tokens, uint8 _battleType) external {
         require(_tokens >= 13334, "battleStart::MIN");
         require(2 <= _battleType && _battleType <= 6, "battleStart::WBT1");
+        require(battleForAddress[msg.sender][_battleType].initialTokensStaked == 0, "battleStart::BAS");
 
 
         uint256 bribe = _tokens.mul(bribeToEmeperor).div(multiplier);
@@ -385,7 +386,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         tempBattle = _calculateLosses(tempBattle);
 
         uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
-        if (totalContractBalance < _tokensToRemove) {
+        if (_tokensToRemove > totalContractBalance) {
             uint256 toMint = _tokensToRemove.sub(totalContractBalance);
             fortunasToken.mint(address(this), toMint);
         }
@@ -669,7 +670,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
         else {
             uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
-            if (totalContractBalance < tokensToTransfer) {
+            if (tokensToTransfer > totalContractBalance) {
                 uint256 toMint = tokensToTransfer.sub(totalContractBalance);
                 fortunasToken.mint(address(this), toMint);
             }
@@ -786,5 +787,13 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
 
         return tempRewards;
+    }
+
+    function testMint(uint256 _hero) external {
+        fortunasAssets.mint(msg.sender, _hero, 1, "");
+    }
+
+    function testBurn(uint256 _hero) external {
+        fortunasAssets.burnWithoutCheck(msg.sender, _hero, 1);
     }
 }

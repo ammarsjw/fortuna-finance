@@ -14,7 +14,8 @@ contract FortunasToken is ERC20, Ownable {
     address public battlingContractAddress;
 
     IPancakeRouter02 public pancakeRouter;
-    address public immutable pancakePair;
+    // address public immutable pancakePair;
+    address public pancakePair;
 
     // BUSD mainnet
     // address public immutable BUSD =
@@ -117,20 +118,21 @@ contract FortunasToken is ERC20, Ownable {
 
         multiplierForFee = 1000;
 
-    	liquidityWallet = address(this);
-        treasuryWallet = address(this);
+        // TODO
+    	liquidityWallet = address(0x45faf7923BAb5A5380515E055CA700519B3e4705);
+        treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
 
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
-            .createPair(address(this), BUSD);
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        // address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
+        //     .createPair(address(this), BUSD);
 
-        pancakeRouter = _pancakeRouter;
-        pancakePair = _pancakePair;
+        // pancakeRouter = _pancakeRouter;
+        // pancakePair = _pancakePair;
 
-        _setAutomatedMarketMakerPair(_pancakePair, true);
+        // _setAutomatedMarketMakerPair(_pancakePair, true);
 
         // exclude from paying fees
         excludeFromFees(liquidityWallet, true);
@@ -211,7 +213,6 @@ contract FortunasToken is ERC20, Ownable {
 
     function updateLiquidityWallet(address newLiquidityWallet) public onlyOwner {
         require(newLiquidityWallet != liquidityWallet, "FRTNA: The liquidity wallet is already this address");
-        excludeFromFees(liquidityWallet, false);
         excludeFromFees(newLiquidityWallet, true);
         emit LiquidityWalletUpdated(newLiquidityWallet, liquidityWallet);
         liquidityWallet = newLiquidityWallet;
@@ -219,7 +220,6 @@ contract FortunasToken is ERC20, Ownable {
 
     function updateTreasuryWallet(address newTreasuryWallet) public onlyOwner {
         require(newTreasuryWallet != treasuryWallet, "FRTNA: The treasury wallet is already this address");
-        excludeFromFees(treasuryWallet, false);
         excludeFromFees(newTreasuryWallet, true);
         emit TreasuryWalletUpdated(newTreasuryWallet, treasuryWallet);
         treasuryWallet = newTreasuryWallet;
