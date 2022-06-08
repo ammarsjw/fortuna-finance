@@ -7,7 +7,7 @@ import "./MathUpgradeable.sol";
 import "./FortunasToken.sol";
 import "./ABDKMath64x64.sol";
 
-abstract contract baseTest {
+abstract contract BaseTest {
 
     function adding(uint256 a, uint256 b) public virtual returns (uint256) {
         return a + b;
@@ -15,10 +15,30 @@ abstract contract baseTest {
 
 }
 
-contract test is Ownable, baseTest {
+contract OtherTest is Ownable {
+
+    constructor() {
+
+    }
+    
+    function outsideCall1() external view returns (address) {
+        address x = msg.sender;
+        return x;
+    }
+
+    function outsideCall2() public view returns (address) {
+        address y = msg.sender;
+        return y;
+    }
+
+}
+
+contract Test is Ownable, BaseTest {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
+    OtherTest public otherTest;
+    
     uint256 public contractStartTime = 1652421600; // a certain epoch time for testing (11:00 AM, 13th May 2022) 
     
     uint256 rewardTime;
@@ -49,6 +69,8 @@ contract test is Ownable, baseTest {
         rewardTime = 1;                                     // only for testing
         oneDayTime = 48;                                    // only for testing
         baseBattleTime = 144;                               // only for testing
+
+        otherTest = new OtherTest();
     }
 
     function setFortunasTokenContractAddress(address payable _contractAddress) public onlyOwner {
@@ -290,5 +312,13 @@ contract test is Ownable, baseTest {
 
     function fun25(Thing memory _tempThings) internal pure {
         _tempThings = Thing(5, 6);
+    }
+
+    function fun26() external view returns(address, address, address) {
+        address x;
+        address y;
+        x = otherTest.outsideCall1();
+        y = otherTest.outsideCall2();
+        return (msg.sender, x, y);
     }
 }
