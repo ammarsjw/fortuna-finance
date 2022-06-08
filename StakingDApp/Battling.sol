@@ -37,7 +37,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     // BUSD mainnet
     // address public immutable BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
     // BUSD testnet (TestnetERC20Token)
-    address public BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
+    address public immutable BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     uint256 public rewardTime;                              // 30 minutes in seconds
     uint256 public oneDayTime;                              // 1 day in seconds

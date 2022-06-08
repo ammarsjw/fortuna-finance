@@ -21,7 +21,7 @@ contract FortunasToken is ERC20, Ownable {
     // address public immutable BUSD =
     //     address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
     // BUSD testnet (TestnetERC20Token)
-    address public BUSD =
+    address public immutable BUSD =
         address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     address public liquidityWallet;
@@ -73,6 +73,8 @@ contract FortunasToken is ERC20, Ownable {
 
     event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
 
+    event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiqudity);
+
     // constructor
 
     constructor() ERC20("Fortunas Token", "FRTNA") {
@@ -98,7 +100,7 @@ contract FortunasToken is ERC20, Ownable {
         multiplierForFee = 10 ** 3;
 
         // TODO
-    	liquidityWallet = address(0x45faf7923BAb5A5380515E055CA700519B3e4705);
+    	liquidityWallet = address(owner());
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
 
         // PancakeRouter02 mainnet
@@ -114,9 +116,9 @@ contract FortunasToken is ERC20, Ownable {
         // _setAutomatedMarketMakerPair(_pancakePair, true);
 
         // exclude from paying fees
+        excludeFromFees(address(this), true);
         excludeFromFees(liquidityWallet, true);
         excludeFromFees(treasuryWallet, true);
-        excludeFromFees(owner(), true);
 
         // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
@@ -126,7 +128,7 @@ contract FortunasToken is ERC20, Ownable {
 
     // getters and setters
 
-    function postConstructor(address _battlingContractAddress/*, address _lotteryContractAddress*/) external onlyOwner {
+    function setAssociatedContracts(address _battlingContractAddress/*, address _lotteryContractAddress*/) external onlyOwner {
         battlingContractAddress = _battlingContractAddress;
         excludeFromFees(_battlingContractAddress, true);
         // excludeFromFees(_lotteryContractAddress, true);
@@ -306,6 +308,62 @@ contract FortunasToken is ERC20, Ownable {
         }
 
         super._transfer(from, to, amount);
+    }
+
+    function swapAndLiquify(uint256 tokens) private {
+        // split the contract balance into halves
+        uint256 half = tokens.div(2);
+        uint256 otherHalf = tokens.sub(half);
+
+        // capture the contract's current ETH balance.
+        // this is so that we can capture exactly the amount of ETH that the
+        // swap creates, and not make the liquidity event include any ETH that
+        // has been manually sent to the contract
+        uint256 initialBalance = address(this).balance;
+
+        // swap tokens for ETH
+        swapTokensForEth(half); // <- this breaks the ETH -> HATE swap when swap+liquify is triggered
+
+        // how much ETH did we just swap into?
+        uint256 newBalance = address(this).balance.sub(initialBalance);
+
+        // add liquidity to uniswap
+        addLiquidity(otherHalf, newBalance);
+        
+        emit SwapAndLiquify(half, newBalance, otherHalf);
+    }
+
+    function swapTokensForEth(uint256 tokenAmount) private {
+        // generate the uniswap pair path of token -> weth
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = pancakeRouter.WETH();
+
+        _approve(address(this), address(pancakeRouter), tokenAmount);
+
+        // make the swap
+        pancakeRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            tokenAmount,
+            0, // accept any amount of ETH
+            path,
+            address(this),
+            block.timestamp
+        );
+    }
+
+    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
+        // approve token transfer to cover all possible scenarios
+        _approve(address(this), address(pancakeRouter), tokenAmount);
+
+        // add the liquidity
+        pancakeRouter.addLiquidityETH{value: ethAmount}(
+            address(this),
+            tokenAmount,
+            0, // slippage is unavoidable
+            0, // slippage is unavoidable
+            liquidityWallet,
+            block.timestamp
+        );
     }
 
     function burn(address account, uint256 amount) external {

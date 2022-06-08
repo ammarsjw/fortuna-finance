@@ -20,7 +20,7 @@ contract Eloin is Context, IERC20, Ownable {
     mapping (address => bool) private _isExcludedFromFee;
 
     mapping (address => bool) private _isExcluded;
-    mapping(address => bool) public _isBlacklisted;
+    mapping (address => bool) public _isBlacklisted;
     mapping (address => uint256) _sellTime;
     mapping (address => uint256) _buyTime;
     address[] private _excluded;
@@ -457,7 +457,7 @@ contract Eloin is Context, IERC20, Ownable {
         }
     }
     
-       function _validateTime(
+    function _validateTime(
         address sender,
         address recipient,
         bool takeFee
