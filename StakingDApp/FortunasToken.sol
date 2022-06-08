@@ -130,7 +130,7 @@ contract FortunasToken is ERC20, Ownable {
         pancakeRouter = _pancakeRouter;
         pancakePair = _pancakePair;
 
-        setAutomatedMarketMakerPair(_pancakePair, true);
+        _setAutomatedMarketMakerPair(_pancakePair, true);
 
         // exclude from paying fees
         excludeFromFees(liquidityWallet, true);
@@ -199,6 +199,10 @@ contract FortunasToken is ERC20, Ownable {
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
         require(pair != pancakePair, "FRTNA: The PancakeSwap pair cannot be removed from automatedMarketMakerPairs");
 
+        _setAutomatedMarketMakerPair(pair, value);
+    }
+
+    function _setAutomatedMarketMakerPair(address pair, bool value) private {
         require(automatedMarketMakerPairs[pair] != value, "FRTNA: Automated market maker pair is already set to that value");
         automatedMarketMakerPairs[pair] = value;
 
