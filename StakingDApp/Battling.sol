@@ -704,20 +704,15 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     }
 
     function _calculateLosses(Battle memory _tempBattle) internal returns (Battle memory) {
-        // TODO
-        uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-        uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-        uint256 randRations = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-
-        randHero = randHero.mod(1000);
-        randCavalry = randCavalry.mod(1000);
-        randRations = randRations.mod(1000);
-
         uint256 chanceToLoose = 500;
         uint256 chanceDecrease = _tempBattle.battleDaysExpended.div(48).mul(10).div(2);
         chanceToLoose = chanceToLoose.safeSub(chanceDecrease);
 
         if (_tempBattle.hero != 0) {
+            // TODO
+            uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+            randHero = randHero.mod(1000);
+
             if (0 < randHero && randHero <= chanceToLoose) {
                 emit HeroLost (
                     msg.sender,
@@ -739,6 +734,9 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
 
         if (_tempBattle.cavalry != 0) {
+            uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
+            randCavalry = randCavalry.mod(1000);
+
             if (0 < randCavalry && randCavalry <= chanceToLoose) {
                 emit CavalryLost (
                     msg.sender,
@@ -787,13 +785,5 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         }
 
         return tempRewards;
-    }
-
-    function testMint(uint256 _hero) external {
-        fortunasAssets.mint(msg.sender, _hero, 1, "");
-    }
-
-    function testBurn(uint256 _hero) external {
-        fortunasAssets.burnWithoutCheck(msg.sender, _hero, 1);
     }
 }
