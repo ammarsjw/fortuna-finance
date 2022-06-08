@@ -1,7 +1,6 @@
 pragma solidity ^0.8.0;
 // SPDX-License-Identifier: Unlicense
 
-import "./Context.sol";
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./ERC1155.sol";
