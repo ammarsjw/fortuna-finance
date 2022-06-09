@@ -387,7 +387,7 @@ contract FortunasToken is ERC20, Ownable {
             0, // accept any amount of ETH
             path,
             address(this),
-            block.timestamp.add(600)
+            block.timestamp.add(1800)
         );
     }
 
@@ -402,7 +402,7 @@ contract FortunasToken is ERC20, Ownable {
             0, // slippage is unavoidable
             0, // slippage is unavoidable
             liquidityWallet,
-            block.timestamp.add(600)
+            block.timestamp.add(1800)
         );
     }
 
