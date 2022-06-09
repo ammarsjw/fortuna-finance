@@ -16,7 +16,7 @@ contract BattlingExtension is BattlingBase {
 
     // functions
 
-    function calculateRations(Battle memory _tempBattle, uint256 _extraRewards, uint256 _rationDays) external view returns (Battle memory, uint256) {
+    function calculateRations(Battle memory _tempBattle, uint256 _extraRewards, uint256 _rationDays) external view onlyOwner returns (Battle memory, uint256) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards).add(_extraRewards);
         uint256 tempRations;
         uint256 totalPercentage;
@@ -42,7 +42,7 @@ contract BattlingExtension is BattlingBase {
         return (_tempBattle, tempRations);
     }
 
-    function calculateRewards(Battle memory _tempBattle) public view returns (Battle memory) {
+    function calculateRewards(Battle memory _tempBattle) public view onlyOwner returns (Battle memory) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
         uint256 daysWagingBattle = block.timestamp.sub(_tempBattle.battleStartTime).div(oneDayTime);
@@ -120,7 +120,7 @@ contract BattlingExtension is BattlingBase {
         return _tempBattle;
     }
 
-    function calculateExtraRewards(Battle memory _tempBattle) public view returns (uint256, uint256) {
+    function calculateExtraRewards(Battle memory _tempBattle) public view onlyOwner returns (uint256, uint256) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
         uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
@@ -146,7 +146,7 @@ contract BattlingExtension is BattlingBase {
         return (extraRewards, nextReward);
     }
 
-    function calculateRewardsForBattleEnd(Battle memory _tempBattle) external view returns (Battle memory) {
+    function calculateRewardsForBattleEnd(Battle memory _tempBattle) external view onlyOwner returns (Battle memory) {
         uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {

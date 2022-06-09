@@ -677,7 +677,7 @@ contract Battling is BattlingBase, ERC1155Holder {
      * @dev Ideally to be called only if an update on current reward amount is needed
      * @dev Function "battleEnd" should be called if unstaking
      */
-    function viewRewards(address _user) external view returns (uint256[] memory, uint256[] memory) {
+    function viewAllRewards(address _user) external view returns (uint256[] memory, uint256[] memory) {
         uint256[] memory tempRewards = new uint256[](5);
         uint256[] memory nextRewards = new uint256[](5);
         uint256 extraRewards;
