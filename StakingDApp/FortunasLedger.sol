@@ -70,12 +70,12 @@ contract FortunasLedger is Ownable {
             uint256 rewardCycles = timeToConsider.div(rewardTime);
             uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
 
-            uint256 accruedInterest = _compoundReward(
+            uint256 compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
                 ratio,
                 1
             );
-            tempTotalPassiveRewards += accruedInterest.sub(balance.add(tempTotalPassiveRewards));
+            tempTotalPassiveRewards += compoundReward;
 
             _totalPassiveRewards[account] = tempTotalPassiveRewards;
             _lastUpdate[account] += rewardCycles.mul(rewardTime);
@@ -120,19 +120,19 @@ contract FortunasLedger is Ownable {
             uint256 rewardCycles = timeToConsider.div(rewardTime);
             uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
 
-            uint256 accruedInterest = _compoundReward(
+            uint256 compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
                 ratio,
                 1
             );
-            tempTotalPassiveRewards += accruedInterest.sub(balance.add(tempTotalPassiveRewards));
+            tempTotalPassiveRewards += compoundReward;
 
-            accruedInterest = _compoundReward(
+            compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
                 rewardPercentagePerCycle,
                 1
             );
-            nextPassiveReward += accruedInterest.sub(balance.add(tempTotalPassiveRewards));
+            nextPassiveReward = compoundReward;
         }
 
         return (tempTotalPassiveRewards, nextPassiveReward);
@@ -143,6 +143,7 @@ contract FortunasLedger is Ownable {
             return _principal;
         }
 
-        return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        return accruedReward.sub(_principal);
     }
 }

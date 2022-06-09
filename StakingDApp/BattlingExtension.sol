@@ -49,17 +49,17 @@ contract BattlingExtension is BattlingBase {
         uint256 daysForReward;
 
         uint256 ratio = _tempBattle.currentRewardPercentage.mul(10 ** 18).div(multiplierForReward);
-        uint256 accruedInterest;
+        uint256 compoundReward;
         if (daysWagingBattle.sub(_tempBattle.battleDaysExpended) != 0) {
             if (daysWagingBattle < 3) {
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
-                accruedInterest = _compoundReward(
+                compoundReward = _compoundReward(
                     tempTotalTokens,
                     ratio,
                     daysForReward
                 );
-                _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                _tempBattle.rewards += compoundReward;
             }
             else if (daysWagingBattle >= 3
             && daysWagingBattle < _tempBattle.rationsDaysTotal.add(3)
@@ -67,13 +67,13 @@ contract BattlingExtension is BattlingBase {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
-                    accruedInterest = _compoundReward(
+                    compoundReward = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         daysForReward
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += compoundReward;
+                    tempTotalTokens += compoundReward;
 
                     _tempBattle.battleDaysExpended = 3;
                 }
@@ -103,12 +103,12 @@ contract BattlingExtension is BattlingBase {
                 }
 
                 if (exponent > 0) {
-                    accruedInterest = _compoundReward(
+                    compoundReward = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         exponent
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += compoundReward;
                 }
             }
 
@@ -128,20 +128,18 @@ contract BattlingExtension is BattlingBase {
         uint256 ratio = rewardPercentagePerCycle.mul(cyclesRemaining);
         ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
-        uint256 accruedInterest = _compoundReward(
+        uint256 extraRewards = _compoundReward(
             tempTotalTokens,
             ratio,
             1
         );
-        uint256 extraRewards = accruedInterest.sub(tempTotalTokens);
         tempTotalTokens += extraRewards;
 
-        accruedInterest = _compoundReward(
+        uint256 nextReward = _compoundReward(
             tempTotalTokens,
             rewardPercentagePerCycle,
             1
         );
-        uint256 nextReward = accruedInterest.sub(tempTotalTokens);
 
         return (extraRewards, nextReward);
     }
@@ -162,28 +160,28 @@ contract BattlingExtension is BattlingBase {
             uint256 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
             uint256 ratio = _tempBattle.currentRewardPercentage.mul(10 ** 18).div(multiplierForReward);
-            uint256 accruedInterest;
+            uint256 compoundReward;
             if (_tempBattle.battleType == 2) {
                 require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::BNE");
 
-                accruedInterest = _compoundReward(
+                compoundReward = _compoundReward(
                     tempTotalTokens,
                     ratio,
                     daysForReward
                 );
-                _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                _tempBattle.rewards += compoundReward;
             }
             else {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
-                    accruedInterest = _compoundReward(
+                    compoundReward = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         daysForReward
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += compoundReward;
+                    tempTotalTokens += compoundReward;
 
                     _tempBattle.battleDaysExpended = 3;
                 }
@@ -213,12 +211,12 @@ contract BattlingExtension is BattlingBase {
                 }
 
                 if (exponent > 0) {
-                    accruedInterest = _compoundReward(
+                    compoundReward = _compoundReward(
                         tempTotalTokens,
                         ratio,
                         exponent
                     );
-                    _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
+                    _tempBattle.rewards += compoundReward;
                 }
             }
 
@@ -233,6 +231,7 @@ contract BattlingExtension is BattlingBase {
             return _principal;
         }
 
-        return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        return accruedReward.sub(_principal);
     }
 }
