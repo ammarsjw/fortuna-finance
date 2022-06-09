@@ -6,7 +6,7 @@ import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./BattlingBase.sol";
 import "./BattlingExtension.sol";
-import "./FortunasToken.sol";
+import "./IFortunasToken.sol";
 import "./FortunasAssets.sol";
 import "./ERC1155Holder.sol";
 import "./IPancakePair.sol";
@@ -29,7 +29,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     FortunasAssets public fortunasAssets;
     
     // FRTNA
-    FortunasToken public fortunasToken;
+    IFortunasToken public fortunasToken;
     
     // Treasury Wallet
     address public treasuryWallet;
@@ -122,7 +122,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasAssets = new FortunasAssets("", address(this));
 
-        fortunasToken = FortunasToken(payable(_fortunasToken));
+        fortunasToken = IFortunasToken(payable(_fortunasToken));
 
         // TODO
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
@@ -150,7 +150,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     // setters
 
     function setFortunasToken(address _fortunasToken) external onlyOwner {
-        fortunasToken = FortunasToken(payable(_fortunasToken));
+        fortunasToken = IFortunasToken(payable(_fortunasToken));
     }
 
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {

@@ -428,12 +428,12 @@ contract FortunasToken is ERC20, Ownable {
         return (totalPassiveRewards, nextPassiveReward);
     }
 
-    function burn(address account, uint256 amount) external {
-        _burn(account, amount);
-    }
-
     function mint(address account, uint256 amount) external onlyContract {
         _mint(account, amount);
+    }
+
+    function burn(address account, uint256 amount) external onlyContract {
+        _burn(account, amount);
     }
 
     modifier onlyContract {
