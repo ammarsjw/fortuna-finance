@@ -320,7 +320,6 @@ contract Battling is BattlingBase, ERC1155Holder {
     function purchaseHero(uint256 _heroToPurchase) external {
         require(1 <= _heroToPurchase && _heroToPurchase <= 6, "purchaseHero::WH");
 
-
         uint256 cost;
         if (_heroToPurchase == 6) {
             cost = randomAssetPrice;
@@ -616,13 +615,15 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function _calculateLosses(Battle memory _tempBattle) internal returns (Battle memory) {
         uint256 chanceToLoose = 50;
-        uint256 chanceDecrease = _tempBattle.battleDaysExpended.safeSub(3).mul(5);
-        chanceToLoose = chanceToLoose.safeSub(chanceDecrease);
+        if (_tempBattle.battleDaysExpended > 3) {
+            uint256 chanceDecrease = _tempBattle.battleDaysExpended.sub(3).mul(5);
+            chanceToLoose = chanceToLoose.safeSub(chanceDecrease);
+        }
 
         if (_tempBattle.hero != 0 && chanceToLoose != 0) {
             // TODO
             uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-            randHero = randHero.mod(1000);
+            randHero = randHero.mod(100);
 
             if (0 < randHero && randHero <= chanceToLoose) {
                 emit HeroLost (
@@ -646,7 +647,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         if (_tempBattle.cavalry != 0 && chanceToLoose != 0) {
             uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
-            randCavalry = randCavalry.mod(1000);
+            randCavalry = randCavalry.mod(100);
 
             if (0 < randCavalry && randCavalry <= chanceToLoose) {
                 emit CavalryLost (
