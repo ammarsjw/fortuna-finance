@@ -8,12 +8,12 @@ import "./ABDKMath64x64.sol";
 contract FortunasLedger is Ownable {
     using SafeMath for uint256;
 
-    uint256 rewardTime;
+    uint256 public rewardTime;
     
-    uint256 multiplierForReward;
+    uint256 public multiplierForReward;
 
-    uint256 rewardPercentage;
-    uint256 rewardPercentagePerCycle;
+    uint256 public rewardPercentage;
+    uint256 public rewardPercentagePerCycle;
 
     // mappings
 
@@ -69,6 +69,7 @@ contract FortunasLedger is Ownable {
 
             uint256 rewardCycles = timeToConsider.div(rewardTime);
             uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
+            ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
             uint256 compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
@@ -119,6 +120,7 @@ contract FortunasLedger is Ownable {
 
             uint256 rewardCycles = timeToConsider.div(rewardTime);
             uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
+            ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
             uint256 compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
@@ -127,9 +129,11 @@ contract FortunasLedger is Ownable {
             );
             tempTotalPassiveRewards += compoundReward;
 
+            ratio = rewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+
             compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
-                rewardPercentagePerCycle,
+                ratio,
                 1
             );
             nextPassiveReward = compoundReward;

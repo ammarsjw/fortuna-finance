@@ -135,9 +135,11 @@ contract BattlingExtension is BattlingBase {
         );
         tempTotalTokens += extraRewards;
 
+        ratio = rewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+
         uint256 nextReward = _compoundReward(
             tempTotalTokens,
-            rewardPercentagePerCycle,
+            ratio,
             1
         );
 
