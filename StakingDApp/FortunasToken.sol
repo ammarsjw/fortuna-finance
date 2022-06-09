@@ -406,7 +406,7 @@ contract FortunasToken is ERC20, Ownable {
         );
     }
 
-    function claimPassiveRewards() external {
+    function claimLedger() external {
         require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
 
         uint256 totalPassiveRewards =
@@ -419,7 +419,7 @@ contract FortunasToken is ERC20, Ownable {
         _mint(msg.sender, totalPassiveRewards);
     }
 
-    function viewPassiveRewards(address account) external view returns (uint256, uint256) {
+    function viewLedger(address account) external view returns (uint256, uint256) {
         require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
 
         (uint256 totalPassiveRewards, uint256 nextPassiveReward) =

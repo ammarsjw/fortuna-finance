@@ -260,6 +260,8 @@ contract Test is Ownable, BaseTest {
     }
 
     function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256, uint256) {
+        _ratio *= 10 ** 7;
+        // Ratio should be in whole numbers. If floating point numbers are required comment this^ out and multiply by 10 ** 7
         _ratio = _ratio.mul(10 ** 18).div(10 ** 9);
 
         uint256 accruedInterest = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
