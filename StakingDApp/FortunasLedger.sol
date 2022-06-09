@@ -24,7 +24,7 @@ contract FortunasLedger is Ownable {
 
     constructor() {
         // rewardTime = 1800;
-        rewardTime = 1;
+        rewardTime = 60;
 
         multiplierForReward = 10 ** 9;
 
@@ -96,7 +96,7 @@ contract FortunasLedger is Ownable {
         return updatedPassiveRewards;
     }
 
-    function getPassiveRewards(address account, uint256 balance) external view returns (uint256, uint256) {
+    function getPassiveRewards(address account, uint256 balance) external view onlyOwner returns (uint256, uint256) {
         uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
         uint256 nextPassiveReward;
 
