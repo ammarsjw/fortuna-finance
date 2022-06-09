@@ -615,11 +615,11 @@ contract Battling is BattlingBase, ERC1155Holder {
     }
 
     function _calculateLosses(Battle memory _tempBattle) internal returns (Battle memory) {
-        uint256 chanceToLoose = 500;
-        uint256 chanceDecrease = _tempBattle.battleDaysExpended.div(48).mul(10).div(2);
+        uint256 chanceToLoose = 50;
+        uint256 chanceDecrease = _tempBattle.battleDaysExpended.safeSub(3).mul(5);
         chanceToLoose = chanceToLoose.safeSub(chanceDecrease);
 
-        if (_tempBattle.hero != 0) {
+        if (_tempBattle.hero != 0 && chanceToLoose != 0) {
             // TODO
             uint256 randHero = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
             randHero = randHero.mod(1000);
@@ -644,7 +644,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
         }
 
-        if (_tempBattle.cavalry != 0) {
+        if (_tempBattle.cavalry != 0 && chanceToLoose != 0) {
             uint256 randCavalry = uint256(keccak256(abi.encodePacked(block.difficulty, block.timestamp)));
             randCavalry = randCavalry.mod(1000);
 

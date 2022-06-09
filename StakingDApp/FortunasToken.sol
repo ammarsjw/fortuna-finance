@@ -270,51 +270,8 @@ contract FortunasToken is ERC20, Ownable {
             require(canTransferBeforeTradingIsEnabled[from], "FRTNA: This account cannot send tokens until trading is enabled");
         }
 
-        if (!isExcludedFromPassiveRewards[from]) {
-            (uint256 totalPassiveRewards, bool isFirstTransaction) =
-                fortunasLedger.updatePassiveRewards(from, balanceOf(from));
-
-            uint256 nextPassiveReward =
-                fortunasLedger.calculateNextPassiveReward(from, balanceOf(from));
-
-            if (isFirstTransaction) {
-                emit LedgerCreated(
-                    from,
-                    totalPassiveRewards,
-                    nextPassiveReward
-                );
-            }
-            else {
-                emit LedgerUpdated(
-                    from,
-                    totalPassiveRewards,
-                    nextPassiveReward
-                );
-            }
-        }
-
-        if (!isExcludedFromPassiveRewards[to]) {
-            (uint256 totalPassiveRewards, bool isFirstTransaction) =
-                fortunasLedger.updatePassiveRewards(to, balanceOf(to));
-
-            uint256 nextPassiveReward =
-                fortunasLedger.calculateNextPassiveReward(to, balanceOf(to));
-
-            if (isFirstTransaction) {
-                emit LedgerCreated(
-                    to,
-                    totalPassiveRewards,
-                    nextPassiveReward
-                );
-            }
-            else {
-                emit LedgerUpdated(
-                    to,
-                    totalPassiveRewards,
-                    nextPassiveReward
-                );
-            }
-        }
+        updateLedger(from);
+        updateLedger(to);
 
         if(amount == 0) {
             super._transfer(from, to, 0);
@@ -469,8 +426,10 @@ contract FortunasToken is ERC20, Ownable {
         );
     }
 
-    function updateLedger(address account) external {
-        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
+    function updateLedger(address account) public {
+        if (isExcludedFromPassiveRewards[account]) {
+            return;
+        }
 
         (uint256 totalPassiveRewards, bool isFirstTransaction) =
             fortunasLedger.updatePassiveRewards(account, balanceOf(account));
@@ -479,7 +438,11 @@ contract FortunasToken is ERC20, Ownable {
             fortunasLedger.calculateNextPassiveReward(account, balanceOf(account));
 
         if (isFirstTransaction) {
-            emit LedgerCreated(account, totalPassiveRewards, nextPassiveReward);
+            emit LedgerCreated(
+                account,
+                totalPassiveRewards,
+                nextPassiveReward
+            );
             return;
         }
 
