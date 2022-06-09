@@ -87,61 +87,21 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 rations
     );
 
-    event HeroPurchased (
-        address indexed user,
-        uint256 battleType,
-        bool heroStatus,
-        uint256 hero
-    );
+    event HeroPurchased (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
 
-    event HeroDeployed (
-        address indexed user,
-        uint256 battleType,
-        bool heroStatus,
-        uint256 hero
-    );
+    event HeroDeployed (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
 
-    event HeroReturned (
-        address indexed user,
-        uint256 battleType,
-        bool heroStatus,
-        uint256 hero
-    );
+    event HeroReturned (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
 
-    event HeroLost (
-        address indexed user,
-        uint256 battleType,
-        bool heroStatus,
-        uint256 hero
-    );
+    event HeroLost (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
 
-    event CavalryPurchased (
-        address indexed user,
-        uint256 battleType,
-        bool cavalryStatus,
-        uint256 cavalry
-    );
+    event CavalryPurchased (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
 
-    event CavalryDeployed (
-        address indexed user,
-        uint256 battleType,
-        bool cavalryStatus,
-        uint256 cavalry
-    );
+    event CavalryDeployed (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
 
-    event CavalryReturned (
-        address indexed user,
-        uint256 battleType,
-        bool cavalryStatus,
-        uint256 cavalry
-    );
+    event CavalryReturned (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
 
-    event CavalryLost (
-        address indexed user,
-        uint256 battleType,
-        bool cavalryStatus,
-        uint256 cavalry
-    );
+    event CavalryLost (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
 
     // constructor
 
