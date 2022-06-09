@@ -259,10 +259,11 @@ contract Test is Ownable, BaseTest {
         return numberOfRewardCycles;
     }
 
-    function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256) {
-        _ratio = _ratio.mul(10 ** 18).div(10000000);
+    function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256, uint256) {
+        _ratio = _ratio.mul(10 ** 18).div(10 ** 9);
 
-        return ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        uint256 accruedInterest = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        return (accruedInterest, accruedInterest.sub(_principal));
     }
 
     function fun19(uint256 a, uint256 b) external view returns (uint256) {

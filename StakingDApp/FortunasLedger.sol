@@ -96,7 +96,7 @@ contract FortunasLedger is Ownable {
         return updatedPassiveRewards;
     }
 
-    function viewPassiveRewards(address account, uint256 balance) external view returns (uint256, uint256) {
+    function getPassiveRewards(address account, uint256 balance) external view returns (uint256, uint256) {
         uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
         uint256 nextPassiveReward;
 
