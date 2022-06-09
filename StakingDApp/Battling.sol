@@ -254,7 +254,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-        uint256 extraRewards = battlingExtension.calculateExtraRewards(tempBattle);
+        (uint256 extraRewards, ) = battlingExtension.calculateExtraRewards(tempBattle);
 
         uint256 tempRations;
         (tempBattle, tempRations) = battlingExtension.calculateRations(tempBattle, extraRewards, _rationDays);
@@ -717,8 +717,10 @@ contract Battling is BattlingBase, ERC1155Holder {
      * @dev Ideally to be called only if an update on current reward amount is needed
      * @dev Function "battleEnd" should be called if unstaking
      */
-    function viewRewards(address _user) external view returns (uint256[] memory) {
+    function viewRewards(address _user) external view returns (uint256[] memory, uint256[] memory) {
         uint256[] memory tempRewards = new uint256[](5);
+        uint256[] memory nextRewards = new uint256[](5);
+        uint256 extraRewards;
         Battle memory tempBattle;
         for (uint256 i = 0 ; i < 5 ; i++) {
             tempBattle = battleForAddress[_user][i + 2];
@@ -726,7 +728,8 @@ contract Battling is BattlingBase, ERC1155Holder {
                 if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
                     tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-                    tempBattle.rewards += battlingExtension.calculateExtraRewards(tempBattle);
+                    (extraRewards, nextRewards[i]) = battlingExtension.calculateExtraRewards(tempBattle);
+                    tempBattle.rewards += extraRewards;
                 }
                 else {
                     tempBattle = battlingExtension.calculateRewardsForBattleEnd(tempBattle);
@@ -735,6 +738,6 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempRewards[i] = tempBattle.rewards;
         }
 
-        return tempRewards;
+        return (tempRewards, nextRewards);
     }
 }

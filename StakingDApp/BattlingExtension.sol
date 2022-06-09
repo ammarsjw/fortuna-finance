@@ -73,7 +73,7 @@ contract BattlingExtension is BattlingBase {
                         daysForReward
                     );
                     _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += _tempBattle.rewards;
+                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
 
                     _tempBattle.battleDaysExpended = 3;
                 }
@@ -120,11 +120,12 @@ contract BattlingExtension is BattlingBase {
         return _tempBattle;
     }
 
-    function calculateExtraRewards(Battle memory _tempBattle) public view returns (uint256) {
+    function calculateExtraRewards(Battle memory _tempBattle) public view returns (uint256, uint256) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
         uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
-        uint256 ratio = _tempBattle.currentRewardPercentage.roundDiv(48).mul(cyclesRemaining);
+        uint256 rewardPercentagePerCycle = _tempBattle.currentRewardPercentage.roundDiv(48);
+        uint256 ratio = rewardPercentagePerCycle.mul(cyclesRemaining);
         ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
         uint256 accruedInterest = _compoundReward(
@@ -132,8 +133,17 @@ contract BattlingExtension is BattlingBase {
             ratio,
             1
         );
+        uint256 extraRewards = accruedInterest.sub(tempTotalTokens);
+        tempTotalTokens += extraRewards;
 
-        return accruedInterest.sub(tempTotalTokens);
+        accruedInterest = _compoundReward(
+            tempTotalTokens,
+            rewardPercentagePerCycle,
+            1
+        );
+        uint256 nextReward = accruedInterest.sub(tempTotalTokens);
+
+        return (extraRewards, nextReward);
     }
 
     function calculateRewardsForBattleEnd(Battle memory _tempBattle) external view returns (Battle memory) {
@@ -142,7 +152,8 @@ contract BattlingExtension is BattlingBase {
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
             _tempBattle = calculateRewards(_tempBattle);
 
-            _tempBattle.rewards += calculateExtraRewards(_tempBattle);
+            (uint256 extraRewards, ) = calculateExtraRewards(_tempBattle);
+            _tempBattle.rewards += extraRewards;
         }
         else {
             uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
@@ -172,7 +183,7 @@ contract BattlingExtension is BattlingBase {
                         daysForReward
                     );
                     _tempBattle.rewards += accruedInterest.sub(tempTotalTokens);
-                    tempTotalTokens += _tempBattle.rewards;
+                    tempTotalTokens += accruedInterest.sub(tempTotalTokens);
 
                     _tempBattle.battleDaysExpended = 3;
                 }
