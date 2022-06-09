@@ -4,16 +4,16 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
+import "./BattlingBase.sol";
+import "./BattlingExtension.sol";
 import "./FortunasToken.sol";
+import "./FortunasAssets.sol";
+import "./ERC1155Holder.sol";
 import "./IPancakePair.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakeFactory.sol";
-import "./FortunasAssets.sol";
-import "./BattlingHelper.sol";
-import "./BattleStruct.sol";
-import "./ERC1155Holder.sol";
 
-contract Battling is Ownable, BattleStruct, ERC1155Holder {
+contract Battling is BattlingBase, ERC1155Holder {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
@@ -39,30 +39,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
     // BUSD testnet (TestnetERC20Token)
     address public immutable BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
-    uint256 public rewardTime;                              // 30 minutes in seconds
-    uint256 public oneDayTime;                              // 1 day in seconds
-    uint256 public baseBattleTime;                          // 3 days in seconds
-
-    uint256 multiplier;
-    uint256 multiplierForReward;
-
-    uint256 rationsIncreasePercentage;
-
-    uint256[5] rationsBase;                                 // rations %
-    uint256[5] rationsIncrease;                             // percentage increase in rations percentages when reward limit is reached
-    
-    uint256[6] rewardBasePercentages;
-    uint256 rewardIncreasePerDay;
-
-    uint256[6] rewardLimit;                                 // rewardBase cannot exceed these amounts
-    uint256[6] rewardBase;                                  // reward % per day
-
     uint256[10] assetPercentages;
     uint256[10] assetPrices;
 
     uint256 randomAssetPrice;
 
-    BattlingHelper battlingHelper;
+    BattlingExtension public battlingExtension;
 
     // mappings
 
@@ -185,21 +167,6 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         // TODO
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
 
-        // rewardTime = 1800;
-        // oneDayTime = 86400;
-        // baseBattleTime = 259200;
-        rewardTime = 1;                                     // only for testing
-        oneDayTime = 48;                                    // only for testing
-        baseBattleTime = 144;                               // only for testing
-
-        multiplier = 10 ** 6;
-        multiplierForReward = 10 ** 9;
-
-        rationsIncreasePercentage = 125000;
-
-        rationsBase = [2500, 5000, 7500, 10000, 12500];
-        _setRations();
-
         // each hero's/cavalry's effect on current/total battle APY
         assetPercentages = [200000, 400000, 600000, 800000, 1000000,
                             100000, 200000, 300000, 400000, 500000];
@@ -209,9 +176,9 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
 
         randomAssetPrice = 5000;
 
-        battlingHelper = new BattlingHelper();
+        battlingExtension = new BattlingExtension();
 
-        // setting all rewards for both battling and battlingHelper outside of constructor
+        // setting all rewards for both battling and battlingExtension outside of constructor
     }
 
     // getters
@@ -230,32 +197,14 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         treasuryWallet = _treasuryWallet;
     }
 
-    function _setRations() internal {
-        for (uint256 i = 0 ; i < 5 ; i++) {
-            rationsIncrease[i] = rationsBase[i].mul(rationsIncreasePercentage).roundDiv(multiplier);
-        }
-    }
-
     function setAllRewards(uint256[6] memory _basePercentages, uint256 _increasePerDay, uint256[6] memory _limit) external onlyOwner {
-        rewardBasePercentages = _basePercentages;
-        rewardIncreasePerDay = _increasePerDay;
-
-        rewardLimit = _limit;
-        _setRewards();
-
-        battlingHelper.setAllRewards(_basePercentages, _increasePerDay, _limit);
-    }
-
-    function _setRewards() internal {
-        for (uint256 i = 0 ; i < 6 ; i++) {
-            rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
-        }
+        _setAllRewards(_basePercentages, _increasePerDay, _limit);
     }
 
     // functions
 
     function battleStart(uint256 _tokens, uint8 _battleType) external {
-        require(_tokens >= 13334, "battleStart::MIN");
+        require(_tokens >= minRewardAmount[_battleType - 1], "battleStart::MIN");
         require(2 <= _battleType && _battleType <= 6, "battleStart::WBT1");
         require(battleForAddress[msg.sender][_battleType].initialTokensStaked == 0, "battleStart::BAS");
 
@@ -303,12 +252,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::WR1");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-        uint256 extraRewards = battlingHelper.calculateExtraRewards(tempBattle);
+        uint256 extraRewards = battlingExtension.calculateExtraRewards(tempBattle);
 
         uint256 tempRations;
-        (tempBattle, tempRations) = battlingHelper.calculateRations(tempBattle, extraRewards, _rationDays);
+        (tempBattle, tempRations) = battlingExtension.calculateRations(tempBattle, extraRewards, _rationDays);
 
         fortunasToken.burn(msg.sender, tempRations);
 
@@ -334,7 +283,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::BE");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
         tempBattle.additionalTokens += _tokensToAdd;
         if (tempBattle.additionalTokens + _tokensToAdd > tempBattle.initialTokensStaked) {
             tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
@@ -365,9 +314,9 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::BE");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
         require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::WT");
-        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= 13334, "removeTroops::MIN");
+        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= minRewardAmount[_battleType - 1], "removeTroops::MIN");
 
         if (_tokensToRemove > tempBattle.rewards) {
             _tokensToRemove -= tempBattle.rewards;
@@ -500,7 +449,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(tempBattle.hero == 0, "addHero::HAB2");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
         tempBattle.currentRewardPercentage += assetPercentages[_heroToAdd - 1];
         if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
             tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
@@ -541,7 +490,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(heroBattleForAddress[msg.sender][_heroToRemove] == _battleType, "removeHero::HAB3");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
         tempBattle.currentRewardPercentage -= assetPercentages[_heroToRemove - 1];
         if (tempBattle.dayForLimitReached != 0) {
             tempBattle.dayForLimitReached = 0;
@@ -583,7 +532,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(tempBattle.cavalry == 0, "addCavalry::CAB2");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
         tempBattle.currentRewardLimit += assetPercentages[_cavalryToAdd - 1];
         if (tempBattle.dayForLimitReached != 0) {
             if (tempBattle.currentRewardPercentage < tempBattle.currentRewardLimit) {
@@ -625,7 +574,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(cavalryBattleForAddress[msg.sender][_cavalryToRemove] == _battleType, "removeCavalry::CAB3");
 
 
-        tempBattle = battlingHelper.calculateRewards(tempBattle);
+        tempBattle = battlingExtension.calculateRewards(tempBattle);
         tempBattle.currentRewardLimit -= assetPercentages[_cavalryToRemove - 1];
         if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
             tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
@@ -663,7 +612,7 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         require(tempBattle.initialTokensStaked != 0, "battleEnd::WB");
 
 
-        tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
+        tempBattle = battlingExtension.calculateRewardsForBattleEnd(tempBattle);
         uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
 
         if (_battleType == 2) {
@@ -775,12 +724,12 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
             tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
                 if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
-                    tempBattle = battlingHelper.calculateRewards(tempBattle);
+                    tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-                    tempBattle.rewards += battlingHelper.calculateExtraRewards(tempBattle);
+                    tempBattle.rewards += battlingExtension.calculateExtraRewards(tempBattle);
                 }
                 else {
-                    tempBattle = battlingHelper.calculateRewardsForBattleEnd(tempBattle);
+                    tempBattle = battlingExtension.calculateRewardsForBattleEnd(tempBattle);
                 }
             }
             tempRewards[i] = tempBattle.rewards;
@@ -789,7 +738,3 @@ contract Battling is Ownable, BattleStruct, ERC1155Holder {
         return tempRewards;
     }
 }
-
-// TODO nextReward
-// TODO interface for FortunasToken
-// TODO OwnableUpgradeable

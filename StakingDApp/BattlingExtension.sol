@@ -1,78 +1,18 @@
 pragma solidity ^0.8.0;
 // SPDX-License-Identifier: Unlicense
 
-import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./ABDKMath64x64.sol";
-import "./BattleStruct.sol";
+import "./BattlingBase.sol";
 
-contract BattlingHelper is Ownable, BattleStruct {
+contract BattlingExtension is BattlingBase {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
-    // variables
-
-    uint256 public rewardTime;                              // 30 minutes in seconds
-    uint256 public oneDayTime;                              // 1 day in seconds
-    uint256 public baseBattleTime;                          // 3 days in seconds
-
-    uint256 multiplier;
-    uint256 multiplierForReward;
-
-    uint256 rationsIncreasePercentage;
-
-    uint256[5] rationsBase;                                 // rations %
-    uint256[5] rationsIncrease;                             // percentage increase in rations percentages when reward limit is reached
-
-    uint256[6] rewardBasePercentages;
-    uint256 rewardIncreasePerDay;
-
-    uint256[6] rewardLimit;                                 // rewardBase cannot exceed these amounts
-    uint256[6] rewardBase;                                  // reward % per day
-
     // constructor
 
-    constructor() {
-        // rewardTime = 1800;
-        // oneDayTime = 86400;
-        // baseBattleTime = 259200;
-        rewardTime = 1;                                     // only for testing
-        oneDayTime = 48;                                    // only for testing
-        baseBattleTime = 144;                               // only for testing
-
-        multiplier = 10 ** 6;
-        multiplierForReward = 10 ** 9;
-
-        rationsIncreasePercentage = 125000;
-
-        rationsBase = [2500, 5000, 7500, 10000, 12500];
-        _setRations();
-
-        // setting all rewards in battling contract
-    }
-
-    // setters
-
-    function _setRations() internal {
-        for (uint256 i = 0 ; i < 5 ; i++) {
-            rationsIncrease[i] = rationsBase[i].mul(rationsIncreasePercentage).roundDiv(multiplier);
-        }
-    }
-
-    function setAllRewards(uint256[6] memory _basePercentages, uint256 _increasePerDay, uint256[6] memory _limit) external onlyOwner {
-        rewardBasePercentages = _basePercentages;
-        rewardIncreasePerDay = _increasePerDay;
-
-        rewardLimit = _limit;
-        _setRewards();
-    }
-
-    function _setRewards() internal {
-        for (uint256 i = 0 ; i < 6 ; i++) {
-            rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
-        }
-    }
+    constructor() {}
 
     // functions
 
