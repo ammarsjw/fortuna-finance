@@ -5,7 +5,7 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./ABDKMath64x64.sol";
 
-contract FortunasTokenHelper is Ownable {
+contract FortunasLedger is Ownable {
     using SafeMath for uint256;
 
     uint256 rewardTime;

@@ -7,7 +7,7 @@ import "./ERC20.sol";
 import "./IPancakeFactory.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakePair.sol";
-import "./FortunasTokenHelper.sol";
+import "./FortunasLedger.sol";
 
 contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;
@@ -26,7 +26,7 @@ contract FortunasToken is ERC20, Ownable {
         address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     // Bookkeeper for all FRTNA holders
-    FortunasTokenHelper public fortunasTokenHelper;
+    FortunasLedger public fortunasLedger;
     
     address public liquidityWallet;
     address public treasuryWallet;
@@ -85,7 +85,7 @@ contract FortunasToken is ERC20, Ownable {
     // constructor
 
     constructor() ERC20("Fortunas Token", "FRTNA") {
-        fortunasTokenHelper = new FortunasTokenHelper();
+        fortunasLedger = new FortunasLedger();
 
         // TODO
     	liquidityWallet = address(owner());
@@ -265,11 +265,11 @@ contract FortunasToken is ERC20, Ownable {
         }
 
         if (!isExcludedFromPassiveRewards[from]) {
-            fortunasTokenHelper.updatePassiveRewards(from, balanceOf(from));
+            fortunasLedger.updatePassiveRewards(from, balanceOf(from));
         }
 
         if (!isExcludedFromPassiveRewards[to]) {
-            fortunasTokenHelper.updatePassiveRewards(to, balanceOf(to));
+            fortunasLedger.updatePassiveRewards(to, balanceOf(to));
         }
 
         if(amount == 0) {
@@ -410,7 +410,7 @@ contract FortunasToken is ERC20, Ownable {
         require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
 
         uint256 totalPassiveRewards =
-            fortunasTokenHelper.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
+            fortunasLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
 
         if (totalPassiveRewards == 0) {
             require(false, "FRTNA: No rewards to claim");
@@ -423,7 +423,7 @@ contract FortunasToken is ERC20, Ownable {
         require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
 
         (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
-            fortunasTokenHelper.viewPassiveRewards(account, balanceOf(account));
+            fortunasLedger.viewPassiveRewards(account, balanceOf(account));
 
         return (totalPassiveRewards, nextPassiveReward);
     }
