@@ -163,33 +163,33 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // functions
 
-    function battleStart(uint256 _tokens, uint8 _battleType) external {
-        require(_tokens >= minRewardAmount[_battleType - 1], "battleStart::MIN");
+    function battleStart(uint256 _amount, uint8 _battleType) external {
+        require(_amount >= minRewardAmount[_battleType - 1], "battleStart::MIN");
         require(2 <= _battleType && _battleType <= 6, "battleStart::WBT1");
         require(battleForAddress[msg.sender][_battleType].initialTokensStaked == 0, "battleStart::BAS");
 
 
-        uint256 bribe = _tokens.mul(bribeToEmeperor).div(multiplier);
-        _tokens -= bribe;
+        uint256 bribe = _amount.mul(bribeToEmeperor).div(multiplier);
+        _amount -= bribe;
 
         if (_battleType == 2) {
             LPToken.transferFrom(msg.sender, treasuryWallet, bribe);
 
-            LPToken.transferFrom(msg.sender, address(this), _tokens);
+            LPToken.transferFrom(msg.sender, address(this), _amount);
         }
         else {
             fortunasToken.transferFrom(msg.sender, treasuryWallet, bribe);
 
-            fortunasToken.transferFrom(msg.sender, address(this), _tokens);
+            fortunasToken.transferFrom(msg.sender, address(this), _amount);
         }
 
-        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _tokens, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, 0, 0);
+        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, 0, 0);
 
         emit BattleStarted (
             msg.sender,
             _battleType,
             true,
-            _tokens,
+            _amount,
             battleForAddress[msg.sender][_battleType].battleStartTime,
             3,
             0,
@@ -243,22 +243,22 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function addTroops(uint256 _tokensToAdd, uint8 _battleType) external {
+    function addTroops(uint256 _amountToAdd, uint8 _battleType) external {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "addTroops::WB");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addTroops::BE");
 
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
-        tempBattle.additionalTokens += _tokensToAdd;
-        if (tempBattle.additionalTokens + _tokensToAdd > tempBattle.initialTokensStaked) {
+        tempBattle.additionalTokens += _amountToAdd;
+        if (tempBattle.additionalTokens + _amountToAdd > tempBattle.initialTokensStaked) {
             tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
             if (tempBattle.hero > 0) {
                 tempBattle.currentRewardPercentage += assetPercentages[tempBattle.hero - 1];
             }
         }
 
-        fortunasToken.transferFrom(msg.sender, address(this), _tokensToAdd);
+        fortunasToken.transferFrom(msg.sender, address(this), _amountToAdd);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 
@@ -274,40 +274,40 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function removeTroops(uint256 _tokensToRemove, uint8 _battleType) external {
+    function removeTroops(uint256 _amountToRemove, uint8 _battleType) external {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "removeTroops::WB");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "removeTroops::BE");
 
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
-        require(_tokensToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::WT");
-        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_tokensToRemove) >= minRewardAmount[_battleType - 1], "removeTroops::MIN");
+        require(_amountToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::WT");
+        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_amountToRemove) >= minRewardAmount[_battleType - 1], "removeTroops::MIN");
 
-        if (_tokensToRemove > tempBattle.rewards) {
-            _tokensToRemove -= tempBattle.rewards;
+        if (_amountToRemove > tempBattle.rewards) {
+            _amountToRemove -= tempBattle.rewards;
             tempBattle.rewards = 0;
-            if (_tokensToRemove > tempBattle.additionalTokens) {
-                _tokensToRemove -= tempBattle.additionalTokens;
+            if (_amountToRemove > tempBattle.additionalTokens) {
+                _amountToRemove -= tempBattle.additionalTokens;
                 tempBattle.additionalTokens = 0;
-                tempBattle.initialTokensStaked -= _tokensToRemove;
+                tempBattle.initialTokensStaked -= _amountToRemove;
             }
             else {
-                tempBattle.additionalTokens -= _tokensToRemove;
+                tempBattle.additionalTokens -= _amountToRemove;
             }
         }
         else {
-            tempBattle.rewards -= _tokensToRemove;
+            tempBattle.rewards -= _amountToRemove;
         }
 
         tempBattle = _calculateLosses(tempBattle);
 
         uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
-        if (_tokensToRemove > totalContractBalance) {
-            uint256 toMint = _tokensToRemove.sub(totalContractBalance);
+        if (_amountToRemove > totalContractBalance) {
+            uint256 toMint = _amountToRemove.sub(totalContractBalance);
             fortunasToken.mint(address(this), toMint);
         }
-        fortunasToken.transfer(msg.sender, _tokensToRemove);
+        fortunasToken.transfer(msg.sender, _amountToRemove);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 
@@ -677,6 +677,17 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         return _tempBattle;
+    }
+
+    function removeLPTokens(uint256 _amount) external onlyOwner {
+        if (_amount == 0) {
+            LPToken.transfer(owner(), LPToken.balanceOf(address(this)));
+            return;
+        }
+
+        require(LPToken.balanceOf(address(this)) >= _amount);
+
+        LPToken.transfer(owner(), _amount);
     }
 
     /**
