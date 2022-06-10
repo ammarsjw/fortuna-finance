@@ -324,4 +324,30 @@ contract Test is Ownable, BaseTest {
         y = otherTest.outsideCall2();
         return (msg.sender, x, y);
     }
+
+    function fun27(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256, uint256) {
+        _ratio *= 10 ** 7;
+        // Ratio should be in whole numbers. If floating point numbers are required comment this^ out and multiply by 10 ** 7
+        _ratio = _ratio.mul(10 ** 18).div(10 ** 9);
+
+        uint256 accruedInterest1 = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        _exponent = 1;
+        uint256 accruedInterest2 = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), accruedInterest1);
+
+        return (accruedInterest1, accruedInterest2);
+    }
+
+    function fun28(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256, uint256) {
+        _ratio *= 10 ** 7;
+        // Ratio should be in whole numbers. If floating point numbers are required comment this^ out and multiply by 10 ** 7
+        _ratio = _ratio.mul(10 ** 18).div(10 ** 9);
+
+        _principal = _principal.mul(10 ** 18);
+
+        uint256 accruedInterest1 = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+        _exponent = 1;
+        uint256 accruedInterest2 = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), accruedInterest1);
+
+        return (accruedInterest1, accruedInterest2);
+    }
 }

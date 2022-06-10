@@ -221,9 +221,15 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken.burn(msg.sender, tempRations);
 
-        tempBattle.rations += tempRations;
-        tempBattle.rationsDaysTotal += _rationDays;
-        battleForAddress[msg.sender][_battleType] = tempBattle;
+        battleForAddress[msg.sender][_battleType].rations += tempRations;
+        battleForAddress[msg.sender][_battleType].rationsDaysTotal += _rationDays;
+        battleForAddress[msg.sender][_battleType].dayForLimitReached = tempBattle.dayForLimitReached;
+
+        tempBattle = battleForAddress[msg.sender][_battleType];
+
+        // tempBattle.rations += tempRations;
+        // tempBattle.rationsDaysTotal += _rationDays;
+        // battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit BattleUpdated (
             msg.sender,
