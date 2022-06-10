@@ -19,10 +19,10 @@ contract FortunasToken is ERC20, Ownable {
     address public pancakePair;
 
     // BUSD mainnet
-    // address public immutable BUSD =
+    // address public BUSD =
     //     address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
     // BUSD testnet (TestnetERC20Token)
-    address public immutable BUSD =
+    address public BUSD =
         address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     // Bookkeeper for all FRTNA holders
@@ -121,20 +121,20 @@ contract FortunasToken is ERC20, Ownable {
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        // address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
-        //     .createPair(address(this), BUSD);
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
+            .createPair(address(this), BUSD);
 
-        // pancakeRouter = _pancakeRouter;
-        // pancakePair = _pancakePair;
+        pancakeRouter = _pancakeRouter;
+        pancakePair = _pancakePair;
 
-        // _setAutomatedMarketMakerPair(_pancakePair, true);
+        _setAutomatedMarketMakerPair(_pancakePair, true);
 
         // exclude from receiving rewards
         excludeFromPassiveRewards(address(this), true);
         excludeFromPassiveRewards(liquidityWallet, true);
         excludeFromPassiveRewards(treasuryWallet, true);
-        // excludeFromPassiveRewards(_pancakePair, true);
+        excludeFromPassiveRewards(_pancakePair, true);
         excludeFromPassiveRewards(address(0), true);
 
         // exclude from paying fees

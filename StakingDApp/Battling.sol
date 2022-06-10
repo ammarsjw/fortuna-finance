@@ -35,9 +35,9 @@ contract Battling is BattlingBase, ERC1155Holder {
     address public treasuryWallet;
 
     // BUSD mainnet
-    // address public immutable BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
+    // address public BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
     // BUSD testnet (TestnetERC20Token)
-    address public immutable BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
+    address public BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
     uint256[10] assetPercentages;
     uint256[10] assetPrices;
@@ -112,13 +112,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        // address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
-        // pancakeRouter = _pancakeRouter;
-        // pancakePair = IPancakePair(_addressForPancakePair);
+        pancakeRouter = _pancakeRouter;
+        pancakePair = IPancakePair(_addressForPancakePair);
 
-        // LPToken = IERC20(_addressForPancakePair);
+        LPToken = IERC20(_addressForPancakePair);
 
         fortunasAssets = new FortunasAssets("", address(this));
 
