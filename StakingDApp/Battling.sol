@@ -578,15 +578,29 @@ contract Battling is BattlingBase, ERC1155Holder {
 
 
         tempBattle = battlingExtension.calculateRewardsForBattleEnd(tempBattle);
-        uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
 
         if (_battleType == 2) {
-            require(LPToken.balanceOf(address(this)) >= tokensToTransfer, "battleEnd::WT3");
-            LPToken.transfer(msg.sender, tokensToTransfer);
+            uint256 tokensToRefund = tempBattle.initialTokensStaked;
+            LPToken.transfer(msg.sender, tokensToRefund);
+
+            uint256 tokensToTransfer = tempBattle.rewards;
+            uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
+
+            bool isMintingRequired = tokensToTransfer > totalContractBalance;
+
+            if (isMintingRequired) {
+                uint256 toMint = tokensToTransfer.sub(totalContractBalance);
+                fortunasToken.mint(address(this), toMint);
+            }
+            fortunasToken.transfer(msg.sender, tokensToTransfer);
         }
         else {
+            uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
             uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
-            if (tokensToTransfer > totalContractBalance) {
+
+            bool isMintingRequired = tokensToTransfer > totalContractBalance;
+
+            if (isMintingRequired) {
                 uint256 toMint = tokensToTransfer.sub(totalContractBalance);
                 fortunasToken.mint(address(this), toMint);
             }
@@ -611,7 +625,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             false,
-            0,
+            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards),
             0,
             0,
             0,
@@ -677,17 +691,6 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         return _tempBattle;
-    }
-
-    function removeLPTokens(uint256 _amount) external onlyOwner {
-        if (_amount == 0) {
-            LPToken.transfer(owner(), LPToken.balanceOf(address(this)));
-            return;
-        }
-
-        require(LPToken.balanceOf(address(this)) >= _amount);
-
-        LPToken.transfer(owner(), _amount);
     }
 
     /**
