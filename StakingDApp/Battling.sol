@@ -25,12 +25,15 @@ contract Battling is BattlingBase, ERC1155Holder {
     // LP Token for FRTNA-BUSD pair
     IERC20 public LPToken;
 
-    // Fortunas Multi Token for heroes and cavalry
-    FortunasAssets public fortunasAssets;
-    
     // FRTNA
     IFortunasToken public fortunasToken;
-    
+
+    // Fortunas Multi Token for heroes and cavalry
+    FortunasAssets public fortunasAssets;
+
+    // Contract that handles calculations for Battling
+    BattlingExtension public battlingExtension;
+
     // Treasury Wallet
     address public treasuryWallet;
 
@@ -43,8 +46,6 @@ contract Battling is BattlingBase, ERC1155Holder {
     uint256[10] assetPrices;
 
     uint256 randomAssetPrice;
-
-    BattlingExtension public battlingExtension;
 
     // mappings
 
@@ -105,7 +106,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // constructor
 
-    constructor(address _fortunasToken) {
+    constructor(address _fortunasToken, uint64 _subscriptionId) {
         bribeToEmeperor = 5000;
 
         // TODO (for mainnet) rather than using the constructor, use the setter function to initialize some of the below variables to hide sensitive information
@@ -120,9 +121,11 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         LPToken = IERC20(_addressForPancakePair);
 
+        fortunasToken = IFortunasToken(payable(_fortunasToken));
+
         fortunasAssets = new FortunasAssets("", address(this));
 
-        fortunasToken = IFortunasToken(payable(_fortunasToken));
+        battlingExtension = new BattlingExtension(_subscriptionId);
 
         // TODO
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
@@ -135,8 +138,6 @@ contract Battling is BattlingBase, ERC1155Holder {
                         2500, 5000, 7500, 10000, 12500];
 
         randomAssetPrice = 5000;
-
-        battlingExtension = new BattlingExtension();
 
         // setting all rewards for both battling and battlingExtension outside of constructor
     }
@@ -197,7 +198,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function sendRations(uint8 _battleType, uint256 _rationDays) external {
+    function sendRations(uint256 _rationDays, uint8 _battleType) external {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "sendRations::WB");
         if (block.timestamp >= tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
@@ -284,20 +285,20 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(_amountToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::WT");
         require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_amountToRemove) >= minRewardAmount[_battleType - 1], "removeTroops::MIN");
 
-        if (_amountToRemove > tempBattle.rewards) {
-            _amountToRemove -= tempBattle.rewards;
-            tempBattle.rewards = 0;
-            if (_amountToRemove > tempBattle.additionalTokens) {
-                _amountToRemove -= tempBattle.additionalTokens;
-                tempBattle.additionalTokens = 0;
+        if (_amountToRemove > tempBattle.additionalTokens) {
+            _amountToRemove -= tempBattle.additionalTokens;
+            tempBattle.additionalTokens = 0;
+            if (_amountToRemove > tempBattle.rewards) {
+                _amountToRemove -= tempBattle.rewards;
+                tempBattle.rewards = 0;
                 tempBattle.initialTokensStaked -= _amountToRemove;
             }
             else {
-                tempBattle.additionalTokens -= _amountToRemove;
+                tempBattle.rewards -= _amountToRemove;
             }
         }
         else {
-            tempBattle.rewards -= _amountToRemove;
+            tempBattle.additionalTokens -= _amountToRemove;
         }
 
         tempBattle = _calculateLosses(tempBattle);
