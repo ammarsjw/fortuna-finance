@@ -5,14 +5,125 @@ import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./ABDKMath64x64.sol";
 import "./BattlingBase.sol";
+import "./ChainlinkDependencies.sol";
+import "./IBattling.sol";
 
-contract BattlingExtension is BattlingBase {
+contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
+    // Chainlink VRF Variables
+
+    VRFCoordinatorV2Interface COORDINATOR;
+    LinkTokenInterface LINKTOKEN;
+
+    uint64 vrf_subscriptionId;
+
+    uint256[] vrf_randomNumbers;
+    uint256 vrf_requestId;
+
+    // for loss
+    address vrf_user;
+    uint256 vrf_battleType;
+    uint256 vrf_chanceToLose;
+    bool vrf_isBattleEnd;
+    uint8 vrf_scenario;
+
+    // TODO
+    address vrfCoordinator = address(0x6168499c0cFfCaCD319c818142124B7A15E857ab);
+
+    address link_token_contract = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
+
+    bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
+
+    uint32 callbackGasLimit = 100000;
+    
+    uint16 requestConfirmations = 3;
+
+    // variables
+
+    IBattling battling;
+
     // constructor
 
-    constructor() {}
+    constructor(uint64 _subscriptionId, address _battling) VRFConsumerBaseV2(vrfCoordinator) {
+        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
+        LINKTOKEN = LinkTokenInterface(link_token_contract);
+
+        vrf_subscriptionId = _subscriptionId;
+
+        battling = IBattling(_battling);
+    }
+
+    // Chainlink VRF functions
+
+    function requestRandommessForLoss(
+        uint32 _numbersNeeded,
+        address _user,
+        uint256 _battleType,
+        uint256 _chanceToLose,
+        bool _isBattleEnd,
+        uint8 _scenario
+    ) external onlyOwner {
+        vrf_requestId = COORDINATOR.requestRandomWords(
+            keyHash,
+            vrf_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            _numbersNeeded
+        );
+
+        // setting global variables for callback function
+        vrf_user = _user;
+        vrf_battleType = _battleType;
+        vrf_chanceToLose = _chanceToLose;
+        vrf_isBattleEnd = _isBattleEnd;
+        vrf_scenario = _scenario;
+    }
+
+    function fulfillRandomWords(
+        uint256, /* requestId */
+        uint256[] memory randomWords
+    ) internal override {
+        vrf_randomNumbers = randomWords;
+
+        if (vrf_scenario == 1) {
+            battling.handleLosses(
+                vrf_user,
+                vrf_battleType,
+                vrf_chanceToLose,
+                vrf_isBattleEnd,
+                vrf_randomNumbers[0],
+                vrf_randomNumbers[1]
+            );
+        }
+        else if (vrf_scenario == 2) {
+            battling.handleLosses(
+                vrf_user,
+                vrf_battleType,
+                vrf_chanceToLose,
+                vrf_isBattleEnd,
+                vrf_randomNumbers[0],
+                0
+            );
+        }
+        else if (vrf_scenario == 3) {
+            battling.handleLosses(
+                vrf_user,
+                vrf_battleType,
+                vrf_chanceToLose,
+                vrf_isBattleEnd,
+                0,
+                vrf_randomNumbers[0]
+            );
+        }
+    }
+
+    function withdraw(address _to, uint256 _amount) external onlyOwner {
+        // Transfer this contract's funds to an address.
+        // 1000000000000000000 = 1 LINK
+        LINKTOKEN.transfer(_to, _amount);
+    }
 
     // functions
 
