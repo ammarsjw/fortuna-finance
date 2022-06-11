@@ -5,8 +5,8 @@ import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./ABDKMath64x64.sol";
 import "./BattlingBase.sol";
-import "./ChainlinkDependencies.sol";
 import "./IBattling.sol";
+import "./ChainlinkDependencies.sol";
 
 contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
     using SafeMath for uint256;
@@ -22,14 +22,12 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
     uint256[] vrf_randomNumbers;
     uint256 vrf_requestId;
 
-    // for loss
     address vrf_user;
     uint256 vrf_battleType;
     uint256 vrf_chanceToLose;
     bool vrf_isBattleEnd;
     uint8 vrf_scenario;
 
-    // TODO
     address vrfCoordinator = address(0x6168499c0cFfCaCD319c818142124B7A15E857ab);
 
     address link_token_contract = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);

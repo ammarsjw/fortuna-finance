@@ -55,37 +55,51 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // events
 
+    // event BattleStarted (
+    //     address indexed user,
+    //     uint256 battleType,
+    //     bool battleStatus,
+    //     uint256 tokensStaked,
+    //     uint256 battleStartTime,
+    //     uint256 battleDurationInDays,
+    //     uint256 rewards,
+    //     uint256 rations
+    // );
+
     event BattleStarted (
         address indexed user,
         uint256 battleType,
         bool battleStatus,
-        uint256 tokensStaked,
-        uint256 battleStartTime,
-        uint256 battleDurationInDays,
+        uint256 initialTokensStaked,
+        uint256 additionalTokens,
         uint256 rewards,
-        uint256 rations
+        uint256 rations,
+        uint256 battleStartTime,
+        uint256 battleDurationInDays
     );
 
     event BattleUpdated (
         address indexed user,
         uint256 battleType,
         bool battleStatus,
-        uint256 tokensStaked,
-        uint256 battleStartTime,
-        uint256 battleDurationInDays,
+        uint256 initialTokensStaked,
+        uint256 additionalTokens,
         uint256 rewards,
-        uint256 rations
+        uint256 rations,
+        uint256 battleStartTime,
+        uint256 battleDurationInDays
     );
 
     event BattleEnded (
         address indexed user,
         uint256 battleType,
         bool battleStatus,
-        uint256 tokensStaked,
-        uint256 battleStartTime,
-        uint256 battleDurationInDays,
+        uint256 initialTokensStaked,
+        uint256 additionalTokens,
         uint256 rewards,
-        uint256 rations
+        uint256 rations,
+        uint256 battleStartTime,
+        uint256 battleDurationInDays
     );
 
     event HeroPurchased (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
@@ -191,10 +205,11 @@ contract Battling is BattlingBase, ERC1155Holder {
             _battleType,
             true,
             _amount,
-            battleForAddress[msg.sender][_battleType].battleStartTime,
-            3,
             0,
-            0
+            0,
+            0,
+            battleForAddress[msg.sender][_battleType].battleStartTime,
+            3
         );
     }
 
@@ -227,11 +242,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -255,11 +271,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -318,11 +335,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -437,11 +455,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -475,11 +494,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -516,11 +536,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -555,11 +576,12 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             true,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens),
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
             tempBattle.rewards,
-            tempBattle.rations
+            tempBattle.rations,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3)
         );
     }
 
@@ -629,8 +651,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _battleType,
             false,
-            tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards),
-            0,
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
+            tempBattle.rewards,
             0,
             0,
             0

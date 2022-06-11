@@ -36,8 +36,8 @@ contract BattlingBase is Ownable {
         uint8 battleType;
         uint256 initialTokensStaked;
         uint256 additionalTokens;
-        uint256 rations;
         uint256 rewards;
+        uint256 rations;
         uint256 currentRewardLimit;
         uint256 currentRewardPercentage;
         uint256 battleStartTime;
