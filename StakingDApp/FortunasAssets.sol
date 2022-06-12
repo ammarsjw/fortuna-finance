@@ -7,7 +7,7 @@ import "./ERC1155.sol";
 
 contract FortunasAssets is Ownable, ERC1155 {
 
-    address public battlingContractAddress;
+    address public battling;
 
     // mappings
 
@@ -17,9 +17,9 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     constructor(
         string memory _uri,
-        address _battlingContractAddress
+        address _battling
     ) ERC1155(_uri) {
-        battlingContractAddress = _battlingContractAddress;
+        battling = _battling;
     }
 
     // functions
@@ -85,7 +85,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _amount,
         bytes memory _data
     ) public onlyOwner {
-        require(_to == battlingContractAddress || _from == battlingContractAddress, "safeTransferFromWithoutCheck::Either sender or recipient must be contract");
+        require(_to == battling || _from == battling, "safeTransferFromWithoutCheck::Either sender or recipient must be Battling contract");
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
     }
 
@@ -94,7 +94,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _tokenId,
         uint256 _amount
     ) external onlyOwner {
-        require(_from != battlingContractAddress, "burnWithoutCheck::Incorrect arguments given");
+        require(_from != battling, "burnWithoutCheck::Incorrect argument given");
         _burn(msg.sender, _tokenId, _amount);
 
         _ownership[_tokenId][_from] = false;
