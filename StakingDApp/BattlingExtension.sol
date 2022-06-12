@@ -19,13 +19,11 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
 
     uint64 vrf_subscriptionId;
 
-    uint256[] vrf_randomNumbers;
     uint256 vrf_requestId;
-
     address vrf_user;
     uint256 vrf_battleType;
     uint256 vrf_chanceToLose;
-    bool vrf_isBattleEnd;
+    bool vrf_isEndBattle;
     uint8 vrf_scenario;
 
     address vrfCoordinator = address(0x6168499c0cFfCaCD319c818142124B7A15E857ab);
@@ -75,24 +73,34 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         vrf_user = _user;
         vrf_battleType = _battleType;
         vrf_chanceToLose = _chanceToLose;
-        vrf_isBattleEnd = _isBattleEnd;
+        vrf_isEndBattle = _isBattleEnd;
         vrf_scenario = _scenario;
+    }
+
+    function requestRandommessForRandomAsset() external onlyOwner {
+        vrf_requestId = COORDINATOR.requestRandomWords(
+            keyHash,
+            vrf_subscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            1
+        );
+
+        vrf_scenario = 4;
     }
 
     function fulfillRandomWords(
         uint256, /* requestId */
         uint256[] memory randomWords
     ) internal override {
-        vrf_randomNumbers = randomWords;
-
         if (vrf_scenario == 1) {
             battling.handleLosses(
                 vrf_user,
                 vrf_battleType,
                 vrf_chanceToLose,
-                vrf_isBattleEnd,
-                vrf_randomNumbers[0],
-                vrf_randomNumbers[1]
+                vrf_isEndBattle,
+                randomWords[0],
+                randomWords[1]
             );
         }
         else if (vrf_scenario == 2) {
@@ -100,8 +108,8 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 vrf_user,
                 vrf_battleType,
                 vrf_chanceToLose,
-                vrf_isBattleEnd,
-                vrf_randomNumbers[0],
+                vrf_isEndBattle,
+                randomWords[0],
                 0
             );
         }
@@ -110,10 +118,32 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 vrf_user,
                 vrf_battleType,
                 vrf_chanceToLose,
-                vrf_isBattleEnd,
+                vrf_isEndBattle,
                 0,
-                vrf_randomNumbers[0]
+                randomWords[0]
             );
+        }
+        else if (vrf_scenario == 4) {
+            uint256 assetToPurchase;
+            uint256 randomNumber = randomWords[0].mod(100).add(1);
+
+            if (randomNumber <= 50) {
+                assetToPurchase = 1;
+            }
+            else if (50 < randomNumber && randomNumber <= 75) {
+                assetToPurchase = 2;
+            }
+            else if (75 < randomNumber && randomNumber <= 90) {
+                assetToPurchase = 3;
+            }
+            else if (90 < randomNumber && randomNumber <= 99) {
+                assetToPurchase = 4;
+            }
+            else if (randomNumber == 100) {
+                assetToPurchase = 5;
+            }
+
+            battling.purchaseAsset(assetToPurchase);
         }
     }
 
@@ -255,7 +285,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         return (extraRewards, nextReward);
     }
 
-    function calculateRewardsForBattleEnd(Battle memory _tempBattle) external view onlyOwner returns (Battle memory) {
+    function calculateRewardsForEndBattle(Battle memory _tempBattle) external view onlyOwner returns (Battle memory) {
         uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
@@ -273,7 +303,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
             uint256 ratio = _tempBattle.currentRewardPercentage.mul(10 ** 18).div(multiplierForReward);
             uint256 compoundReward;
             if (_tempBattle.battleType == 2) {
-                require(block.timestamp >= battleEndTime, "calculateRewardsForBattleEnd::BNE");
+                require(block.timestamp >= battleEndTime, "calculateRewardsForEndBattle::BNE");
 
                 compoundReward = _compoundReward(
                     tempTotalTokens,

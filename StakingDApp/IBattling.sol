@@ -12,4 +12,8 @@ interface IBattling {
         uint256 _chanceForCavalryLoss
     ) external;
 
+    function purchaseAsset(
+        uint256 _assetToPurchase
+    ) external;
+
 }
