@@ -142,7 +142,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         // percentage cost of LP for purchasing a random hero
         randomAssetPrice = 5000;
 
-        // setting all rewards related variables for battling outside of constructor
+        // setting all reward related variables for battling outside of constructor
     }
 
     // getters
@@ -563,8 +563,8 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function handleLosses(address _user, uint256 _battleType, uint256 _chanceToLose, bool isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
-        require(msg.sender == address(battlingExtension), "handleLosses::WS");
+    function handleLoss(address _user, uint256 _battleType, uint256 _chanceToLose, bool isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
+        require(msg.sender == address(battlingExtension), "handleLoss::WS");
         Battle memory tempBattle = battleForAddress[_user][_battleType];
 
         if (_chanceForHeroLoss != 0) {

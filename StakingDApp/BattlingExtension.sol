@@ -94,7 +94,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         uint256[] memory randomWords
     ) internal override {
         if (vrf_scenario == 1) {
-            battling.handleLosses(
+            battling.handleLoss(
                 vrf_user,
                 vrf_battleType,
                 vrf_chanceToLose,
@@ -104,7 +104,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
             );
         }
         else if (vrf_scenario == 2) {
-            battling.handleLosses(
+            battling.handleLoss(
                 vrf_user,
                 vrf_battleType,
                 vrf_chanceToLose,
@@ -114,7 +114,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
             );
         }
         else if (vrf_scenario == 3) {
-            battling.handleLosses(
+            battling.handleLoss(
                 vrf_user,
                 vrf_battleType,
                 vrf_chanceToLose,
