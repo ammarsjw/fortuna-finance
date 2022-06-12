@@ -48,7 +48,7 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public totalSellingFeesAccumulated;
 
-    uint256 public transferTokensAtAmount = 10000 * (10**18);
+    uint256 public swapAndTransferTokensAtAmount = 10000 * (10**18);
 
     // timestamp for when the token can be traded freely on PanackeSwap
     uint256 public immutable tradingEnabledTimestamp = 1623967200; //June 17, 22:00 UTC, 2021
@@ -286,16 +286,18 @@ contract FortunasToken is ERC20, Ownable {
 
         uint256 contractTokenBalance = balanceOf(address(this));
 
-        bool canSwap = contractTokenBalance >= transferTokensAtAmount;
+        bool canSwapAndTransfer = contractTokenBalance >= swapAndTransferTokensAtAmount;
 
         if (
             tradingIsEnabled &&
-            canSwap &&
+            canSwapAndTransfer &&
             !swapping &&
             !_isBuy(from) &&
             from != liquidityWallet &&
             to != liquidityWallet
         ) {
+            swapping = true;
+
             uint256 totalBuyingFeesAccumulated = contractTokenBalance;
             uint256 toLiquidityAmount;
             uint256 toTreasuryAmount;
@@ -338,6 +340,8 @@ contract FortunasToken is ERC20, Ownable {
                     .div(multiplierForFee);
                 _burn(address(this), toBurnAmount);
             }
+
+            swapping = false;
         }
 
         if (
