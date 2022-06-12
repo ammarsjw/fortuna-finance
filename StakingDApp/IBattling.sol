@@ -5,7 +5,7 @@ interface IBattling {
     
     function handleLoss(
         address _user,
-        uint256 _battleType,
+        uint8 _battleType,
         uint256 _chanceToLose,
         bool isBattleEnd,
         uint256 _chanceForHeroLoss,

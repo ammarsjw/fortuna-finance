@@ -49,7 +49,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // mappings
 
-    mapping (address => mapping(uint256 => Battle)) private battleForAddress;
+    mapping (address => mapping(uint8 => Battle)) private battleForAddress;
     mapping (address => mapping(uint256 => uint8)) private battleTypeForAsset;
 
     // events
@@ -147,7 +147,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // getters
 
-    function getBattleForAddress(address _user, uint _battleType) external view returns (Battle memory) {
+    function getBattleForAddress(address _user, uint8 _battleType) external view returns (Battle memory) {
         return battleForAddress[_user][_battleType];
     }
 
@@ -563,7 +563,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function handleLoss(address _user, uint256 _battleType, uint256 _chanceToLose, bool isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
+    function handleLoss(address _user, uint8 _battleType, uint256 _chanceToLose, bool isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
         require(msg.sender == address(battlingExtension), "handleLoss::WS");
         Battle memory tempBattle = battleForAddress[_user][_battleType];
 
@@ -663,7 +663,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256[] memory nextRewards = new uint256[](5);
         uint256 extraRewards;
         Battle memory tempBattle;
-        for (uint256 i = 0 ; i < 5 ; i++) {
+        for (uint8 i = 0 ; i < 5 ; i++) {
             tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
                 if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
@@ -684,14 +684,14 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // modifiers
 
-    modifier validBattle(uint256 _battleType) {
+    modifier validBattle(uint8 _battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "Battling:WB");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "battling::BE");
         _;
     }
 
-    modifier validBattleType(uint256 _battleType) {
+    modifier validBattleType(uint8 _battleType) {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
         _;
     }

@@ -21,7 +21,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
 
     uint256 vrf_requestId;
     address vrf_user;
-    uint256 vrf_battleType;
+    uint8 vrf_battleType;
     uint256 vrf_chanceToLose;
     bool vrf_isEndBattle;
     uint8 vrf_scenario;
@@ -56,7 +56,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
     function requestRandommessForLoss(
         uint32 _numbersNeeded,
         address _user,
-        uint256 _battleType,
+        uint8 _battleType,
         uint256 _chanceToLose,
         bool _isBattleEnd,
         uint8 _scenario
