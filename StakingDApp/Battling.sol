@@ -54,17 +54,6 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // events
 
-    // event BattleStarted (
-    //     address indexed user,
-    //     uint256 battleType,
-    //     bool battleStatus,
-    //     uint256 tokensStaked,
-    //     uint256 battleStartTime,
-    //     uint256 battleDurationInDays,
-    //     uint256 rewards,
-    //     uint256 rations
-    // );
-
     event BattleStarted (
         address indexed user,
         uint256 battleType,
@@ -213,7 +202,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function sendRations(uint256 _rationDays, uint8 _battleType) external validBattleType2(_battleType) validBattle(_battleType) {
+    function sendRations(uint256 _rationDays, uint8 _battleType) external validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForBattleType[msg.sender][_battleType];
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::WR1");
         if (tempBattle.battleDaysExpended != 0) {
@@ -391,7 +380,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
     }
 
-    function deployAsset(uint256 _assetToDeploy, uint8 _battleType) external validBattleType2(_battleType) validBattle(_battleType) {
+    function deployAsset(uint256 _assetToDeploy, uint8 _battleType) external validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForBattleType[msg.sender][_battleType];
         require(1 <= _assetToDeploy && _assetToDeploy <= 10, "deployAsset::WA");
         require(fortunasAssets.ownershipOf(msg.sender, _assetToDeploy), "deployAsset::ANO");
@@ -454,7 +443,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function returnAsset(uint256 _assetToReturn, uint8 _battleType) public validBattleType2(_battleType) validBattle(_battleType) {
+    function returnAsset(uint256 _assetToReturn, uint8 _battleType) public validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForBattleType[msg.sender][_battleType];
         require(1 <= _assetToReturn && _assetToReturn <= 10, "removeHero::WA");
         require(fortunasAssets.ownershipOf(msg.sender, _assetToReturn), "removeHero::ANO");
@@ -702,7 +691,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         _;
     }
 
-    modifier validBattleType2(uint256 _battleType) {
+    modifier validBattleType(uint256 _battleType) {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
         _;
     }
