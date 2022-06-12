@@ -15,8 +15,9 @@ contract FortunasToken is ERC20, Ownable {
     address public battlingContractAddress;
 
     IPancakeRouter02 public pancakeRouter;
-    // address public immutable pancakePair;
-    address public pancakePair;
+    address public immutable pancakePair;
+
+    bool private swapping;
 
     // BUSD mainnet
     // address public BUSD =
@@ -270,8 +271,13 @@ contract FortunasToken is ERC20, Ownable {
             require(canTransferBeforeTradingIsEnabled[from], "FRTNA: This account cannot send tokens until trading is enabled");
         }
 
-        updateLedger(from);
-        updateLedger(to);
+        if (!isExcludedFromPassiveRewards[from]) {
+            updateLedger(from);
+        }
+        
+        if (!isExcludedFromPassiveRewards[to]) {
+            updateLedger(to);
+        }
 
         if(amount == 0) {
             super._transfer(from, to, 0);
@@ -280,9 +286,16 @@ contract FortunasToken is ERC20, Ownable {
 
         uint256 contractTokenBalance = balanceOf(address(this));
 
-        bool canTransfer = contractTokenBalance >= transferTokensAtAmount;
+        bool canSwap = contractTokenBalance >= transferTokensAtAmount;
 
-        if (canTransfer) {
+        if (
+            tradingIsEnabled &&
+            canSwap &&
+            !swapping &&
+            !_isBuy(from) &&
+            from != liquidityWallet &&
+            to != liquidityWallet
+        ) {
             uint256 totalBuyingFeesAccumulated = contractTokenBalance;
             uint256 toLiquidityAmount;
             uint256 toTreasuryAmount;
@@ -328,8 +341,8 @@ contract FortunasToken is ERC20, Ownable {
         }
 
         if (
-            _isBuy(from)
-            && !isExcludedFromFees[to]
+            _isBuy(from) &&
+            !isExcludedFromFees[to]
         ) {
             uint256 buyingFee = amount.mul(totalBuyingFee).div(multiplierForFee);
             amount -= buyingFee;
@@ -338,8 +351,8 @@ contract FortunasToken is ERC20, Ownable {
         }
 
         if (
-            _isSell(from, to)
-            && !isExcludedFromFees[from]
+            _isSell(from, to) &&
+            !isExcludedFromFees[from]
         ) {
             uint256 sellingFee = amount.mul(totalSellingFee).div(multiplierForFee);
             totalSellingFeesAccumulated += sellingFee;
@@ -426,11 +439,7 @@ contract FortunasToken is ERC20, Ownable {
         );
     }
 
-    function updateLedger(address account) public {
-        if (isExcludedFromPassiveRewards[account]) {
-            return;
-        }
-
+    function updateLedger(address account) internal {
         (uint256 totalPassiveRewards, bool isFirstTransaction) =
             fortunasLedger.updatePassiveRewards(account, balanceOf(account));
 

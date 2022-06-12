@@ -48,8 +48,8 @@ contract FortunasLedger is Ownable {
         uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
         
         if (
-            balance == 0
-            && tempTotalPassiveRewards == 0
+            balance == 0 &&
+            tempTotalPassiveRewards == 0
         ) {
             return 0;
         }
@@ -73,8 +73,8 @@ contract FortunasLedger is Ownable {
         uint256 currentTime = block.timestamp;
         
         if (
-            balance == 0
-            && tempTotalPassiveRewards == 0
+            balance == 0 &&
+            tempTotalPassiveRewards == 0
         ) {
             _lastUpdate[account] = currentTime;
             return (0, false);
@@ -137,8 +137,8 @@ contract FortunasLedger is Ownable {
         uint256 currentTime = block.timestamp;
 
         if (
-            balance == 0
-            && tempTotalPassiveRewards == 0
+            balance == 0 &&
+            tempTotalPassiveRewards == 0
         ) {
             return (0, 0);
         }

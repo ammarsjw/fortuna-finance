@@ -159,8 +159,10 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards).add(_extraRewards);
         uint256 tempRations;
         uint256 totalPercentage;
-        if (_tempBattle.rationsDaysTotal + _rationDays >= _tempBattle.dayForLimitReached
-        && _tempBattle.dayForLimitReached != 0) {
+        if (
+            _tempBattle.rationsDaysTotal + _rationDays >= _tempBattle.dayForLimitReached &&
+            _tempBattle.dayForLimitReached != 0
+        ) {
             if (_tempBattle.rationsDaysTotal < _tempBattle.dayForLimitReached) {
                 uint256 daysPreIncrease = _tempBattle.dayForLimitReached - _tempBattle.rationsDaysTotal;
                 tempRations = tempTotalTokens.mul(rationsBase[daysPreIncrease - 1]).div(multiplier);
@@ -200,9 +202,11 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 );
                 _tempBattle.rewards += compoundReward;
             }
-            else if (daysWagingBattle >= 3
-            && daysWagingBattle < _tempBattle.rationsDaysTotal.add(3)
-            && _tempBattle.rationsDaysTotal > 0) {
+            else if (
+                daysWagingBattle >= 3 &&
+                daysWagingBattle < _tempBattle.rationsDaysTotal.add(3) &&
+                _tempBattle.rationsDaysTotal > 0
+            ) {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
@@ -222,8 +226,10 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit
-                    && _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit) {
+                    if (
+                        _tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit &&
+                        _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit
+                    ) {
                         _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
 
                         singleReward = tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
@@ -332,8 +338,10 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 uint256 exponent;
                 uint256 singleReward;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (_tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit
-                    && _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit) {
+                    if (
+                        _tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit &&
+                        _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit
+                    ) {
                         _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
 
                         singleReward = tempTotalTokens.mul(_tempBattle.currentRewardPercentage).div(multiplierForReward);
