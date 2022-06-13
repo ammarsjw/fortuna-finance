@@ -157,6 +157,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         fortunasToken = IFortunasToken(payable(_fortunasToken));
     }
 
+    function setFortunasAssetsURI(string memory _uri) external onlyOwner {
+        fortunasAssets.setURI(_uri);
+    }
+
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
         treasuryWallet = _treasuryWallet;
     }
