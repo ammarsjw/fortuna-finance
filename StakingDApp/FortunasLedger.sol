@@ -12,8 +12,8 @@ contract FortunasLedger is Ownable {
     
     uint256 public multiplierForReward;
 
-    uint256 public rewardPercentage;
-    uint256 public rewardPercentagePerCycle;
+    uint256 public passiveRewardPercentage;
+    uint256 public passiveRewardPercentagePerCycle;
 
     // mappings
 
@@ -28,8 +28,8 @@ contract FortunasLedger is Ownable {
 
         multiplierForReward = 10 ** 9;
 
-        rewardPercentage = 2500000;
-        rewardPercentagePerCycle = 52083;
+        passiveRewardPercentage = 2500000;
+        passiveRewardPercentagePerCycle = 52083;
     }
 
     // getters
@@ -54,7 +54,7 @@ contract FortunasLedger is Ownable {
             return 0;
         }
 
-        uint256 ratio = rewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+        uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
         uint256 compoundReward = _compoundReward(
             balance.add(tempTotalPassiveRewards),
@@ -71,7 +71,7 @@ contract FortunasLedger is Ownable {
         uint256 tempLastUpdate = _lastUpdate[account];
 
         uint256 currentTime = block.timestamp;
-        
+
         if (
             balance == 0 &&
             tempTotalPassiveRewards == 0
@@ -93,7 +93,7 @@ contract FortunasLedger is Ownable {
             uint256 timeToConsider = currentTime.sub(tempLastUpdate);
 
             uint256 rewardCycles = timeToConsider.div(rewardTime);
-            uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
+            uint256 ratio = passiveRewardPercentagePerCycle.mul(rewardCycles);
             ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
             uint256 compoundReward = _compoundReward(
@@ -155,7 +155,7 @@ contract FortunasLedger is Ownable {
             uint256 timeToConsider = currentTime.sub(tempLastUpdate);
 
             uint256 rewardCycles = timeToConsider.div(rewardTime);
-            uint256 ratio = rewardPercentagePerCycle.mul(rewardCycles);
+            uint256 ratio = passiveRewardPercentagePerCycle.mul(rewardCycles);
             ratio = ratio.mul(10 ** 18).div(multiplierForReward);
 
             uint256 compoundReward = _compoundReward(
@@ -165,7 +165,7 @@ contract FortunasLedger is Ownable {
             );
             tempTotalPassiveRewards += compoundReward;
 
-            ratio = rewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+            ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
             compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
