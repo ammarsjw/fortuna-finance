@@ -58,7 +58,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         address _user,
         uint8 _battleType,
         uint256 _chanceToLose,
-        bool _isBattleEnd,
+        bool _isEndBattle,
         uint8 _scenario
     ) external onlyOwner {
         vrf_requestId = COORDINATOR.requestRandomWords(
@@ -73,7 +73,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         vrf_user = _user;
         vrf_battleType = _battleType;
         vrf_chanceToLose = _chanceToLose;
-        vrf_isEndBattle = _isBattleEnd;
+        vrf_isEndBattle = _isEndBattle;
         vrf_scenario = _scenario;
     }
 
@@ -100,8 +100,8 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 vrf_battleType,
                 vrf_chanceToLose,
                 vrf_isEndBattle,
-                randomWords[0],
-                randomWords[1]
+                randomWords[0].mod(100).add(1),
+                randomWords[1].mod(100).add(1)
             );
         }
         else if (vrf_scenario == 2) {
@@ -110,7 +110,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 vrf_battleType,
                 vrf_chanceToLose,
                 vrf_isEndBattle,
-                randomWords[0],
+                randomWords[0].mod(100).add(1),
                 0
             );
         }
@@ -121,7 +121,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 vrf_chanceToLose,
                 vrf_isEndBattle,
                 0,
-                randomWords[0]
+                randomWords[0].mod(100).add(1)
             );
         }
         else if (vrf_scenario == 4) {

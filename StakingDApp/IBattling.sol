@@ -7,7 +7,7 @@ interface IBattling {
         address _user,
         uint8 _battleType,
         uint256 _chanceToLose,
-        bool isBattleEnd,
+        bool _isEndBattle,
         uint256 _chanceForHeroLoss,
         uint256 _chanceForCavalryLoss
     ) external;

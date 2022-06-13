@@ -563,13 +563,11 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function handleLoss(address _user, uint8 _battleType, uint256 _chanceToLose, bool isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
+    function handleLoss(address _user, uint8 _battleType, uint256 _chanceToLose, bool _isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
         require(msg.sender == address(battlingExtension), "handleLoss::WS");
         Battle memory tempBattle = battleForAddress[_user][_battleType];
 
         if (_chanceForHeroLoss != 0) {
-            _chanceForHeroLoss = _chanceForHeroLoss.mod(100).add(1);
-
             if (_chanceForHeroLoss <= _chanceToLose) {
                 emit HeroLost (
                     msg.sender,
@@ -582,7 +580,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
                 battleTypeForAsset[msg.sender][tempBattle.hero] = 0;
 
-                if (!isEndBattle) {
+                if (!_isEndBattle) {
                     tempBattle.currentRewardPercentage -= assetPercentages[tempBattle.hero - 1];
                     if (tempBattle.dayForLimitReached != 0) {
                         tempBattle.dayForLimitReached = 0;
@@ -594,8 +592,6 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         if (_chanceForCavalryLoss != 0) {
-            _chanceForCavalryLoss = _chanceForCavalryLoss.mod(100).add(1);
-
             if (_chanceForCavalryLoss <= _chanceToLose) {
                 emit CavalryLost (
                     msg.sender,
@@ -608,7 +604,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
                 battleTypeForAsset[msg.sender][tempBattle.cavalry] = 0;
 
-                if (!isEndBattle) {
+                if (!_isEndBattle) {
                     tempBattle.currentRewardLimit -= assetPercentages[tempBattle.cavalry - 1];
                     if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
                         tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
@@ -620,7 +616,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
         }
 
-        if (isEndBattle) {
+        if (_isEndBattle) {
             if (tempBattle.hero != 0) {
                 fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.hero, 1, "");
                 battleTypeForAsset[msg.sender][tempBattle.hero] = 0;
