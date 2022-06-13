@@ -22,6 +22,12 @@ contract FortunasAssets is Ownable, ERC1155 {
         battling = _battling;
     }
 
+    // setters
+
+    function setURI(string memory _uri) external onlyOwner {
+        _setURI(_uri);
+    }
+
     // functions
 
     function ownershipOf(
