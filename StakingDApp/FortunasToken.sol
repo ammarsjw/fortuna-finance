@@ -42,8 +42,8 @@ contract FortunasToken is ERC20, Ownable {
     uint256 public treasurySellingFee;
     uint256 public burnSellingFee;
 
-    uint256 public totalBuyingFee;
-    uint256 public totalSellingFee;
+    uint256 public maxBuyingFee;
+    uint256 public maxSellingFee;
     uint256 public immutable multiplierForFee;
 
     uint256 public totalSellingFeesAccumulated;
@@ -114,8 +114,8 @@ contract FortunasToken is ERC20, Ownable {
         treasurySellingFee = _treasurySellingFee;
         burnSellingFee = _burnSellingFee;
 
-        totalBuyingFee = _liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee);
-        totalSellingFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
+        maxBuyingFee = _liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee);
+        maxSellingFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
 
         multiplierForFee = 10 ** 3;
 
@@ -161,18 +161,18 @@ contract FortunasToken is ERC20, Ownable {
         // excludeFromFees(_lotteryContractAddress, true);
     }
 
-    function updateBuyFee(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
-        require(_liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee) == totalBuyingFee,
-            "FRTNA: Cannot exceed total selling fees");
+    function updateBuyingFees(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
+        uint256 totalInputFee = _liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee);
+        require(totalInputFee <= maxBuyingFee, "FRTNA: Cannot exceed total Buying fees");
 
         liquidityBuyingFee = _liquidityBuyingFee;
         treasuryBuyingFee = _treasuryBuyingFee;
         burnBuyingFee = _burnBuyingFee;
     }
 
-    function updateSellingFee(uint256 _liquiditySellingFee, uint256 _treasurySellingFee, uint256 _burnSellingFee) public onlyOwner {
-        require(_liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee) == totalSellingFee,
-            "FRTNA: Cannot exceed total selling fees");
+    function updateSellingFees(uint256 _liquiditySellingFee, uint256 _treasurySellingFee, uint256 _burnSellingFee) public onlyOwner {
+        uint256 totalInputFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
+        require(totalInputFee <= maxSellingFee, "FRTNA: Cannot exceed total selling fees");
 
         liquiditySellingFee = _liquiditySellingFee;
         treasurySellingFee = _treasurySellingFee;
@@ -348,6 +348,8 @@ contract FortunasToken is ERC20, Ownable {
             _isBuy(from) &&
             !isExcludedFromFees[to]
         ) {
+            uint256 totalBuyingFee = liquidityBuyingFee.add(treasuryBuyingFee).add(burnBuyingFee);
+
             uint256 buyingFee = amount.mul(totalBuyingFee).div(multiplierForFee);
             amount -= buyingFee;
 
@@ -358,6 +360,8 @@ contract FortunasToken is ERC20, Ownable {
             _isSell(from, to) &&
             !isExcludedFromFees[from]
         ) {
+            uint256 totalSellingFee = liquiditySellingFee.add(treasurySellingFee).add(burnSellingFee);
+
             uint256 sellingFee = amount.mul(totalSellingFee).div(multiplierForFee);
             totalSellingFeesAccumulated += sellingFee;
             amount -= sellingFee;
