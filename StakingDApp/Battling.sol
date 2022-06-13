@@ -209,7 +209,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     function sendRations(uint256 _rationDays, uint8 _battleType) external validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::WR1");
-        if (tempBattle.battleDaysExpended != 0) {
+        if (tempBattle.rationsDaysTotal != 0) {
             uint256 rationsExpended = block.timestamp.sub(tempBattle.battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
             uint256 currentRationsDays = tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
             require(currentRationsDays <= 5, "sendRations::WR2");
@@ -343,6 +343,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 pricePercentage;
         if (_assetToPurchase == 0) {
             battlingExtension.requestRandomnessForRandomAsset();
+            return;
         }
         else if (msg.sender == address(battlingExtension)) {
             pricePercentage = randomAssetPrice;
@@ -350,7 +351,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         else {
             pricePercentage = assetPrices[_assetToPurchase - 1];
         }
-        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::HAO");
+        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::AAO");
 
 
         uint256 reserves;
