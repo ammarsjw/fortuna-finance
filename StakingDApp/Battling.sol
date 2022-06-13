@@ -632,6 +632,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                     tempBattle.hero
                 );
             }
+
             if (tempBattle.cavalry != 0) {
                 fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
                 battleTypeForAsset[msg.sender][tempBattle.cavalry] = 0;
@@ -685,14 +686,22 @@ contract Battling is BattlingBase, ERC1155Holder {
     // modifiers
 
     modifier validBattle(uint8 _battleType) {
-        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
-        require(tempBattle.initialTokensStaked != 0, "Battling:WB");
-        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "battling::BE");
+        _validBattle(_battleType);
         _;
     }
 
+    function _validBattle(uint8 _battleType) internal view {
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
+        require(tempBattle.initialTokensStaked != 0, "Battling:WB");
+        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "battling::BE");
+    }
+
     modifier validBattleType(uint8 _battleType) {
-        require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
+        _validBattleType(_battleType);
         _;
+    }
+
+    function _validBattleType(uint8 _battleType) internal pure {
+        require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
     }
 }
