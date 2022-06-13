@@ -310,13 +310,13 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         if (chanceToLose != 0) {
             if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                battlingExtension.requestRandommessForLoss(2, msg.sender, _battleType, chanceToLose, false, 1);
+                battlingExtension.requestRandomnessForLoss(2, msg.sender, _battleType, chanceToLose, false, 1);
             }
             else if (tempBattle.hero != 0) {
-                battlingExtension.requestRandommessForLoss(1, msg.sender, _battleType, chanceToLose, false, 2);
+                battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, false, 2);
             }
             else if (tempBattle.cavalry != 0) {
-                battlingExtension.requestRandommessForLoss(1, msg.sender, _battleType, chanceToLose, false, 3);
+                battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, false, 3);
             }
         }
 
@@ -338,7 +338,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         uint256 pricePercentage;
         if (_assetToPurchase == 0) {
-            battlingExtension.requestRandommessForRandomAsset();
+            battlingExtension.requestRandomnessForRandomAsset();
         }
         else if (msg.sender == address(battlingExtension)) {
             pricePercentage = randomAssetPrice;
@@ -539,13 +539,13 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             if (chanceToLose != 0) {
                 if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                    battlingExtension.requestRandommessForLoss(2, msg.sender, _battleType, chanceToLose, true, 1);
+                    battlingExtension.requestRandomnessForLoss(2, msg.sender, _battleType, chanceToLose, true, 1);
                 }
                 else if (tempBattle.hero != 0) {
-                    battlingExtension.requestRandommessForLoss(1, msg.sender, _battleType, chanceToLose, true, 2);
+                    battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, true, 2);
                 }
                 else if (tempBattle.cavalry != 0) {
-                    battlingExtension.requestRandommessForLoss(1, msg.sender, _battleType, chanceToLose, true, 3);
+                    battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, true, 3);
                 }
             }
         }

@@ -53,7 +53,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
 
     // Chainlink VRF functions
 
-    function requestRandommessForLoss(
+    function requestRandomnessForLoss(
         uint32 _numbersNeeded,
         address _user,
         uint8 _battleType,
@@ -77,7 +77,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         vrf_scenario = _scenario;
     }
 
-    function requestRandommessForRandomAsset() external onlyOwner {
+    function requestRandomnessForRandomAsset() external onlyOwner {
         vrf_requestId = COORDINATOR.requestRandomWords(
             keyHash,
             vrf_subscriptionId,
