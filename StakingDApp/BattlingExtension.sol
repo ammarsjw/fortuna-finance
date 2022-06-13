@@ -86,6 +86,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
             1
         );
 
+        // setting global variable for callback function
         vrf_scenario = 4;
     }
 
