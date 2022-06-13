@@ -18,6 +18,7 @@ contract FortunasToken is ERC20, Ownable {
     address public immutable pancakePair;
 
     bool private swapping;
+    bool public swapAndLiquifyEnabled = true;
 
     // BUSD mainnet
     // address public BUSD =
@@ -44,11 +45,11 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public maxBuyingFee;
     uint256 public maxSellingFee;
-    uint256 public immutable multiplierForFee;
+    uint256 public immutable multiplierForTotalFee;
 
     uint256 public totalSellingFeesAccumulated;
 
-    uint256 public swapAndTransferTokensAtAmount = 10000 * (10**18);
+    uint256 public swapAndTransferTokensAtAmount = 1000 * (10**18);
 
     // timestamp for when the token can be traded freely on PanackeSwap
     uint256 public immutable tradingEnabledTimestamp = 1623967200; //June 17, 22:00 UTC, 2021
@@ -117,7 +118,7 @@ contract FortunasToken is ERC20, Ownable {
         maxBuyingFee = _liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee);
         maxSellingFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
 
-        multiplierForFee = 10 ** 3;
+        multiplierForTotalFee = 10 ** 3;
 
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
@@ -151,12 +152,16 @@ contract FortunasToken is ERC20, Ownable {
 
     // getters and setters
 
-    function setAssociatedContracts(address _battlingContractAddress) external onlyOwner {
-        battlingContractAddress = _battlingContractAddress;
+    function setAssociatedContracts(address newBattlingContractAddress) external onlyOwner {
+        battlingContractAddress = newBattlingContractAddress;
 
-        excludeFromPassiveRewards(_battlingContractAddress, true);
+        excludeFromPassiveRewards(newBattlingContractAddress, true);
+        excludeFromFees(newBattlingContractAddress, true);
+    }
 
-        excludeFromFees(_battlingContractAddress, true);
+    function setSwapAndLiquifyEnabled(bool state) external onlyOwner {
+        require(swapAndLiquifyEnabled != state, "FRTNA: SwapAndLiquifyEnabled is already of the value 'state'");
+        swapAndLiquifyEnabled = state;
     }
 
     function updateBuyingFees(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
@@ -305,18 +310,20 @@ contract FortunasToken is ERC20, Ownable {
                 totalBuyingFeesAccumulated -= totalSellingFeesAccumulated;
 
                 toLiquidityAmount = totalSellingFeesAccumulated
-                    .mul(liquiditySellingFee)
-                    .div(multiplierForFee);
-                swapAndLiquify(toLiquidityAmount);
+                    .mul(liquiditySellingFee).div(100);
+                if (swapAndLiquifyEnabled) {
+                    swapAndLiquify(toLiquidityAmount);
+                }
+                else {
+                    super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+                }
 
                 toTreasuryAmount = totalSellingFeesAccumulated
-                    .mul(treasurySellingFee)
-                    .div(multiplierForFee);
+                    .mul(treasurySellingFee).div(100);
                 super._transfer(address(this), treasuryWallet, toTreasuryAmount);
 
                 toBurnAmount = totalSellingFeesAccumulated
-                    .mul(burnSellingFee)
-                    .div(multiplierForFee);
+                    .mul(burnSellingFee).div(100);
                 _burn(address(this), toBurnAmount);
 
                 totalSellingFeesAccumulated = 0;
@@ -324,18 +331,20 @@ contract FortunasToken is ERC20, Ownable {
             
             if (totalBuyingFeesAccumulated > 0) {
                 toLiquidityAmount = totalBuyingFeesAccumulated
-                    .mul(liquidityBuyingFee)
-                    .div(multiplierForFee);
-                swapAndLiquify(toLiquidityAmount);
+                    .mul(liquidityBuyingFee).div(100);
+                if (swapAndLiquifyEnabled) {
+                    swapAndLiquify(toLiquidityAmount);
+                }
+                else {
+                    super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+                }
 
                 toTreasuryAmount = totalBuyingFeesAccumulated
-                    .mul(treasuryBuyingFee)
-                    .div(multiplierForFee);
+                    .mul(treasuryBuyingFee).div(100);
                 super._transfer(address(this), treasuryWallet, toTreasuryAmount);
 
                 toBurnAmount = totalBuyingFeesAccumulated
-                    .mul(burnBuyingFee)
-                    .div(multiplierForFee);
+                    .mul(burnBuyingFee).div(100);
                 _burn(address(this), toBurnAmount);
             }
 
@@ -348,7 +357,7 @@ contract FortunasToken is ERC20, Ownable {
         ) {
             uint256 totalBuyingFee = liquidityBuyingFee.add(treasuryBuyingFee).add(burnBuyingFee);
 
-            uint256 buyingFee = amount.mul(totalBuyingFee).div(multiplierForFee);
+            uint256 buyingFee = amount.mul(totalBuyingFee).div(multiplierForTotalFee);
             amount -= buyingFee;
 
             super._transfer(from, address(this), buyingFee);
@@ -360,7 +369,7 @@ contract FortunasToken is ERC20, Ownable {
         ) {
             uint256 totalSellingFee = liquiditySellingFee.add(treasurySellingFee).add(burnSellingFee);
 
-            uint256 sellingFee = amount.mul(totalSellingFee).div(multiplierForFee);
+            uint256 sellingFee = amount.mul(totalSellingFee).div(multiplierForTotalFee);
             totalSellingFeesAccumulated += sellingFee;
             amount -= sellingFee;
 
