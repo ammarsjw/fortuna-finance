@@ -9,16 +9,26 @@ import "./ABDKMath64x64.sol";
 
 abstract contract BaseTest {
 
+    mapping (uint256 => uint256) values;
+
     function adding(uint256 a, uint256 b) public virtual returns (uint256) {
         return a + b;
     }
 
+    function getValues(uint256 x) external view returns (uint256) {
+        return values[x];
+    }
+
 }
 
-contract OtherTest is Ownable {
+contract OtherTest is Ownable, BaseTest {
 
     constructor() {
 
+    }
+
+    function adding(uint256 a, uint256 b) public virtual override returns (uint256) {
+        return a + b;
     }
     
     function outsideCall1() external view returns (address) {
@@ -29,6 +39,10 @@ contract OtherTest is Ownable {
     function outsideCall2() public view returns (address) {
         address y = msg.sender;
         return y;
+    }
+
+    function changeValues(uint256 x, uint256 y) public {
+        values[x] = y;
     }
 
 }
@@ -349,5 +363,9 @@ contract Test is Ownable, BaseTest {
         uint256 accruedInterest2 = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), accruedInterest1);
 
         return (accruedInterest1, accruedInterest2);
+    }
+
+    function changeValues(uint256 x, uint256 y) public {
+        values[x] = y;
     }
 }
