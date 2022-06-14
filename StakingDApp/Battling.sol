@@ -115,13 +115,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        // address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
-        pancakeRouter = _pancakeRouter;
-        pancakePair = IPancakePair(_addressForPancakePair);
+        // pancakeRouter = _pancakeRouter;
+        // pancakePair = IPancakePair(_addressForPancakePair);
 
-        LPToken = IERC20(_addressForPancakePair);
+        // LPToken = IERC20(_addressForPancakePair);
 
         fortunasToken = IFortunasToken(payable(_fortunasToken));
 
@@ -339,20 +339,19 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function purchaseAsset(uint256 _assetToPurchase) external {
         require(0 <= _assetToPurchase && _assetToPurchase <= 10, "purchaseHero::WA");
-
-        uint256 pricePercentage;
         if (_assetToPurchase == 0) {
             battlingExtension.requestRandomnessForRandomAsset();
             return;
         }
-        else if (msg.sender == address(battlingExtension)) {
+        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::AAO");
+
+        uint256 pricePercentage;
+        if (msg.sender == address(battlingExtension)) {
             pricePercentage = randomAssetPrice;
         }
         else {
             pricePercentage = assetPrices[_assetToPurchase - 1];
         }
-        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::AAO");
-
 
         uint256 reserves;
         if (pancakePair.token0() == address(fortunasToken)) {
