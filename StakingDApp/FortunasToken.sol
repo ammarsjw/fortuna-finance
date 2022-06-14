@@ -12,10 +12,11 @@ import "./FortunasLedger.sol";
 contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;
 
-    address public battlingContractAddress;
+    address public battling;
 
     IPancakeRouter02 public pancakeRouter;
-    address public immutable pancakePair;
+    // address public immutable pancakePair;
+    address public pancakePair;
 
     bool private swapping;
     bool public swapAndLiquifyEnabled = true;
@@ -123,20 +124,20 @@ contract FortunasToken is ERC20, Ownable {
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-        address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
-            .createPair(address(this), BUSD);
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        // address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
+        //     .createPair(address(this), BUSD);
 
-        pancakeRouter = _pancakeRouter;
-        pancakePair = _pancakePair;
+        // pancakeRouter = _pancakeRouter;
+        // pancakePair = _pancakePair;
 
-        _setAutomatedMarketMakerPair(_pancakePair, true);
+        // _setAutomatedMarketMakerPair(_pancakePair, true);
 
         // exclude from receiving rewards
         excludeFromPassiveRewards(address(this), true);
         excludeFromPassiveRewards(liquidityWallet, true);
         excludeFromPassiveRewards(treasuryWallet, true);
-        excludeFromPassiveRewards(_pancakePair, true);
+        // excludeFromPassiveRewards(_pancakePair, true);
         excludeFromPassiveRewards(address(0), true);
 
         // exclude from paying fees
@@ -152,11 +153,11 @@ contract FortunasToken is ERC20, Ownable {
 
     // getters and setters
 
-    function setAssociatedContracts(address newBattlingContractAddress) external onlyOwner {
-        battlingContractAddress = newBattlingContractAddress;
+    function setBattling(address newBattling) external onlyOwner {
+        battling = newBattling;
 
-        excludeFromPassiveRewards(newBattlingContractAddress, true);
-        excludeFromFees(newBattlingContractAddress, true);
+        excludeFromPassiveRewards(newBattling, true);
+        excludeFromFees(newBattling, true);
     }
 
     function setSwapAndLiquifyEnabled(bool state) external onlyOwner {
@@ -274,14 +275,6 @@ contract FortunasToken is ERC20, Ownable {
             require(canTransferBeforeTradingIsEnabled[from], "FRTNA: This account cannot send tokens until trading is enabled");
         }
 
-        if (!isExcludedFromPassiveRewards[from]) {
-            updateLedger(from);
-        }
-        
-        if (!isExcludedFromPassiveRewards[to]) {
-            updateLedger(to);
-        }
-
         if(amount == 0) {
             super._transfer(from, to, 0);
             return;
@@ -377,6 +370,71 @@ contract FortunasToken is ERC20, Ownable {
         }
 
         super._transfer(from, to, amount);
+
+        if (!isExcludedFromPassiveRewards[from]) {
+            _updateLedger(from);
+        }
+ 
+        if (!isExcludedFromPassiveRewards[to]) {
+            _updateLedger(to);
+        }
+    }
+
+    function updateLedger(address account) external {
+        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
+
+        _updateLedger(account);
+    }
+
+    function _updateLedger(address account) internal {
+        (uint256 totalPassiveRewards, bool isFirstTransaction) =
+            fortunasLedger.updatePassiveRewards(account, balanceOf(account));
+
+        uint256 nextPassiveReward =
+            fortunasLedger.calculateNextPassiveReward(account, balanceOf(account));
+
+        if (isFirstTransaction) {
+            emit LedgerCreated(
+                account,
+                totalPassiveRewards,
+                nextPassiveReward
+            );
+            return;
+        }
+
+        emit LedgerUpdated(
+            account,
+            totalPassiveRewards,
+            nextPassiveReward
+        );
+    }
+
+    function claimLedger() external {
+        require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
+
+        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
+            fortunasLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
+
+        if (totalPassiveRewards == 0) {
+            require(false, "FRTNA: No rewards to claim");
+        }
+
+        _mint(msg.sender, totalPassiveRewards);
+
+        emit LedgerClaimed(
+            msg.sender,
+            totalPassiveRewards,
+            nextPassiveReward
+        );
+    }
+
+    function viewLedger(address account) external view returns (uint256, uint256) {
+        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
+
+        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
+            fortunasLedger.getCurrentLedgerStatus(account, balanceOf(account));
+
+        return (totalPassiveRewards, nextPassiveReward);
     }
 
     function swapAndLiquify(uint256 tokens) private {
@@ -435,67 +493,16 @@ contract FortunasToken is ERC20, Ownable {
         );
     }
 
-    function claimLedger() external {
-        require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
-
-        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
-            fortunasLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
-
-        if (totalPassiveRewards == 0) {
-            require(false, "FRTNA: No rewards to claim");
-        }
-
-        _mint(msg.sender, totalPassiveRewards);
-
-        emit LedgerClaimed(
-            msg.sender,
-            totalPassiveRewards,
-            nextPassiveReward
-        );
-    }
-
-    function updateLedger(address account) internal {
-        (uint256 totalPassiveRewards, bool isFirstTransaction) =
-            fortunasLedger.updatePassiveRewards(account, balanceOf(account));
-
-        uint256 nextPassiveReward =
-            fortunasLedger.calculateNextPassiveReward(account, balanceOf(account));
-
-        if (isFirstTransaction) {
-            emit LedgerCreated(
-                account,
-                totalPassiveRewards,
-                nextPassiveReward
-            );
-            return;
-        }
-
-        emit LedgerUpdated(
-            account,
-            totalPassiveRewards,
-            nextPassiveReward
-        );
-    }
-
-    function viewLedger(address account) external view returns (uint256, uint256) {
-        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
-
-        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
-            fortunasLedger.getPassiveRewards(account, balanceOf(account));
-
-        return (totalPassiveRewards, nextPassiveReward);
-    }
-
     function mint(address account, uint256 amount) external onlyContract {
         _mint(account, amount);
     }
 
-    function burn(address account, uint256 amount) external {
+    function burn(address account, uint256 amount) external onlyContract {
         _burn(account, amount);
     }
 
     modifier onlyContract {
-        require(msg.sender == battlingContractAddress, "FRTNA: Only Fortunas Battling Contract can call this function");
+        require(msg.sender == battling, "FRTNA: Only Fortunas Battling Contract can call this function");
         _;
     }
 
