@@ -82,14 +82,9 @@ contract BattlingBase is Ownable {
         rewardIncreasePerDay = _increasePerDay;
 
         rewardLimit = _limit;
-        _setRewards();
-    }
-
-    function _setRewards() internal {
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
             minRewardAmount[i] = multiplierForReward.roundDiv(rewardBase[i].roundDiv(48));
         }
     }
-
 }
