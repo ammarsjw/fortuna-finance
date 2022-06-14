@@ -13,6 +13,7 @@ interface IBattling {
     ) external;
 
     function purchaseAsset(
+        address _user,
         uint256 _assetToPurchase
     ) external;
 

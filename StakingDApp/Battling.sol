@@ -337,21 +337,23 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function purchaseAsset(uint256 _assetToPurchase) external {
+    function purchaseAsset(address _user, uint256 _assetToPurchase) external {
         require(0 <= _assetToPurchase && _assetToPurchase <= 10, "purchaseHero::WA");
         if (_assetToPurchase == 0) {
-            battlingExtension.requestRandomnessForRandomAsset();
+            require(msg.sender == _user, "purchaseAsset::WS");
+            battlingExtension.requestRandomnessForRandomAsset(_user);
             return;
         }
-        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::AAO");
 
         uint256 pricePercentage;
         if (msg.sender == address(battlingExtension)) {
             pricePercentage = randomAssetPrice;
         }
         else {
+            require(msg.sender == _user, "purchaseAsset::WS");
             pricePercentage = assetPrices[_assetToPurchase - 1];
         }
+        require(fortunasAssets.ownershipOf(_user, _assetToPurchase) == false, "purchaseHero::AAO");
 
         uint256 reserves;
         if (pancakePair.token0() == address(fortunasToken)) {
@@ -362,13 +364,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         uint256 price = reserves.mul(pricePercentage).roundDiv(multiplier);
-        fortunasToken.transferFrom(msg.sender, address(this), price);
+        fortunasToken.transferFrom(_user, address(this), price);
 
-        fortunasAssets.mint(msg.sender, _assetToPurchase, 1, "");
+        fortunasAssets.mint(_user, _assetToPurchase, 1, "");
 
         if (_assetToPurchase <= 5) {
             emit HeroPurchased (
-                msg.sender,
+                _user,
                 0,
                 true,
                 _assetToPurchase
@@ -376,7 +378,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
         else {
             emit CavalryPurchased (
-                msg.sender,
+                _user,
                 0,
                 true,
                 _assetToPurchase

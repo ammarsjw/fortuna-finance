@@ -77,7 +77,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         vrf_scenario = _scenario;
     }
 
-    function requestRandomnessForRandomAsset() external onlyOwner {
+    function requestRandomnessForRandomAsset(address _user) external onlyOwner {
         vrf_requestId = COORDINATOR.requestRandomWords(
             keyHash,
             vrf_subscriptionId,
@@ -87,6 +87,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
         );
 
         // setting global variable for callback function
+        vrf_user = _user;
         vrf_scenario = 4;
     }
 
@@ -144,7 +145,7 @@ contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
                 assetToPurchase = 5;
             }
 
-            battling.purchaseAsset(assetToPurchase);
+            battling.purchaseAsset(vrf_user , assetToPurchase);
         }
     }
 

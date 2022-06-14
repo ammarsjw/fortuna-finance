@@ -22,13 +22,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         battling = _battling;
     }
 
-    // setters
-
-    function setURI(string memory _uri) external onlyOwner {
-        _setURI(_uri);
-    }
-
-    // functions
+    // getters
 
     function ownershipOf(
         address _account,
@@ -37,6 +31,29 @@ contract FortunasAssets is Ownable, ERC1155 {
         require(_account != address(0), "ownershipOf::Address zero is not a valid owner");
         return _ownership[_id][_account];
     }
+
+    function ownershipOfBatch(
+        address _account
+    ) external view returns (bool[] memory) {
+        require(_account != address(0), "ownershipOfBatch::Address zero is not a valid owner");
+
+        bool[] memory ownershipBatch = new bool[](10);
+        for (uint256 i = 0 ; i < 10 ; i++) {
+            ownershipBatch[i] = _ownership[i + 1][_account];
+        }
+
+        return ownershipBatch;
+    }
+
+    // setters
+
+    function setURI(
+        string memory _uri
+    ) external onlyOwner {
+        _setURI(_uri);
+    }
+
+    // functions
 
     function mint(
         address _to,
