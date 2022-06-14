@@ -16,6 +16,7 @@ contract FortunasToken is ERC20, Ownable {
 
     IPancakeRouter02 public pancakeRouter;
     address public immutable pancakePair;
+    // address public pancakePair;
 
     bool private swapping;
     bool public swapAndLiquifyEnabled = true;
