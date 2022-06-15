@@ -23,8 +23,12 @@ abstract contract BaseTest {
 
 contract OtherTest is Ownable, BaseTest {
 
-    constructor() {
+    address public sender;
+    address public origin;
 
+    constructor() {
+        sender = msg.sender;
+        origin = tx.origin;
     }
 
     function adding(uint256 a, uint256 b) public virtual override returns (uint256) {

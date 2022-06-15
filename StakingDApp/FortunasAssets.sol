@@ -8,8 +8,9 @@ import "./ERC1155.sol";
 contract FortunasAssets is Ownable, ERC1155 {
 
     address public battling;
+    address public parent;
 
-    bool private isTransferEnabled = false;
+    bool public isTransferEnabled = false;
 
     // mappings
 
@@ -18,17 +19,13 @@ contract FortunasAssets is Ownable, ERC1155 {
     // constructor
 
     constructor(
-        string memory _uri,
-        address _battling
+        string memory _uri
     ) ERC1155(_uri) {
-        battling = _battling;
+        battling = msg.sender;
+        parent = tx.origin;
     }
 
     // getters
-
-    function getIsTransferEnabled() external view onlyOwner returns (bool) {
-        return isTransferEnabled;
-    }
 
     function ownershipOf(
         address _account,
@@ -55,7 +52,7 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     function setIsTransferEnabled(
         bool _state
-    ) external onlyOwner {
+    ) external onlyParent {
         require(isTransferEnabled != _state, "setIsTransferEnabled::isTransferEnabled is already of the value '_state'");
 
         isTransferEnabled = _state;
@@ -63,7 +60,7 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     function setURI(
         string memory _uri
-    ) external onlyOwner {
+    ) external onlyParent {
         _setURI(_uri);
     }
 
@@ -141,4 +138,11 @@ contract FortunasAssets is Ownable, ERC1155 {
 
         _ownership[_tokenId][_from] = false;
     }
+
+    // modifiers
+
+    modifier onlyParent() {
+        require(msg.sender == parent, "onlyParent::Only parent can call this function");
+        _;
+    } 
 }

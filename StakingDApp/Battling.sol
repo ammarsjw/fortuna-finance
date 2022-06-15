@@ -124,7 +124,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken = IFortunasToken(payable(_fortunasToken));
 
-        fortunasAssets = new FortunasAssets("", address(this));
+        fortunasAssets = new FortunasAssets("");
 
         battlingExtension = new BattlingExtension();
 
@@ -154,10 +154,6 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function setFortunasToken(address _fortunasToken) external onlyOwner {
         fortunasToken = IFortunasToken(payable(_fortunasToken));
-    }
-
-    function setFortunasAssetsURI(string memory _uri) external onlyOwner {
-        fortunasAssets.setURI(_uri);
     }
 
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {

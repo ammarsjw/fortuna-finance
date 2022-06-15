@@ -423,7 +423,7 @@ contract FortunasToken is ERC20, Ownable {
 
         emit LedgerClaimed(
             msg.sender,
-            totalPassiveRewards,
+            0,
             nextPassiveReward
         );
     }
