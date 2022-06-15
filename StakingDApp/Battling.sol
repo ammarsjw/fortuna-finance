@@ -108,10 +108,9 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // constructor
 
-    constructor(address _fortunasToken, uint64 _subscriptionId) {
+    constructor(address _fortunasToken) {
         bribeToEmeperor = 5000;
 
-        // TODO (for mainnet) rather than using the constructor, use the setter function to initialize some of the below variables to hide sensitive information
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
@@ -127,7 +126,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasAssets = new FortunasAssets("", address(this));
 
-        battlingExtension = new BattlingExtension(_subscriptionId, address(this));
+        battlingExtension = new BattlingExtension();
 
         // TODO
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
@@ -165,27 +164,31 @@ contract Battling is BattlingBase, ERC1155Holder {
         treasuryWallet = _treasuryWallet;
     }
 
-    function setAllRewards(uint256[6] memory _basePercentages, uint256 _increasePerDay, uint256[6] memory _limit) external onlyOwner {
+    function setAllRewards(
+        uint256[6] memory _basePercentages,
+        uint256 _increasePerDay,
+        uint256[6] memory _limit
+    ) external onlyOwner {
         _setAllRewards(_basePercentages, _increasePerDay, _limit);
     }
 
     // functions
 
-    function startBattle(uint256 _amount, uint8 _battleType) external {
+    function startBattle(
+        uint256 _amount,
+        uint8 _battleType
+    ) external {
         require(_amount >= minRewardAmount[_battleType - 1], "startBattle::MIN");
         require(2 <= _battleType && _battleType <= 6, "startBattle::WBT1");
         require(battleForAddress[msg.sender][_battleType].initialTokensStaked == 0, "startBattle::BAS");
 
-
-        uint256 bribe = _amount.mul(bribeToEmeperor).div(multiplier);
-        _amount -= bribe;
-
         if (_battleType == 2) {
-            LPToken.transferFrom(msg.sender, treasuryWallet, bribe);
-
             LPToken.transferFrom(msg.sender, address(this), _amount);
         }
         else {
+            uint256 bribe = _amount.mul(bribeToEmeperor).div(multiplier);
+            _amount -= bribe;
+
             fortunasToken.transferFrom(msg.sender, treasuryWallet, bribe);
 
             fortunasToken.transferFrom(msg.sender, address(this), _amount);
@@ -206,15 +209,21 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function sendRations(uint256 _rationDays, uint8 _battleType) external validBattleType(_battleType) validBattle(_battleType) {
+    function sendRations(
+        uint256 _rationDays,
+        uint8 _battleType
+    ) external validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
+
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::WR1");
+
         if (tempBattle.rationsDaysTotal != 0) {
-            uint256 rationsExpended = block.timestamp.sub(tempBattle.battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
-            uint256 currentRationsDays = tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
+            uint256 rationsExpended = 
+                block.timestamp.sub(tempBattle.battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
+            uint256 currentRationsDays =
+                tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
             require(currentRationsDays <= 5, "sendRations::WR2");
         }
-
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
@@ -244,10 +253,14 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function addTroops(uint256 _amountToAdd, uint8 _battleType) external validBattle(_battleType) {
+    function addTroops(
+        uint256 _amountToAdd,
+        uint8 _battleType
+    ) external validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
+
         tempBattle.additionalTokens += _amountToAdd;
         if (tempBattle.additionalTokens + _amountToAdd > tempBattle.initialTokensStaked) {
             tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
@@ -273,12 +286,17 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function removeTroops(uint256 _amountToRemove, uint8 _battleType) external validBattle(_battleType) {
+    function removeTroops(
+        uint256 _amountToRemove,
+        uint8 _battleType
+    ) external validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
-        require(_amountToRemove < tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards), "removeTroops::WA");
-        require(tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards).sub(_amountToRemove) >= minRewardAmount[_battleType - 1], "removeTroops::MIN");
+
+        uint256 tempTotalTokens = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
+        require(_amountToRemove < tempTotalTokens, "removeTroops::WA");
+        require(minRewardAmount[_battleType - 1] <= tempTotalTokens.sub(_amountToRemove), "removeTroops::MIN");
 
         if (_amountToRemove > tempBattle.additionalTokens) {
             _amountToRemove -= tempBattle.additionalTokens;
@@ -302,25 +320,31 @@ contract Battling is BattlingBase, ERC1155Holder {
             uint256 toMint = _amountToRemove.sub(totalContractBalance);
             fortunasToken.mint(address(this), toMint);
         }
+
         fortunasToken.transfer(msg.sender, _amountToRemove);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 
         uint256 chanceToLose = 50;
+
         if (tempBattle.battleDaysExpended > 3) {
             uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
             chanceToLose = chanceToLose.safeSub(chanceDecrease);
         }
 
         if (chanceToLose != 0) {
+            bool[] memory chances = new bool[](2);
             if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                battlingExtension.requestRandomnessForLoss(2, msg.sender, _battleType, chanceToLose, false, 1);
+                chances = battlingExtension.createRandomnessForLoss(chanceToLose, 2);
+                handleLoss(_battleType, false, chances[0], chances[1]);
             }
             else if (tempBattle.hero != 0) {
-                battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, false, 2);
+                chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
+                handleLoss(_battleType, false, chances[0], false);
             }
             else if (tempBattle.cavalry != 0) {
-                battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, false, 3);
+                chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
+                handleLoss(_battleType, false, false, chances[0]);
             }
         }
 
@@ -337,26 +361,24 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function purchaseAsset(address _user, uint256 _assetToPurchase) external {
+    function purchaseAsset(
+        uint256 _assetToPurchase
+    ) external {
         require(0 <= _assetToPurchase && _assetToPurchase <= 10, "purchaseHero::WA");
-        if (_assetToPurchase == 0) {
-            require(msg.sender == _user, "purchaseAsset::WS");
-            battlingExtension.requestRandomnessForRandomAsset(_user);
-            return;
-        }
 
         uint256 pricePercentage;
-        if (msg.sender == address(battlingExtension)) {
+        if (_assetToPurchase == 0) {
             pricePercentage = randomAssetPrice;
+            _assetToPurchase = battlingExtension.createRandomnessForAsset();
         }
         else {
-            require(msg.sender == _user, "purchaseAsset::WS");
             pricePercentage = assetPrices[_assetToPurchase - 1];
         }
-        require(fortunasAssets.ownershipOf(_user, _assetToPurchase) == false, "purchaseHero::AAO");
+
+        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::AAO");
 
         uint256 reserves;
-        if (pancakePair.token0() == address(fortunasToken)) {
+        if (address(fortunasToken) == pancakePair.token0()) {
             (reserves, , ) = pancakePair.getReserves();
         }
         else {
@@ -364,13 +386,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         uint256 price = reserves.mul(pricePercentage).roundDiv(multiplier);
-        fortunasToken.transferFrom(_user, address(this), price);
+        fortunasToken.transferFrom(msg.sender, address(this), price);
 
-        fortunasAssets.mint(_user, _assetToPurchase, 1, "");
+        fortunasAssets.mint(msg.sender, _assetToPurchase, 1, "");
 
         if (_assetToPurchase <= 5) {
             emit HeroPurchased (
-                _user,
+                msg.sender,
                 0,
                 true,
                 _assetToPurchase
@@ -378,7 +400,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
         else {
             emit CavalryPurchased (
-                _user,
+                msg.sender,
                 0,
                 true,
                 _assetToPurchase
@@ -386,12 +408,15 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
     }
 
-    function deployAsset(uint256 _assetToDeploy, uint8 _battleType) external validBattleType(_battleType) validBattle(_battleType) {
+    function deployAsset(
+        uint256 _assetToDeploy,
+        uint8 _battleType
+    ) external validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
+
         require(1 <= _assetToDeploy && _assetToDeploy <= 10, "deployAsset::WA");
         require(fortunasAssets.ownershipOf(msg.sender, _assetToDeploy), "deployAsset::ANO");
         require(battleTypeForAsset[msg.sender][_assetToDeploy] == 0, "deployAsset::AAB1");
-
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
@@ -449,12 +474,15 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function returnAsset(uint256 _assetToReturn, uint8 _battleType) public validBattleType(_battleType) validBattle(_battleType) {
+    function returnAsset(
+        uint256 _assetToReturn,
+        uint8 _battleType
+    ) public validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
+
         require(1 <= _assetToReturn && _assetToReturn <= 10, "removeHero::WA");
         require(fortunasAssets.ownershipOf(msg.sender, _assetToReturn), "removeHero::ANO");
         require(battleTypeForAsset[msg.sender][_assetToReturn] == _battleType, "removeHero::AAB2");
-
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
@@ -506,17 +534,18 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function endBattle(uint8 _battleType) external {
+    function endBattle(
+        uint8 _battleType
+    ) external {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(2 <= _battleType && _battleType <= 6, "endBattle::WBT1");
         require(tempBattle.initialTokensStaked != 0, "endBattle:WB");
 
-
         tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 
         if (_battleType == 2) {
-            uint256 tokensToRefund = tempBattle.initialTokensStaked;
-            LPToken.transfer(msg.sender, tokensToRefund);
+            uint256 tokensToReturn = tempBattle.initialTokensStaked;
+            LPToken.transfer(msg.sender, tokensToReturn);
 
             uint256 tokensToTransfer = tempBattle.rewards;
             uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
@@ -538,20 +567,25 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
             uint256 chanceToLose = 50;
+
             if (tempBattle.battleDaysExpended > 3) {
                 uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
                 chanceToLose = chanceToLose.safeSub(chanceDecrease);
             }
 
             if (chanceToLose != 0) {
+                bool[] memory chances = new bool[](2);
                 if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                    battlingExtension.requestRandomnessForLoss(2, msg.sender, _battleType, chanceToLose, true, 1);
+                    chances = battlingExtension.createRandomnessForLoss(chanceToLose, 2);
+                    handleLoss(_battleType, true, chances[0], chances[1]);
                 }
                 else if (tempBattle.hero != 0) {
-                    battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, true, 2);
+                    chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
+                    handleLoss(_battleType, true, chances[0], false);
                 }
                 else if (tempBattle.cavalry != 0) {
-                    battlingExtension.requestRandomnessForLoss(1, msg.sender, _battleType, chanceToLose, true, 3);
+                    chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
+                    handleLoss(_battleType, true, false, chances[0]);
                 }
             }
         }
@@ -569,57 +603,57 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function handleLoss(address _user, uint8 _battleType, uint256 _chanceToLose, bool _isEndBattle, uint256 _chanceForHeroLoss, uint256 _chanceForCavalryLoss) external {
-        require(msg.sender == address(battlingExtension), "handleLoss::WS");
-        Battle memory tempBattle = battleForAddress[_user][_battleType];
+    function handleLoss(
+        uint8 _battleType,
+        bool _isEndBattle,
+        bool _isHeroLost,
+        bool _isCavalryLost
+    ) internal {
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
-        if (_chanceForHeroLoss != 0) {
-            if (_chanceForHeroLoss <= _chanceToLose) {
-                emit HeroLost (
-                    msg.sender,
-                    0,
-                    false,
-                    tempBattle.hero
-                );
+        if (_isHeroLost) {
+            emit HeroLost (
+                msg.sender,
+                0,
+                false,
+                tempBattle.hero
+            );
 
-                fortunasAssets.burnWithoutCheck(msg.sender, tempBattle.hero, 1);
+            fortunasAssets.burnWithoutCheck(msg.sender, tempBattle.hero, 1);
 
-                battleTypeForAsset[msg.sender][tempBattle.hero] = 0;
+            battleTypeForAsset[msg.sender][tempBattle.hero] = 0;
 
-                if (!_isEndBattle) {
-                    tempBattle.currentRewardPercentage -= assetPercentages[tempBattle.hero - 1];
-                    if (tempBattle.dayForLimitReached != 0) {
-                        tempBattle.dayForLimitReached = 0;
-                    }
+            if (!_isEndBattle) {
+                tempBattle.currentRewardPercentage -= assetPercentages[tempBattle.hero - 1];
+                if (tempBattle.dayForLimitReached != 0) {
+                    tempBattle.dayForLimitReached = 0;
                 }
-
-                tempBattle.hero = 0;
             }
+
+            tempBattle.hero = 0;
         }
 
-        if (_chanceForCavalryLoss != 0) {
-            if (_chanceForCavalryLoss <= _chanceToLose) {
-                emit CavalryLost (
-                    msg.sender,
-                    0,
-                    false,
-                    tempBattle.cavalry
-                );
+        if (_isCavalryLost) {
+            emit CavalryLost (
+                msg.sender,
+                0,
+                false,
+                tempBattle.cavalry
+            );
 
-                fortunasAssets.burnWithoutCheck(msg.sender, tempBattle.cavalry, 1);
+            fortunasAssets.burnWithoutCheck(msg.sender, tempBattle.cavalry, 1);
 
-                battleTypeForAsset[msg.sender][tempBattle.cavalry] = 0;
+            battleTypeForAsset[msg.sender][tempBattle.cavalry] = 0;
 
-                if (!_isEndBattle) {
-                    tempBattle.currentRewardLimit -= assetPercentages[tempBattle.cavalry - 1];
-                    if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
-                        tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
-                        tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
-                    }
+            if (!_isEndBattle) {
+                tempBattle.currentRewardLimit -= assetPercentages[tempBattle.cavalry - 1];
+                if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
+                    tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
+                    tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
                 }
-
-                tempBattle.cavalry = 0;
             }
+
+            tempBattle.cavalry = 0;
         }
 
         if (_isEndBattle) {
@@ -653,7 +687,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             return;
         }
 
-        battleForAddress[_user][_battleType] = tempBattle;
+        battleForAddress[msg.sender][_battleType] = tempBattle;
     }
 
     /**
@@ -661,7 +695,9 @@ contract Battling is BattlingBase, ERC1155Holder {
      * @dev Ideally to be called only if an update on current reward amount is needed
      * @dev Function "endBattle" should be called if unstaking
      */
-    function viewAllRewards(address _user) external view returns (uint256[] memory, uint256[] memory) {
+    function viewAllRewards(
+        address _user
+    ) external view returns (uint256[] memory, uint256[] memory) {
         uint256[] memory tempRewards = new uint256[](5);
         uint256[] memory nextRewards = new uint256[](5);
         uint256 extraRewards;
@@ -669,7 +705,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         for (uint8 i = 0 ; i < 5 ; i++) {
             tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
-                if (block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
+                if (
+                    block.timestamp <
+                    tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))
+                ) {
                     tempBattle = battlingExtension.calculateRewards(tempBattle);
 
                     (extraRewards, nextRewards[i]) = battlingExtension.calculateExtraRewards(tempBattle);
@@ -695,7 +734,8 @@ contract Battling is BattlingBase, ERC1155Holder {
     function _validBattle(uint8 _battleType) internal view {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(tempBattle.initialTokensStaked != 0, "Battling:WB");
-        require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "battling::BE");
+        require(block.timestamp <
+            tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "battling::BE");
     }
 
     modifier validBattleType(uint8 _battleType) {

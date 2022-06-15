@@ -9,6 +9,8 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     address public battling;
 
+    bool private isTransferEnabled = false;
+
     // mappings
 
     mapping (uint256 => mapping(address => bool)) private _ownership;
@@ -23,6 +25,10 @@ contract FortunasAssets is Ownable, ERC1155 {
     }
 
     // getters
+
+    function getIsTransferEnabled() external view onlyOwner returns (bool) {
+        return isTransferEnabled;
+    }
 
     function ownershipOf(
         address _account,
@@ -46,6 +52,14 @@ contract FortunasAssets is Ownable, ERC1155 {
     }
 
     // setters
+
+    function setIsTransferEnabled(
+        bool _state
+    ) external onlyOwner {
+        require(isTransferEnabled != _state, "setIsTransferEnabled::isTransferEnabled is already of the value '_state'");
+
+        isTransferEnabled = _state;
+    }
 
     function setURI(
         string memory _uri
@@ -74,11 +88,13 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _amount,
         bytes memory _data
     ) public override {
+        require(isTransferEnabled == true, "safeTransferFrom::Function not yet available");
         require(_ownership[_tokenId][_to] == false, "safeTransferFrom::Cannot have more than 1 of any hero or cavalry type");
+
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
 
-        _ownership[_tokenId][_to] = true;
         _ownership[_tokenId][_from] = false;
+        _ownership[_tokenId][_to] = true;
     }
 
     function safeBatchTransferFrom(
@@ -88,17 +104,19 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256[] memory _amounts,
         bytes memory _data
     ) public override {
-        super.safeBatchTransferFrom(_from, _to, _tokenIds, _amounts, _data);
+        require(isTransferEnabled == true, "safeBatchTransferFrom::Function not yet available");
 
         for (uint256 i = 0 ; i < _tokenIds.length ; i++) {
             if (_ownership[_tokenIds[i]][_to]) {
                 require(false, "safeBatchTransferFrom::Cannot have more than 1 of any hero or cavalry type");
             }
             else {
-                _ownership[_tokenIds[i]][_to] = true;
                 _ownership[_tokenIds[i]][_from] = false;
+                _ownership[_tokenIds[i]][_to] = true;
             }
         }
+
+        super.safeBatchTransferFrom(_from, _to, _tokenIds, _amounts, _data);
     }
 
     function safeTransferFromWithoutCheck(
@@ -109,6 +127,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         bytes memory _data
     ) public onlyOwner {
         require(_to == battling || _from == battling, "safeTransferFromWithoutCheck::Either sender or recipient must be Battling contract");
+
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
     }
 

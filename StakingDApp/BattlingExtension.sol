@@ -5,154 +5,113 @@ import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./ABDKMath64x64.sol";
 import "./BattlingBase.sol";
-import "./IBattling.sol";
-import "./ChainlinkDependencies.sol";
+import "./IPancakePair.sol";
+import "./IPancakeRouter02.sol";
+import "./IPancakeFactory.sol";
 
-contract BattlingExtension is BattlingBase, VRFConsumerBaseV2 {
+contract BattlingExtension is BattlingBase {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
-    // Chainlink VRF Variables
+    // RNG variables
 
-    VRFCoordinatorV2Interface COORDINATOR;
-    LinkTokenInterface LINKTOKEN;
+    IPancakeRouter02 public rng_pancakeRouter;
+    IPancakeFactory public rng_pancakeFactory;
 
-    uint64 vrf_subscriptionId;
-
-    uint256 vrf_requestId;
-    address vrf_user;
-    uint8 vrf_battleType;
-    uint256 vrf_chanceToLose;
-    bool vrf_isEndBattle;
-    uint8 vrf_scenario;
-
-    address vrfCoordinator = address(0x6168499c0cFfCaCD319c818142124B7A15E857ab);
-
-    address link_token_contract = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
-
-    bytes32 keyHash = 0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc;
-
-    uint32 callbackGasLimit = 100000;
-    
-    uint16 requestConfirmations = 3;
-
-    // variables
-
-    IBattling battling;
+    IPancakePair public rng_pancakePair1;
+    IPancakePair public rng_pancakePair2;
+    IPancakePair public rng_pancakePair3;
+    IPancakePair public rng_pancakePair4;
 
     // constructor
 
-    constructor(uint64 _subscriptionId, address _battling) VRFConsumerBaseV2(vrfCoordinator) {
-        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
-        LINKTOKEN = LinkTokenInterface(link_token_contract);
+    constructor() {
+        // PancakeRouter02 mainnet
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
+        // PancakeRouter02 testnet
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        IPancakeFactory _pancakeFactory = IPancakeFactory(_pancakeRouter.factory());
 
-        vrf_subscriptionId = _subscriptionId;
+        address _addressForPancakePair1 = _pancakeFactory.allPairs(0);
+        address _addressForPancakePair2 = _pancakeFactory.allPairs(1);
+        address _addressForPancakePair3 = _pancakeFactory.allPairs(2);
+        address _addressForPancakePair4 = _pancakeFactory.allPairs(3);
 
-        battling = IBattling(_battling);
+        rng_pancakeRouter = _pancakeRouter;
+        rng_pancakeFactory = _pancakeFactory;
+
+        rng_pancakePair1 = IPancakePair(_addressForPancakePair1);
+        rng_pancakePair2 = IPancakePair(_addressForPancakePair2);
+        rng_pancakePair3 = IPancakePair(_addressForPancakePair3);
+        rng_pancakePair4 = IPancakePair(_addressForPancakePair4);
     }
 
-    // Chainlink VRF functions
+    // RNG functions
 
-    function requestRandomnessForLoss(
-        uint32 _numbersNeeded,
-        address _user,
-        uint8 _battleType,
-        uint256 _chanceToLose,
-        bool _isEndBattle,
-        uint8 _scenario
-    ) external onlyOwner {
-        vrf_requestId = COORDINATOR.requestRandomWords(
-            keyHash,
-            vrf_subscriptionId,
-            requestConfirmations,
-            callbackGasLimit,
-            _numbersNeeded
-        );
+    function createRandomnessForLoss(uint256 _chanceToLose, uint256 _amount) external view returns (bool[] memory) {
+        bool[] memory result = new bool[](2);
 
-        // setting global variables for callback function
-        vrf_user = _user;
-        vrf_battleType = _battleType;
-        vrf_chanceToLose = _chanceToLose;
-        vrf_isEndBattle = _isEndBattle;
-        vrf_scenario = _scenario;
+        uint256 a = rng_pancakePair1.price0CumulativeLast();
+        uint256 b = rng_pancakePair1.price1CumulativeLast();
+        (uint256 c, , ) = rng_pancakePair1.getReserves();
+
+        uint256 d = rng_pancakePair2.price0CumulativeLast();
+        uint256 e = rng_pancakePair2.price1CumulativeLast();
+
+        uint256 randomChance = uint256(keccak256(abi.encodePacked(a, b, c, d, e, block.timestamp))).mod(100).add(1);
+
+        result[0] = randomChance <= _chanceToLose;
+
+        if (_amount == 2) {
+            uint256 f = rng_pancakePair3.price0CumulativeLast();
+            uint256 g = rng_pancakePair3.price1CumulativeLast();
+            (uint256 h, , ) = rng_pancakePair3.getReserves();
+
+            uint256 i = rng_pancakePair4.price0CumulativeLast();
+            uint256 j = rng_pancakePair4.price1CumulativeLast();
+
+            randomChance = uint256(keccak256(abi.encodePacked(f, g, h, i, j, block.timestamp))).mod(100).add(1);
+
+            result[1] = randomChance <= _chanceToLose;
+        }
+
+        return result;
     }
 
-    function requestRandomnessForRandomAsset(address _user) external onlyOwner {
-        vrf_requestId = COORDINATOR.requestRandomWords(
-            keyHash,
-            vrf_subscriptionId,
-            requestConfirmations,
-            callbackGasLimit,
-            1
-        );
+    function createRandomnessForAsset() external view returns (uint256) {
+        uint256 result;
 
-        // setting global variable for callback function
-        vrf_user = _user;
-        vrf_scenario = 4;
-    }
+        uint256 a = rng_pancakePair1.price0CumulativeLast();
+        uint256 b = rng_pancakePair1.price1CumulativeLast();
+        (uint256 c, , ) = rng_pancakePair1.getReserves();
 
-    function fulfillRandomWords(
-        uint256, /* requestId */
-        uint256[] memory randomWords
-    ) internal override {
-        if (vrf_scenario == 1) {
-            battling.handleLoss(
-                vrf_user,
-                vrf_battleType,
-                vrf_chanceToLose,
-                vrf_isEndBattle,
-                randomWords[0].mod(100).add(1),
-                randomWords[1].mod(100).add(1)
-            );
+        uint256 d = rng_pancakePair2.price0CumulativeLast();
+        uint256 e = rng_pancakePair2.price1CumulativeLast();
+        (uint256 f, , ) = rng_pancakePair2.getReserves();
+
+        uint256 g = rng_pancakePair3.price0CumulativeLast();
+        uint256 h = rng_pancakePair3.price1CumulativeLast();
+        (uint256 i, , ) = rng_pancakePair3.getReserves();
+
+        uint256 randomChance = uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, g, h, i, block.timestamp))).mod(100).add(1);
+
+        if (randomChance <= 50) {
+            result = 1;
         }
-        else if (vrf_scenario == 2) {
-            battling.handleLoss(
-                vrf_user,
-                vrf_battleType,
-                vrf_chanceToLose,
-                vrf_isEndBattle,
-                randomWords[0].mod(100).add(1),
-                0
-            );
+        else if (50 < randomChance && randomChance <= 75) {
+            result = 2;
         }
-        else if (vrf_scenario == 3) {
-            battling.handleLoss(
-                vrf_user,
-                vrf_battleType,
-                vrf_chanceToLose,
-                vrf_isEndBattle,
-                0,
-                randomWords[0].mod(100).add(1)
-            );
+        else if (75 < randomChance && randomChance <= 90) {
+            result = 3;
         }
-        else if (vrf_scenario == 4) {
-            uint256 assetToPurchase;
-            uint256 randomNumber = randomWords[0].mod(100).add(1);
-
-            if (randomNumber <= 50) {
-                assetToPurchase = 1;
-            }
-            else if (50 < randomNumber && randomNumber <= 75) {
-                assetToPurchase = 2;
-            }
-            else if (75 < randomNumber && randomNumber <= 90) {
-                assetToPurchase = 3;
-            }
-            else if (90 < randomNumber && randomNumber <= 99) {
-                assetToPurchase = 4;
-            }
-            else if (randomNumber == 100) {
-                assetToPurchase = 5;
-            }
-
-            battling.purchaseAsset(vrf_user , assetToPurchase);
+        else if (90 < randomChance && randomChance <= 99) {
+            result = 4;
         }
-    }
+        else if (randomChance == 100) {
+            result = 5;
+        }
 
-    function withdraw(address _to, uint256 _amount) external onlyOwner {
-        // Transfer this contract's funds to an address.
-        // 1000000000000000000 = 1 LINK
-        LINKTOKEN.transfer(_to, _amount);
+        return result;
     }
 
     // functions
