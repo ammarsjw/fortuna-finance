@@ -12,10 +12,6 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     bool public isTransferEnabled = false;
 
-    // mappings
-
-    mapping (uint256 => mapping(address => bool)) private _ownership;
-
     // constructor
 
     constructor(
@@ -27,25 +23,17 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     // getters
 
-    function ownershipOf(
-        address _account,
-        uint256 _id
-    ) external view returns (bool) {
-        require(_account != address(0), "ownershipOf::Address zero is not a valid owner");
-        return _ownership[_id][_account];
-    }
-
-    function ownershipOfBatch(
+    function balanceOfAllAssets(
         address _account
-    ) external view returns (bool[] memory) {
-        require(_account != address(0), "ownershipOfBatch::Address zero is not a valid owner");
+    ) external view returns (uint256[] memory) {
+        require(_account != address(0), "balanceOfAssetsBatch::Address zero is not a valid owner");
 
-        bool[] memory ownershipBatch = new bool[](10);
+        uint256[] memory allAssetBalances = new uint256[](10);
         for (uint256 i = 0 ; i < 10 ; i++) {
-            ownershipBatch[i] = _ownership[i + 1][_account];
+            allAssetBalances[i] = balanceOf(_account, i + 1);
         }
 
-        return ownershipBatch;
+        return allAssetBalances;
     }
 
     // setters
@@ -72,10 +60,8 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _amount,
         bytes memory _data
     ) external onlyOwner {
-        require(_ownership[_tokenId][_to] == false, "mint::Cannot have more than 1 of any hero or cavalry type");
+        require(1 <= _tokenId && _tokenId <= 10, "mint::Wrong token id given");
         _mint(_to, _tokenId, _amount, _data);
-
-        _ownership[_tokenId][_to] = true;
     }
 
     function safeTransferFrom(
@@ -86,12 +72,9 @@ contract FortunasAssets is Ownable, ERC1155 {
         bytes memory _data
     ) public override {
         require(isTransferEnabled == true, "safeTransferFrom::Function not yet available");
-        require(_ownership[_tokenId][_to] == false, "safeTransferFrom::Cannot have more than 1 of any hero or cavalry type");
+        require(1 <= _tokenId && _tokenId <= 10, "safeTransferFrom::Wrong token id given");
 
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
-
-        _ownership[_tokenId][_from] = false;
-        _ownership[_tokenId][_to] = true;
     }
 
     function safeBatchTransferFrom(
@@ -104,39 +87,31 @@ contract FortunasAssets is Ownable, ERC1155 {
         require(isTransferEnabled == true, "safeBatchTransferFrom::Function not yet available");
 
         for (uint256 i = 0 ; i < _tokenIds.length ; i++) {
-            if (_ownership[_tokenIds[i]][_to]) {
-                require(false, "safeBatchTransferFrom::Cannot have more than 1 of any hero or cavalry type");
-            }
-            else {
-                _ownership[_tokenIds[i]][_from] = false;
-                _ownership[_tokenIds[i]][_to] = true;
-            }
+            require(1 <= _tokenIds[i] && _tokenIds[i] <= 10, "safeBatchTransferFrom::Wrong token ids given");
         }
 
         super.safeBatchTransferFrom(_from, _to, _tokenIds, _amounts, _data);
     }
 
-    function safeTransferFromWithoutCheck(
+    function safeTransferFromWithCheck(
         address _from,
         address _to,
         uint256 _tokenId,
         uint256 _amount,
         bytes memory _data
     ) public onlyOwner {
-        require(_to == battling || _from == battling, "safeTransferFromWithoutCheck::Either sender or recipient must be Battling contract");
+        require(_from == battling || _to == battling, "safeTransferFromWithCheck::Either sender or recipient must be Battling contract");
 
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
     }
 
-    function burnWithoutCheck(
+    function burnWithCheck(
         address _from,
         uint256 _tokenId,
         uint256 _amount
     ) external onlyOwner {
-        require(_from != battling, "burnWithoutCheck::Incorrect argument given");
-        _burn(msg.sender, _tokenId, _amount);
-
-        _ownership[_tokenId][_from] = false;
+        require(_from == battling, "burnWithCheck::Sender must be Battling contract");
+        _burn(_from, _tokenId, _amount);
     }
 
     // modifiers

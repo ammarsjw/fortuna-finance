@@ -50,7 +50,6 @@ contract Battling is BattlingBase, ERC1155Holder {
     // mappings
 
     mapping (address => mapping(uint8 => Battle)) private battleForAddress;
-    mapping (address => mapping(uint256 => uint8)) private battleTypeForAsset;
 
     // events
 
@@ -63,7 +62,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 rewards,
         uint256 rations,
         uint256 battleStartTime,
-        uint256 battleDurationInDays
+        uint256 battleDurationInDays,
+        uint256 hero,
+        uint256 cavalry
     );
 
     event BattleUpdated (
@@ -75,7 +76,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 rewards,
         uint256 rations,
         uint256 battleStartTime,
-        uint256 battleDurationInDays
+        uint256 battleDurationInDays,
+        uint256 hero,
+        uint256 cavalry
     );
 
     event BattleEnded (
@@ -87,24 +90,18 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 rewards,
         uint256 rations,
         uint256 battleStartTime,
-        uint256 battleDurationInDays
+        uint256 battleDurationInDays,
+        uint256 hero,
+        uint256 cavalry
     );
 
-    event HeroPurchased (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
+    event AssetPurchased (address indexed user, uint256 hero, uint256 amount);
 
-    event HeroDeployed (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
+    event AssetDeployed (address indexed user, uint256 hero, uint256 amount);
 
-    event HeroReturned (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
+    event AssetReturned (address indexed user, uint256 hero, uint256 amount);
 
-    event HeroLost (address indexed user, uint256 battleType, bool heroStatus, uint256 hero);
-
-    event CavalryPurchased (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
-
-    event CavalryDeployed (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
-
-    event CavalryReturned (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
-
-    event CavalryLost (address indexed user, uint256 battleType, bool cavalryStatus, uint256 cavalry);
+    event AssetLost (address indexed user, uint256 hero, uint256 amount);
 
     // constructor
 
@@ -201,7 +198,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             0,
             0,
             battleForAddress[msg.sender][_battleType].battleStartTime,
-            3
+            3,
+            0,
+            0
         );
     }
 
@@ -245,7 +244,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.rewards,
             tempBattle.rations,
             tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3)
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
         );
     }
 
@@ -278,7 +279,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.rewards,
             tempBattle.rations,
             tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3)
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
         );
     }
 
@@ -353,7 +356,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.rewards,
             tempBattle.rations,
             tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3)
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
         );
     }
 
@@ -371,8 +376,6 @@ contract Battling is BattlingBase, ERC1155Holder {
             pricePercentage = assetPrices[_assetToPurchase - 1];
         }
 
-        require(fortunasAssets.ownershipOf(msg.sender, _assetToPurchase) == false, "purchaseHero::AAO");
-
         uint256 reserves;
         if (address(fortunasToken) == pancakePair.token0()) {
             (reserves, , ) = pancakePair.getReserves();
@@ -386,22 +389,11 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasAssets.mint(msg.sender, _assetToPurchase, 1, "");
 
-        if (_assetToPurchase <= 5) {
-            emit HeroPurchased (
-                msg.sender,
-                0,
-                true,
-                _assetToPurchase
-            );
-        }
-        else {
-            emit CavalryPurchased (
-                msg.sender,
-                0,
-                true,
-                _assetToPurchase
-            );
-        }
+        emit AssetPurchased (
+            msg.sender,
+            _assetToPurchase,
+            fortunasAssets.balanceOf(msg.sender, _assetToPurchase)
+        );
     }
 
     function deployAsset(
@@ -411,13 +403,12 @@ contract Battling is BattlingBase, ERC1155Holder {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
         require(1 <= _assetToDeploy && _assetToDeploy <= 10, "deployAsset::WA");
-        require(fortunasAssets.ownershipOf(msg.sender, _assetToDeploy), "deployAsset::ANO");
-        require(battleTypeForAsset[msg.sender][_assetToDeploy] == 0, "deployAsset::AAB1");
-
-        tempBattle = battlingExtension.calculateRewards(tempBattle);
+        require(fortunasAssets.balanceOf(msg.sender, _assetToDeploy) > 0, "deployAsset::ANO");
 
         if (_assetToDeploy <= 5) {
-            require(tempBattle.hero == 0, "deployAsset::BAHH");
+            require(tempBattle.hero == 0, "deployAsset::HIB");
+
+            tempBattle = battlingExtension.calculateRewards(tempBattle);
 
             tempBattle.currentRewardPercentage += assetPercentages[_assetToDeploy - 1];
             if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
@@ -425,16 +416,11 @@ contract Battling is BattlingBase, ERC1155Holder {
                 tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
             }
             tempBattle.hero = _assetToDeploy;
-
-            emit HeroDeployed (
-                msg.sender,
-                _battleType,
-                true,
-                _assetToDeploy
-            );
         }
         else {
-            require(tempBattle.cavalry == 0, "deployAsset::BAHC");
+            require(tempBattle.cavalry == 0, "deployAsset::CIB");
+
+            tempBattle = battlingExtension.calculateRewards(tempBattle);
 
             tempBattle.currentRewardLimit += assetPercentages[_assetToDeploy - 1];
             if (tempBattle.dayForLimitReached != 0) {
@@ -443,19 +429,17 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
             }
             tempBattle.cavalry = _assetToDeploy;
-
-            emit CavalryDeployed (
-                msg.sender,
-                _battleType,
-                true,
-                _assetToDeploy
-            );
         }
 
-        fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _assetToDeploy, 1, "");
+        fortunasAssets.safeTransferFromWithCheck(msg.sender, address(this), _assetToDeploy, 1, "");
 
-        battleTypeForAsset[msg.sender][_assetToDeploy] = _battleType;
         battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit AssetDeployed (
+            msg.sender,
+            _assetToDeploy,
+            fortunasAssets.balanceOf(msg.sender, _assetToDeploy)
+        );
 
         emit BattleUpdated (
             msg.sender,
@@ -466,7 +450,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.rewards,
             tempBattle.rations,
             tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3)
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
         );
     }
 
@@ -476,46 +462,41 @@ contract Battling is BattlingBase, ERC1155Holder {
     ) public validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
-        require(1 <= _assetToReturn && _assetToReturn <= 10, "removeHero::WA");
-        require(fortunasAssets.ownershipOf(msg.sender, _assetToReturn), "removeHero::ANO");
-        require(battleTypeForAsset[msg.sender][_assetToReturn] == _battleType, "removeHero::AAB2");
-
-        tempBattle = battlingExtension.calculateRewards(tempBattle);
+        require(1 <= _assetToReturn && _assetToReturn <= 10, "returnAsset::WA");
 
         if (_assetToReturn <= 5) {
+            require(tempBattle.hero == _assetToReturn, "returnAsset::HNIB");
+
+            tempBattle = battlingExtension.calculateRewards(tempBattle);
+
             tempBattle.currentRewardPercentage -= assetPercentages[_assetToReturn - 1];
             if (tempBattle.dayForLimitReached != 0) {
                 tempBattle.dayForLimitReached = 0;
             }
             tempBattle.hero = 0;
-
-            emit HeroReturned (
-                msg.sender,
-                0,
-                true,
-                _assetToReturn
-            );
         }
         else {
+            require(tempBattle.cavalry == _assetToReturn, "returnAsset::CNIB");
+
+            tempBattle = battlingExtension.calculateRewards(tempBattle);
+
             tempBattle.currentRewardLimit -= assetPercentages[_assetToReturn - 1];
             if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
                 tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
                 tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
             }
             tempBattle.cavalry = 0;
-
-            emit CavalryReturned (
-                msg.sender,
-                0,
-                true,
-                _assetToReturn
-            );
         }
 
-        fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _assetToReturn, 1, "");
+        fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _assetToReturn, 1, "");
 
-        battleTypeForAsset[msg.sender][_assetToReturn] = 0;
         battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit AssetReturned (
+            msg.sender,
+            _assetToReturn,
+            fortunasAssets.balanceOf(msg.sender, _assetToReturn)
+        );
 
         emit BattleUpdated (
             msg.sender,
@@ -526,7 +507,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.rewards,
             tempBattle.rations,
             tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3)
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
         );
     }
 
@@ -595,6 +578,8 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.rewards,
             0,
             0,
+            0,
+            0,
             0
         );
     }
@@ -608,16 +593,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
         if (_isHeroLost) {
-            emit HeroLost (
-                msg.sender,
-                0,
-                false,
-                tempBattle.hero
-            );
-
-            fortunasAssets.burnWithoutCheck(msg.sender, tempBattle.hero, 1);
-
-            battleTypeForAsset[msg.sender][tempBattle.hero] = 0;
+            fortunasAssets.burnWithCheck(address(this), tempBattle.hero, 1);
 
             if (!_isEndBattle) {
                 tempBattle.currentRewardPercentage -= assetPercentages[tempBattle.hero - 1];
@@ -626,20 +602,17 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
             }
 
+            emit AssetLost (
+                msg.sender,
+                tempBattle.hero,
+                fortunasAssets.balanceOf(msg.sender, tempBattle.hero)
+            );
+
             tempBattle.hero = 0;
         }
 
         if (_isCavalryLost) {
-            emit CavalryLost (
-                msg.sender,
-                0,
-                false,
-                tempBattle.cavalry
-            );
-
-            fortunasAssets.burnWithoutCheck(msg.sender, tempBattle.cavalry, 1);
-
-            battleTypeForAsset[msg.sender][tempBattle.cavalry] = 0;
+            fortunasAssets.burnWithCheck(address(this), tempBattle.cavalry, 1);
 
             if (!_isEndBattle) {
                 tempBattle.currentRewardLimit -= assetPercentages[tempBattle.cavalry - 1];
@@ -649,31 +622,33 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
             }
 
+            emit AssetLost (
+                msg.sender,
+                tempBattle.cavalry,
+                fortunasAssets.balanceOf(msg.sender, tempBattle.cavalry)
+            );
+
             tempBattle.cavalry = 0;
         }
 
         if (_isEndBattle) {
             if (tempBattle.hero != 0) {
-                fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.hero, 1, "");
-                battleTypeForAsset[msg.sender][tempBattle.hero] = 0;
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.hero, 1, "");
 
-                emit HeroReturned (
+                emit AssetReturned (
                     msg.sender,
-                    0,
-                    true,
-                    tempBattle.hero
+                    tempBattle.hero,
+                    fortunasAssets.balanceOf(msg.sender, tempBattle.hero)
                 );
             }
 
             if (tempBattle.cavalry != 0) {
-                fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
-                battleTypeForAsset[msg.sender][tempBattle.cavalry] = 0;
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
 
-                emit CavalryReturned (
+                emit AssetReturned (
                     msg.sender,
-                    0,
-                    true,
-                    tempBattle.cavalry
+                    tempBattle.cavalry,
+                    fortunasAssets.balanceOf(msg.sender, tempBattle.cavalry)
                 );
             }
 
