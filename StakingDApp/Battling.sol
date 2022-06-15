@@ -95,13 +95,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 cavalry
     );
 
-    event AssetPurchased (address indexed user, uint256 hero, uint256 amount);
+    event AssetPurchased (address indexed user, uint256 asset, uint256 amount);
 
-    event AssetDeployed (address indexed user, uint256 hero, uint256 amount);
+    event AssetDeployed (address indexed user, uint256 asset, uint256 amount);
 
-    event AssetReturned (address indexed user, uint256 hero, uint256 amount);
+    event AssetReturned (address indexed user, uint256 asset, uint256 amount);
 
-    event AssetLost (address indexed user, uint256 hero, uint256 amount);
+    event AssetLost (address indexed user, uint256 asset, uint256 amount);
 
     // constructor
 
@@ -322,8 +322,6 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken.transfer(msg.sender, _amountToRemove);
 
-        battleForAddress[msg.sender][_battleType] = tempBattle;
-
         uint256 chanceToLose = 50;
 
         if (tempBattle.battleDaysExpended > 3) {
@@ -335,17 +333,19 @@ contract Battling is BattlingBase, ERC1155Holder {
             bool[] memory chances = new bool[](2);
             if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
                 chances = battlingExtension.createRandomnessForLoss(chanceToLose, 2);
-                handleLoss(_battleType, false, chances[0], chances[1]);
+                tempBattle = handleLoss(tempBattle, false, chances[0], chances[1]);
             }
             else if (tempBattle.hero != 0) {
                 chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                handleLoss(_battleType, false, chances[0], false);
+                tempBattle = handleLoss(tempBattle, false, chances[0], false);
             }
             else if (tempBattle.cavalry != 0) {
                 chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                handleLoss(_battleType, false, false, chances[0]);
+                tempBattle = handleLoss(tempBattle, false, false, chances[0]);
             }
         }
+
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit BattleUpdated (
             msg.sender,
@@ -556,18 +556,21 @@ contract Battling is BattlingBase, ERC1155Holder {
                 bool[] memory chances = new bool[](2);
                 if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
                     chances = battlingExtension.createRandomnessForLoss(chanceToLose, 2);
-                    handleLoss(_battleType, true, chances[0], chances[1]);
+                    handleLoss(tempBattle, true, chances[0], chances[1]);
                 }
                 else if (tempBattle.hero != 0) {
                     chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                    handleLoss(_battleType, true, chances[0], false);
+                    handleLoss(tempBattle, true, chances[0], false);
                 }
                 else if (tempBattle.cavalry != 0) {
                     chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                    handleLoss(_battleType, true, false, chances[0]);
+                    handleLoss(tempBattle, true, false, chances[0]);
                 }
             }
         }
+
+        Battle memory emptyBattle;
+        battleForAddress[msg.sender][_battleType] = emptyBattle;
 
         emit BattleEnded (
             msg.sender,
@@ -585,80 +588,73 @@ contract Battling is BattlingBase, ERC1155Holder {
     }
 
     function handleLoss(
-        uint8 _battleType,
+        Battle memory _tempBattle,
         bool _isEndBattle,
         bool _isHeroLost,
         bool _isCavalryLost
-    ) internal {
-        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
-
+    ) internal returns (Battle memory) {
         if (_isHeroLost) {
-            fortunasAssets.burnWithCheck(address(this), tempBattle.hero, 1);
+            fortunasAssets.burnWithCheck(address(this), _tempBattle.hero, 1);
 
             if (!_isEndBattle) {
-                tempBattle.currentRewardPercentage -= assetPercentages[tempBattle.hero - 1];
-                if (tempBattle.dayForLimitReached != 0) {
-                    tempBattle.dayForLimitReached = 0;
+                _tempBattle.currentRewardPercentage -= assetPercentages[_tempBattle.hero - 1];
+                if (_tempBattle.dayForLimitReached != 0) {
+                    _tempBattle.dayForLimitReached = 0;
                 }
             }
 
             emit AssetLost (
                 msg.sender,
-                tempBattle.hero,
-                fortunasAssets.balanceOf(msg.sender, tempBattle.hero)
+                _tempBattle.hero,
+                fortunasAssets.balanceOf(msg.sender, _tempBattle.hero)
             );
 
-            tempBattle.hero = 0;
+            _tempBattle.hero = 0;
         }
 
         if (_isCavalryLost) {
-            fortunasAssets.burnWithCheck(address(this), tempBattle.cavalry, 1);
+            fortunasAssets.burnWithCheck(address(this), _tempBattle.cavalry, 1);
 
             if (!_isEndBattle) {
-                tempBattle.currentRewardLimit -= assetPercentages[tempBattle.cavalry - 1];
-                if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
-                    tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
-                    tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
+                _tempBattle.currentRewardLimit -= assetPercentages[_tempBattle.cavalry - 1];
+                if (_tempBattle.currentRewardPercentage >= _tempBattle.currentRewardLimit) {
+                    _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
+                    _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended;
                 }
             }
 
             emit AssetLost (
                 msg.sender,
-                tempBattle.cavalry,
-                fortunasAssets.balanceOf(msg.sender, tempBattle.cavalry)
+                _tempBattle.cavalry,
+                fortunasAssets.balanceOf(msg.sender, _tempBattle.cavalry)
             );
 
-            tempBattle.cavalry = 0;
+            _tempBattle.cavalry = 0;
         }
 
         if (_isEndBattle) {
-            if (tempBattle.hero != 0) {
-                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.hero, 1, "");
+            if (_tempBattle.hero != 0) {
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _tempBattle.hero, 1, "");
 
                 emit AssetReturned (
                     msg.sender,
-                    tempBattle.hero,
-                    fortunasAssets.balanceOf(msg.sender, tempBattle.hero)
+                    _tempBattle.hero,
+                    fortunasAssets.balanceOf(msg.sender, _tempBattle.hero)
                 );
             }
 
-            if (tempBattle.cavalry != 0) {
-                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
+            if (_tempBattle.cavalry != 0) {
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _tempBattle.cavalry, 1, "");
 
                 emit AssetReturned (
                     msg.sender,
-                    tempBattle.cavalry,
-                    fortunasAssets.balanceOf(msg.sender, tempBattle.cavalry)
+                    _tempBattle.cavalry,
+                    fortunasAssets.balanceOf(msg.sender, _tempBattle.cavalry)
                 );
             }
-
-            Battle memory emptyBattle;
-            battleForAddress[msg.sender][_battleType] = emptyBattle;
-
-            return;
         }
 
-        battleForAddress[msg.sender][_battleType] = tempBattle;
+        return _tempBattle;
     }
 
     /**
