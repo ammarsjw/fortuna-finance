@@ -7,7 +7,7 @@ import "./MathUpgradeable.sol";
 import "./BattlingBase.sol";
 import "./BattlingExtension.sol";
 import "./IFortunasToken.sol";
-import "./FortunasAssets.sol";
+import "./IFortunasAssets.sol";
 import "./ERC1155Holder.sol";
 import "./IPancakePair.sol";
 import "./IPancakeRouter02.sol";
@@ -17,6 +17,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
+    // Pancake Swap
     IPancakeRouter02 public pancakeRouter;
     IPancakePair public pancakePair;
 
@@ -27,7 +28,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     IFortunasToken public fortunasToken;
 
     // Fortunas Multi Token for heroes and cavalry
-    FortunasAssets public fortunasAssets;
+    IFortunasAssets public fortunasAssets;
 
     // Contract that handles calculations for Battling
     BattlingExtension public battlingExtension;
@@ -114,7 +115,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // constructor
 
-    constructor(address _fortunasToken) {
+    constructor(address _fortunasToken, address _fortunasAssets) {
         // TODO
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
@@ -129,7 +130,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken = IFortunasToken(payable(_fortunasToken));
 
-        fortunasAssets = new FortunasAssets();
+        fortunasAssets = IFortunasAssets(_fortunasAssets);
 
         battlingExtension = new BattlingExtension();
 
@@ -158,10 +159,6 @@ contract Battling is BattlingBase, ERC1155Holder {
     }
 
     // setters
-
-    function setFortunasToken(address _fortunasToken) external onlyOwner {
-        fortunasToken = IFortunasToken(payable(_fortunasToken));
-    }
 
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
         treasuryWallet = _treasuryWallet;

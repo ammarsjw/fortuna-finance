@@ -8,16 +8,12 @@ import "./ERC1155.sol";
 contract FortunasAssets is Ownable, ERC1155 {
 
     address public battling;
-    address public parent;
 
     bool public isTransferEnabled = false;
 
     // constructor
 
-    constructor() ERC1155("") {
-        battling = msg.sender;
-        parent = tx.origin;
-    }
+    constructor() ERC1155("") {}
 
     // getters
 
@@ -36,17 +32,22 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     // setters
 
+    function setBattling(
+        address _battling
+    ) external onlyOwner {
+        battling = _battling;
+    }
+
     function setIsTransferEnabled(
         bool _state
-    ) external onlyParent {
+    ) external onlyOwner {
         require(isTransferEnabled != _state, "setIsTransferEnabled::isTransferEnabled is already of the value '_state'");
-
         isTransferEnabled = _state;
     }
 
     function setURI(
         string memory _uri
-    ) external onlyParent {
+    ) external onlyOwner {
         _setURI(_uri);
     }
 
@@ -57,7 +58,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _tokenId,
         uint256 _amount,
         bytes memory _data
-    ) external onlyOwner {
+    ) external onlyContract {
         require(1 <= _tokenId && _tokenId <= 10, "mint::Wrong token id given");
         _mint(_to, _tokenId, _amount, _data);
     }
@@ -97,7 +98,7 @@ contract FortunasAssets is Ownable, ERC1155 {
         uint256 _tokenId,
         uint256 _amount,
         bytes memory _data
-    ) public onlyOwner {
+    ) public onlyContract {
         require(_from == battling || _to == battling, "safeTransferFromWithCheck::Either sender or recipient must be Battling contract");
 
         super.safeTransferFrom(_from, _to, _tokenId, _amount, _data);
@@ -107,15 +108,15 @@ contract FortunasAssets is Ownable, ERC1155 {
         address _from,
         uint256 _tokenId,
         uint256 _amount
-    ) external onlyOwner {
+    ) external onlyContract {
         require(_from == battling, "burnWithCheck::Sender must be Battling contract");
         _burn(_from, _tokenId, _amount);
     }
 
     // modifiers
 
-    modifier onlyParent() {
-        require(msg.sender == parent, "onlyParent::Only parent can call this function");
+    modifier onlyContract() {
+        require(msg.sender == battling, "onlyContract::Only Battling contract can call this function");
         _;
     } 
 }
