@@ -14,9 +14,7 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     // constructor
 
-    constructor(
-        string memory _uri
-    ) ERC1155(_uri) {
+    constructor() ERC1155("") {
         battling = msg.sender;
         parent = tx.origin;
     }

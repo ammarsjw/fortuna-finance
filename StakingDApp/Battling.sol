@@ -17,8 +17,6 @@ contract Battling is BattlingBase, ERC1155Holder {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
-    uint256 bribeToEmeperor;
-
     IPancakeRouter02 public pancakeRouter;
     IPancakePair public pancakePair;
 
@@ -43,12 +41,20 @@ contract Battling is BattlingBase, ERC1155Holder {
     // BUSD testnet (TestnetERC20Token)
     address public BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
 
+    // initial cost of supplies to send troops to war
+    uint256 suppliesCost;
+
+    // each hero's/cavalry's effect on current/total battle APY
     uint256[10] assetPercentages;
+
+    // percentage cost of LP for purchasing each hero/cavalry
     uint256[10] assetPrices;
 
+    // percentage cost of LP for purchasing a random hero
     uint256 randomAssetPrice;
 
-    uint256 assetLoseChance;
+    // percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
+    uint256 loseAssetChance;
 
     // mappings
 
@@ -109,8 +115,6 @@ contract Battling is BattlingBase, ERC1155Holder {
     // constructor
 
     constructor(address _fortunasToken) {
-        bribeToEmeperor = 5000;
-
         // TODO
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
@@ -125,25 +129,24 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken = IFortunasToken(payable(_fortunasToken));
 
-        fortunasAssets = new FortunasAssets("");
+        fortunasAssets = new FortunasAssets();
 
         battlingExtension = new BattlingExtension();
 
         // TODO
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
 
-        // each hero's/cavalry's effect on current/total battle APY
+        suppliesCost = 5000;
+
         assetPercentages = [200000, 400000, 600000, 800000, 1000000,
                             100000, 200000, 300000, 400000, 500000];
-        // percentage cost of LP for purchasing each hero/cavalry
+
         assetPrices = [2500, 5000, 7500, 10000, 12500,
                         2500, 5000, 7500, 10000, 12500];
 
-        // percentage cost of LP for purchasing a random hero
         randomAssetPrice = 5000;
 
-        // percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
-        assetLoseChance = 50;
+        loseAssetChance = 50;
 
         // setting all reward related variables for battling outside of constructor
     }
@@ -186,10 +189,10 @@ contract Battling is BattlingBase, ERC1155Holder {
             LPToken.transferFrom(msg.sender, address(this), _amount);
         }
         else {
-            uint256 bribe = _amount.mul(bribeToEmeperor).div(multiplier);
-            _amount -= bribe;
+            uint256 supplies = _amount.mul(suppliesCost).div(multiplier);
+            _amount -= supplies;
 
-            fortunasToken.transferFrom(msg.sender, treasuryWallet, bribe);
+            fortunasToken.transferFrom(msg.sender, treasuryWallet, supplies);
 
             fortunasToken.transferFrom(msg.sender, address(this), _amount);
         }
@@ -329,7 +332,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken.transfer(msg.sender, _amountToRemove);
 
-        uint256 chanceToLoseAssets = assetLoseChance;
+        uint256 chanceToLoseAssets = loseAssetChance;
 
         if (tempBattle.battleDaysExpended > 3) {
             uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
@@ -566,7 +569,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
-            uint256 chanceToLoseAssets = assetLoseChance;
+            uint256 chanceToLoseAssets = loseAssetChance;
 
             if (tempBattle.battleDaysExpended > 3) {
                 uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
