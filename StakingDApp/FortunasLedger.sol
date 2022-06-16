@@ -8,9 +8,9 @@ import "./ABDKMath64x64.sol";
 contract FortunasLedger is Ownable {
     using SafeMath for uint256;
 
-    uint256 public rewardTime;
+    uint256 public passiveRewardTime;
     
-    uint256 public multiplierForReward;
+    uint256 public multiplierForPassiveReward;
 
     uint256 public passiveRewardPercentage;
     uint256 public passiveRewardPercentagePerCycle;
@@ -23,10 +23,10 @@ contract FortunasLedger is Ownable {
     // constructor
 
     constructor() {
-        // rewardTime = 1800;
-        rewardTime = 60;
+        // passiveRewardTime = 1800;
+        passiveRewardTime = 144;
 
-        multiplierForReward = 10 ** 9;
+        multiplierForPassiveReward = 10 ** 9;
 
         passiveRewardPercentage = 2500000;
         passiveRewardPercentagePerCycle = 52083;
@@ -51,7 +51,7 @@ contract FortunasLedger is Ownable {
 
         uint256 currentTime = block.timestamp;
 
-        bool isValid = currentTime > tempLastUpdate.add(rewardTime);
+        bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
 
         if (
             balance == 0 &&
@@ -67,9 +67,9 @@ contract FortunasLedger is Ownable {
         if (isValid) {
             uint256 timeToConsider = currentTime.sub(tempLastUpdate);
 
-            uint256 rewardCycles = timeToConsider.div(rewardTime);
+            uint256 rewardCycles = timeToConsider.div(passiveRewardTime);
             ratio = passiveRewardPercentagePerCycle.mul(rewardCycles);
-            ratio = ratio.mul(10 ** 18).div(multiplierForReward);
+            ratio = ratio.mul(10 ** 18).div(multiplierForPassiveReward);
 
             compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
@@ -79,7 +79,7 @@ contract FortunasLedger is Ownable {
             tempTotalPassiveRewards += compoundReward;
         }
 
-        ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+        ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
 
         compoundReward = _compoundReward(
             balance.add(tempTotalPassiveRewards),
@@ -101,7 +101,7 @@ contract FortunasLedger is Ownable {
             return 0;
         }
 
-        uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+        uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
 
         uint256 compoundReward = _compoundReward(
             balance.add(tempTotalPassiveRewards),
@@ -126,7 +126,7 @@ contract FortunasLedger is Ownable {
             return (0, true);
         }
 
-        bool isValid = currentTime > tempLastUpdate.add(rewardTime);
+        bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
 
         if (
             balance == 0 &&
@@ -140,9 +140,9 @@ contract FortunasLedger is Ownable {
         if (isValid) {
             uint256 timeToConsider = currentTime.sub(tempLastUpdate);
 
-            uint256 rewardCycles = timeToConsider.div(rewardTime);
+            uint256 rewardCycles = timeToConsider.div(passiveRewardTime);
             uint256 ratio = passiveRewardPercentagePerCycle.mul(rewardCycles);
-            ratio = ratio.mul(10 ** 18).div(multiplierForReward);
+            ratio = ratio.mul(10 ** 18).div(multiplierForPassiveReward);
 
             uint256 compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
@@ -152,7 +152,7 @@ contract FortunasLedger is Ownable {
             tempTotalPassiveRewards += compoundReward;
 
             _totalPassiveRewards[account] = tempTotalPassiveRewards;
-            _lastUpdate[account] += rewardCycles.mul(rewardTime);
+            _lastUpdate[account] += rewardCycles.mul(passiveRewardTime);
         }
 
         return (_totalPassiveRewards[account], false);
