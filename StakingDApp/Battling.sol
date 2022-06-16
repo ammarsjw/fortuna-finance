@@ -48,6 +48,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     uint256 randomAssetPrice;
 
+    uint256 assetLoseChance;
+
     // mappings
 
     mapping (address => mapping(uint8 => Battle)) private battleForAddress;
@@ -139,6 +141,9 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         // percentage cost of LP for purchasing a random hero
         randomAssetPrice = 5000;
+
+        // percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
+        assetLoseChance = 50;
 
         // setting all reward related variables for battling outside of constructor
     }
@@ -324,29 +329,29 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken.transfer(msg.sender, _amountToRemove);
 
-        uint256 chanceToLose = 50;
+        uint256 chanceToLoseAssets = assetLoseChance;
 
         if (tempBattle.battleDaysExpended > 3) {
             uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
-            chanceToLose = chanceToLose.safeSub(chanceDecrease);
+            chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
         }
 
-        if (chanceToLose != 0) {
+        if (chanceToLoseAssets != 0) {
             bool heroResult;
             bool cavalryResult;
             if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
-                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
 
                 tempBattle = handleLoss(tempBattle, false, heroResult, cavalryResult);
             }
             else if (tempBattle.hero != 0) {
-                heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
 
                 tempBattle = handleLoss(tempBattle, false, heroResult, false);
             }
             else if (tempBattle.cavalry != 0) {
-                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
 
                 tempBattle = handleLoss(tempBattle, false, false, cavalryResult);
             }
@@ -542,8 +547,17 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
             fortunasToken.transfer(msg.sender, tokensToTransfer);
         }
-        else if (battlingExtension.determineBattleOutcome(tempBattle.battleDaysExpended, _battleType) == false) {
-            uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
+        else {
+            uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens);
+
+            bool isDefeat = battlingExtension.determineBattleOutcome(tempBattle.battleDaysExpended, _battleType);
+
+            if (isDefeat) {
+                tempBattle.rewards = 0;
+            }
+
+            tokensToTransfer += tempBattle.rewards;
+
             uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
 
             if (tokensToTransfer > totalContractBalance) {
@@ -552,29 +566,29 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
-            uint256 chanceToLose = 50;
+            uint256 chanceToLoseAssets = assetLoseChance;
 
             if (tempBattle.battleDaysExpended > 3) {
                 uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
-                chanceToLose = chanceToLose.safeSub(chanceDecrease);
+                chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
             }
 
-            if (chanceToLose != 0) {
+            if (chanceToLoseAssets != 0) {
                 bool heroResult;
                 bool cavalryResult;
                 if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
-                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
 
                     handleLoss(tempBattle, true, heroResult, cavalryResult);
                 }
                 else if (tempBattle.hero != 0) {
-                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
 
                     handleLoss(tempBattle, true, heroResult, false);
                 }
                 else if (tempBattle.cavalry != 0) {
-                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
 
                     handleLoss(tempBattle, true, false, cavalryResult);
                 }
