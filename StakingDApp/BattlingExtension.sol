@@ -23,6 +23,8 @@ contract BattlingExtension is BattlingBase {
     IPancakePair public rng_pancakePair3;
     IPancakePair public rng_pancakePair4;
 
+    uint256[] private defeatChance;
+
     // constructor
 
     constructor() {
@@ -44,38 +46,29 @@ contract BattlingExtension is BattlingBase {
         rng_pancakePair2 = IPancakePair(_addressForPancakePair2);
         rng_pancakePair3 = IPancakePair(_addressForPancakePair3);
         rng_pancakePair4 = IPancakePair(_addressForPancakePair4);
+
+        defeatChance = [300, 500, 800, 900];
     }
 
     // RNG functions
 
-    function createRandomnessForLoss(uint256 _chanceToLose, uint256 _amount) external view returns (bool[] memory) {
-        bool[] memory result = new bool[](2);
-
+    function createRandomnessForLoss(uint256 _chanceToLose, uint256 _multiplier) public view returns (bool) {
         uint256 a = rng_pancakePair1.price0CumulativeLast();
         uint256 b = rng_pancakePair1.price1CumulativeLast();
-        (uint256 c, , ) = rng_pancakePair1.getReserves();
 
-        uint256 d = rng_pancakePair2.price0CumulativeLast();
-        uint256 e = rng_pancakePair2.price1CumulativeLast();
+        uint256 c = rng_pancakePair2.price0CumulativeLast();
+        uint256 d = rng_pancakePair2.price1CumulativeLast();
 
-        uint256 randomChance = uint256(keccak256(abi.encodePacked(a, b, c, d, e, block.timestamp))).mod(100).add(1);
+        uint256 e = rng_pancakePair3.price0CumulativeLast();
+        uint256 f = rng_pancakePair3.price1CumulativeLast();
 
-        result[0] = randomChance <= _chanceToLose;
+        uint256 g = rng_pancakePair4.price0CumulativeLast();
+        uint256 h = rng_pancakePair4.price1CumulativeLast();
 
-        if (_amount == 2) {
-            uint256 f = rng_pancakePair3.price0CumulativeLast();
-            uint256 g = rng_pancakePair3.price1CumulativeLast();
-            (uint256 h, , ) = rng_pancakePair3.getReserves();
+        uint256 randomChance =
+            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, g, h, block.timestamp))).mod(_multiplier).add(1);
 
-            uint256 i = rng_pancakePair4.price0CumulativeLast();
-            uint256 j = rng_pancakePair4.price1CumulativeLast();
-
-            randomChance = uint256(keccak256(abi.encodePacked(f, g, h, i, j, block.timestamp))).mod(100).add(1);
-
-            result[1] = randomChance <= _chanceToLose;
-        }
-
-        return result;
+        return randomChance <= _chanceToLose;
     }
 
     function createRandomnessForAsset() external view returns (uint256) {
@@ -112,6 +105,17 @@ contract BattlingExtension is BattlingBase {
         }
 
         return result;
+    }
+
+    function determineBattleOutcome(uint256 _battleDaysExpended, uint8 _battleType) external view returns (bool) {
+        uint256 chanceDecrease = _battleDaysExpended.mul(5);
+        uint256 chanceForDefeat = defeatChance[_battleType - 3].safeSub(chanceDecrease);
+
+        if (chanceForDefeat != 0) {
+            return createRandomnessForLoss(chanceForDefeat, 1000);
+        }
+
+        return false;
     }
 
     // functions

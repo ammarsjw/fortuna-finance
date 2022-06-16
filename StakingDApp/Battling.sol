@@ -37,6 +37,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     // Treasury Wallet
     address public treasuryWallet;
 
+    // TODO
     // BUSD mainnet
     // address public BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
     // BUSD testnet (TestnetERC20Token)
@@ -108,6 +109,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     constructor(address _fortunasToken) {
         bribeToEmeperor = 5000;
 
+        // TODO
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
         // PancakeRouter02 testnet
@@ -330,18 +332,23 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         if (chanceToLose != 0) {
-            bool[] memory chances = new bool[](2);
+            bool heroResult;
+            bool cavalryResult;
             if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                chances = battlingExtension.createRandomnessForLoss(chanceToLose, 2);
-                tempBattle = handleLoss(tempBattle, false, chances[0], chances[1]);
+                heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+
+                tempBattle = handleLoss(tempBattle, false, heroResult, cavalryResult);
             }
             else if (tempBattle.hero != 0) {
-                chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                tempBattle = handleLoss(tempBattle, false, chances[0], false);
+                heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+
+                tempBattle = handleLoss(tempBattle, false, heroResult, false);
             }
             else if (tempBattle.cavalry != 0) {
-                chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                tempBattle = handleLoss(tempBattle, false, false, chances[0]);
+                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+
+                tempBattle = handleLoss(tempBattle, false, false, cavalryResult);
             }
         }
 
@@ -535,7 +542,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
             fortunasToken.transfer(msg.sender, tokensToTransfer);
         }
-        else {
+        else if (battlingExtension.determineBattleOutcome(tempBattle.battleDaysExpended, _battleType) == false) {
             uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
             uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
 
@@ -553,18 +560,23 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
 
             if (chanceToLose != 0) {
-                bool[] memory chances = new bool[](2);
+                bool heroResult;
+                bool cavalryResult;
                 if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                    chances = battlingExtension.createRandomnessForLoss(chanceToLose, 2);
-                    handleLoss(tempBattle, true, chances[0], chances[1]);
+                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+
+                    handleLoss(tempBattle, true, heroResult, cavalryResult);
                 }
                 else if (tempBattle.hero != 0) {
-                    chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                    handleLoss(tempBattle, true, chances[0], false);
+                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+
+                    handleLoss(tempBattle, true, heroResult, false);
                 }
                 else if (tempBattle.cavalry != 0) {
-                    chances = battlingExtension.createRandomnessForLoss(chanceToLose, 1);
-                    handleLoss(tempBattle, true, false, chances[0]);
+                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLose, 100);
+
+                    handleLoss(tempBattle, true, false, cavalryResult);
                 }
             }
         }
