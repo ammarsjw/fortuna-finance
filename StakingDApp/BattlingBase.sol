@@ -54,9 +54,9 @@ contract BattlingBase is Ownable {
         // rewardTime = 1800;
         // oneDayTime = 86400;
         // baseBattleTime = 259200;
-        rewardTime = 1;                                     // only for testing
-        oneDayTime = 48;                                    // only for testing
-        baseBattleTime = 144;                               // only for testing
+        rewardTime = 60;                                    // only for testing
+        oneDayTime = 2880;                                  // only for testing
+        baseBattleTime = 8640;                              // only for testing
 
         multiplier = 10 ** 6;
         multiplierForReward = 10 ** 9;

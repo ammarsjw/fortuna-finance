@@ -23,10 +23,10 @@ contract FortunasToken is ERC20, Ownable {
 
     // BUSD mainnet
     // address public BUSD =
-    //     address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
-    // BUSD testnet (TestnetERC20Token)
+    //     0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+    // BUSD testnet (TestnetBEP20Token)
     address public BUSD =
-        address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
+        0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
 
     // Bookkeeper for all FRTNA holders
     FortunasLedger public fortunasLedger;
@@ -121,10 +121,11 @@ contract FortunasToken is ERC20, Ownable {
 
         multiplierForTotalFee = 10 ** 3;
 
+        // TODO
         // PancakeRouter02 mainnet
-    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
+    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
         address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
             .createPair(address(this), BUSD);
 

@@ -29,9 +29,9 @@ contract BattlingExtension is BattlingBase {
 
     constructor() {
         // PancakeRouter02 mainnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
         IPancakeFactory _pancakeFactory = IPancakeFactory(_pancakeRouter.factory());
 
         address _addressForPancakePair1 = _pancakeFactory.allPairs(0);

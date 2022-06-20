@@ -38,12 +38,15 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // TODO
     // BUSD mainnet
-    // address public BUSD = address(0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56);
-    // BUSD testnet (TestnetERC20Token)
-    address public BUSD = address(0x7D9385C733a967793EE14D933212ee44025f1B9d);
+    // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+    // BUSD testnet (TestnetBEP20Token)
+    address public BUSD = 0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
 
-    // initial cost of supplies to send troops to war
+    // initial cost of supplies to send troops to battle
     uint256 suppliesCost;
+
+    // initial staked tokens percentage at which battle resets
+    uint256 battleResetPercentage;
 
     // each hero's/cavalry's effect on current/total battle APY
     uint256[10] assetPercentages;
@@ -118,9 +121,9 @@ contract Battling is BattlingBase, ERC1155Holder {
     constructor(address _fortunasToken, address _fortunasAssets) {
         // TODO
         // PancakeRouter02 mainnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0));
+        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
         address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
         pancakeRouter = _pancakeRouter;
@@ -135,9 +138,11 @@ contract Battling is BattlingBase, ERC1155Holder {
         battlingExtension = new BattlingExtension();
 
         // TODO
-        treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
+        treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
 
         suppliesCost = 5000;
+
+        battleResetPercentage = 200;
 
         assetPercentages = [200000, 400000, 600000, 800000, 1000000,
                             100000, 200000, 300000, 400000, 500000];
@@ -162,6 +167,10 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
         treasuryWallet = _treasuryWallet;
+    }
+
+    function setBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
+        battleResetPercentage = _battleResetPercentage;
     }
 
     function setAllRewards(
@@ -266,7 +275,8 @@ contract Battling is BattlingBase, ERC1155Holder {
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
         tempBattle.additionalTokens += _amountToAdd;
-        if (tempBattle.additionalTokens + _amountToAdd > tempBattle.initialTokensStaked) {
+        if (tempBattle.additionalTokens + _amountToAdd >
+            tempBattle.initialTokensStaked.mul(battleResetPercentage).div(100)) {
             tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
             if (tempBattle.hero > 0) {
                 tempBattle.currentRewardPercentage += assetPercentages[tempBattle.hero - 1];
