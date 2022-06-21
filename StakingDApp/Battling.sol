@@ -43,22 +43,22 @@ contract Battling is BattlingBase, ERC1155Holder {
     address public BUSD = 0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
 
     // initial cost of supplies to send troops to battle
-    uint256 suppliesCost;
+    uint256 public suppliesCost;
 
     // initial staked tokens percentage at which battle resets
-    uint256 battleResetPercentage;
+    uint256 public battleResetPercentage;
 
     // each hero's/cavalry's effect on current/total battle APY
-    uint256[10] assetPercentages;
+    uint256[10] public assetPercentages;
 
     // percentage cost of LP for purchasing each hero/cavalry
-    uint256[10] assetPrices;
+    uint256[10] public assetPrices;
 
     // percentage cost of LP for purchasing a random hero
-    uint256 randomAssetPrice;
+    uint256 public randomAssetPrice;
 
     // percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
-    uint256 loseAssetChance;
+    uint256 public loseAssetChance;
 
     // mappings
 
@@ -187,7 +187,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 _amount,
         uint8 _battleType
     ) external {
-        require(_amount >= minRewardAmount[_battleType - 1], "startBattle::MIN");
+        require(_amount >= minStakeAmount[_battleType - 1], "startBattle::MIN");
         require(2 <= _battleType && _battleType <= 6, "startBattle::WBT1");
         require(battleForAddress[msg.sender][_battleType].initialTokensStaked == 0, "startBattle::BAS");
 
@@ -312,7 +312,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         uint256 tempTotalTokens = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens).add(tempBattle.rewards);
         require(_amountToRemove < tempTotalTokens, "removeTroops::WA");
-        require(minRewardAmount[_battleType - 1] <= tempTotalTokens.sub(_amountToRemove), "removeTroops::MIN");
+        require(minStakeAmount[_battleType - 1] <= tempTotalTokens.sub(_amountToRemove), "removeTroops::MIN");
 
         if (_amountToRemove > tempBattle.additionalTokens) {
             _amountToRemove -= tempBattle.additionalTokens;

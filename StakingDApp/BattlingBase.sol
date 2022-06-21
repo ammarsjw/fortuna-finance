@@ -18,17 +18,17 @@ contract BattlingBase is Ownable {
     uint256 multiplier;
     uint256 multiplierForReward;
 
-    uint256 rationsIncreasePercentage;
+    uint256 public rationsIncreasePercentage;
 
-    uint256[5] rationsBase;                                 // rations %
-    uint256[5] rationsIncrease;                             // percentage increase in rations percentages when reward limit is reached
+    uint256[5] public rationsBase;                          // rations %
+    uint256[5] public rationsIncrease;                      // percentage increase in rations percentages when reward limit is reached
 
     uint256[6] rewardBasePercentages;
     uint256 rewardIncreasePerDay;
 
     uint256[6] rewardLimit;                                 // rewardBase cannot exceed these amounts
     uint256[6] rewardBase;                                  // reward % per day
-    uint256[6] minRewardAmount;
+    uint256[6] public minStakeAmount;                       // minimum stake amount to be able to receive rewards
 
     // structs
 
@@ -84,7 +84,7 @@ contract BattlingBase is Ownable {
         rewardLimit = _limit;
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
-            minRewardAmount[i] = multiplierForReward.roundDiv(rewardBase[i].roundDiv(48));
+            minStakeAmount[i] = multiplierForReward.ceilDiv(rewardBase[i].roundDiv(48));
         }
     }
 }

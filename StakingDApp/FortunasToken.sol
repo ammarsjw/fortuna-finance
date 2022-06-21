@@ -502,6 +502,10 @@ contract FortunasToken is ERC20, Ownable {
         _burn(account, amount);
     }
 
+    function circulatingSupply() external view returns (uint256) {
+        return totalSupply().sub(balanceOf(address(battling)));
+    }
+
     modifier onlyContract {
         require(msg.sender == battling, "FRTNA: Only Fortunas Battling Contract can call this function");
         _;
