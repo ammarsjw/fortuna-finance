@@ -44,51 +44,48 @@ contract FortunasLedger is Ownable {
 
     // functions
 
-    function getCurrentLedgerStatus(address account, uint256 balance) external view returns (uint256, uint256) {
+    function updatePassiveRewards(address account, uint256 balance) public onlyOwner returns (uint256, bool) {
         uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
         uint256 tempLastUpdate = _lastUpdate[account];
-        uint256 nextPassiveReward;
 
         uint256 currentTime = block.timestamp;
 
-        bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
+        bool isFirstTransaction = tempLastUpdate == 0;
+
+        if (isFirstTransaction) {
+            _lastUpdate[account] = currentTime;
+            return (0, true);
+        }
 
         if (
             balance == 0 &&
             tempTotalPassiveRewards == 0 &&
-            !isValid
+            !isFirstTransaction
         ) {
-            return (0, 0);
+            return (0, false);
         }
 
-        uint256 ratio;
-        uint256 compoundReward;
+        bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
 
         if (isValid) {
             uint256 timeToConsider = currentTime.sub(tempLastUpdate);
 
             uint256 rewardCycles = timeToConsider.div(passiveRewardTime);
-            ratio = passiveRewardPercentagePerCycle.mul(rewardCycles);
-            ratio = ratio.mul(10 ** 18).div(multiplierForPassiveReward);
 
-            compoundReward = _compoundReward(
+            uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
+
+            uint256 compoundReward = _compoundReward(
                 balance.add(tempTotalPassiveRewards),
                 ratio,
-                1
+                rewardCycles
             );
             tempTotalPassiveRewards += compoundReward;
+
+            _totalPassiveRewards[account] = tempTotalPassiveRewards;
+            _lastUpdate[account] += rewardCycles.mul(passiveRewardTime);
         }
 
-        ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
-
-        compoundReward = _compoundReward(
-            balance.add(tempTotalPassiveRewards),
-            ratio,
-            1
-        );
-        nextPassiveReward = compoundReward;
-
-        return (tempTotalPassiveRewards, nextPassiveReward);
+        return (_totalPassiveRewards[account], false);
     }
 
     function calculateNextPassiveReward(address account, uint256 balance) public view returns (uint256) {
@@ -113,51 +110,6 @@ contract FortunasLedger is Ownable {
         return nextPassiveReward;
     }
 
-    function updatePassiveRewards(address account, uint256 balance) public onlyOwner returns (uint256, bool) {
-        uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
-        uint256 tempLastUpdate = _lastUpdate[account];
-
-        uint256 currentTime = block.timestamp;
-
-        bool isFirstTransaction = tempLastUpdate == 0;
-
-        if (isFirstTransaction) {
-            _lastUpdate[account] = currentTime;
-            return (0, true);
-        }
-
-        bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
-
-        if (
-            balance == 0 &&
-            tempTotalPassiveRewards == 0 &&
-            !isFirstTransaction &&
-            !isValid
-        ) {
-            return (0, false);
-        }
-
-        if (isValid) {
-            uint256 timeToConsider = currentTime.sub(tempLastUpdate);
-
-            uint256 rewardCycles = timeToConsider.div(passiveRewardTime);
-            uint256 ratio = passiveRewardPercentagePerCycle.mul(rewardCycles);
-            ratio = ratio.mul(10 ** 18).div(multiplierForPassiveReward);
-
-            uint256 compoundReward = _compoundReward(
-                balance.add(tempTotalPassiveRewards),
-                ratio,
-                1
-            );
-            tempTotalPassiveRewards += compoundReward;
-
-            _totalPassiveRewards[account] = tempTotalPassiveRewards;
-            _lastUpdate[account] += rewardCycles.mul(passiveRewardTime);
-        }
-
-        return (_totalPassiveRewards[account], false);
-    }
-
     function claimPassiveRewards(address account, uint256 balance) external onlyOwner returns (uint256, uint256) {
         (uint256 updatedPassiveRewards, ) = updatePassiveRewards(account, balance);
         uint256 nextPassiveReward;
@@ -175,6 +127,48 @@ contract FortunasLedger is Ownable {
         }
 
         return (updatedPassiveRewards, nextPassiveReward);
+    }
+
+    function getCurrentLedgerStatus(address account, uint256 balance) external view returns (uint256, uint256) {
+        uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
+        uint256 tempLastUpdate = _lastUpdate[account];
+        uint256 nextPassiveReward;
+
+        uint256 currentTime = block.timestamp;
+
+        if (
+            balance == 0 &&
+            tempTotalPassiveRewards == 0
+        ) {
+            return (0, 0);
+        }
+
+        bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
+
+        uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
+        uint256 compoundReward;
+
+        if (isValid) {
+            uint256 timeToConsider = currentTime.sub(tempLastUpdate);
+
+            uint256 rewardCycles = timeToConsider.div(passiveRewardTime);
+
+            compoundReward = _compoundReward(
+                balance.add(tempTotalPassiveRewards),
+                ratio,
+                rewardCycles
+            );
+            tempTotalPassiveRewards += compoundReward;
+        }
+
+        compoundReward = _compoundReward(
+            balance.add(tempTotalPassiveRewards),
+            ratio,
+            1
+        );
+        nextPassiveReward = compoundReward;
+
+        return (tempTotalPassiveRewards, nextPassiveReward);
     }
 
     function _compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
