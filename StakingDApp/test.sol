@@ -278,12 +278,20 @@ contract Test is Ownable, BaseTest {
     }
 
     function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256, uint256) {
-        _ratio *= 10 ** 7;
-        // Ratio should be in whole numbers. If floating point numbers are required comment this^ out and multiply by 10 ** 7
+        // Multiply _ratio by 10 ** 7 and then send it as an argument
+        bool isInteger = false;
+        if (_ratio.mod(10000000) == 0) {
+            isInteger = true;
+        }
         _ratio = _ratio.mul(10 ** 18).div(10 ** 9);
 
-        uint256 accruedInterest = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
-        return (accruedInterest, accruedInterest.sub(_principal));
+        uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+
+        if (isInteger) {
+            return (accruedReward.add(1), accruedReward.sub(_principal).add(1));
+        }
+
+        return (accruedReward, accruedReward.sub(_principal));
     }
 
     function fun19(uint256 a, uint256 b) external view returns (uint256) {
@@ -371,5 +379,9 @@ contract Test is Ownable, BaseTest {
 
     function changeValues(uint256 x, uint256 y) public {
         values[x] = y;
+    }
+
+    function fun29(uint256 _ratio) external pure returns (uint256) {
+        return _ratio.mod(10000000);
     }
 }
