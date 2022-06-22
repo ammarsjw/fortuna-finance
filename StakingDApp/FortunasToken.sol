@@ -12,7 +12,11 @@ import "./FortunasLedger.sol";
 contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;
 
-    address public battling;
+    // BUSD mainnet
+    // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+    
+    // TODO remove
+    address public BUSD;
 
     IPancakeRouter02 public pancakeRouter;
     address public immutable pancakePair;
@@ -21,15 +25,10 @@ contract FortunasToken is ERC20, Ownable {
     bool private swapping;
     bool public swapAndLiquifyEnabled = true;
 
-    // BUSD mainnet
-    // address public BUSD =
-    //     0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-    // BUSD testnet (TestnetBEP20Token)
-    address public BUSD =
-        0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
-
     // Bookkeeper for all FRTNA holders
     FortunasLedger public fortunasLedger;
+
+    address public battling;
     
     address public liquidityWallet;
     address public treasuryWallet;
@@ -94,9 +93,36 @@ contract FortunasToken is ERC20, Ownable {
     // constructor
 
     constructor() ERC20("Fortunas Token", "FRTNA") {
+        // TODO remove
+        if (block.chainid == 97) {
+            BUSD = 0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
+        }
+        else if (block.chainid == 4) {
+            BUSD = 0x7D9385C733a967793EE14D933212ee44025f1B9d;
+        }
+
+        // PancakeRouter02 mainnet
+    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+
+        // TODO remove
+        IPancakeRouter02 _pancakeRouter;
+        if (block.chainid == 97) {
+            _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        }
+        else if (block.chainid == 4) {
+            _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        }
+        address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
+            .createPair(address(this), BUSD);
+
+        pancakeRouter = _pancakeRouter;
+        pancakePair = _pancakePair;
+
+        _setAutomatedMarketMakerPair(_pancakePair, true);
+
         fortunasLedger = new FortunasLedger();
 
-        // TODO
+        // TODO change
     	liquidityWallet = address(owner());
         treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
 
@@ -120,19 +146,6 @@ contract FortunasToken is ERC20, Ownable {
         maxSellingFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
 
         multiplierForTotalFee = 10 ** 3;
-
-        // TODO
-        // PancakeRouter02 mainnet
-    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-        // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
-        address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
-            .createPair(address(this), BUSD);
-
-        pancakeRouter = _pancakeRouter;
-        pancakePair = _pancakePair;
-
-        _setAutomatedMarketMakerPair(_pancakePair, true);
 
         // exclude from receiving rewards
         excludeFromPassiveRewards(address(this), true);

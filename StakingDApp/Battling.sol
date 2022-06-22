@@ -17,6 +17,12 @@ contract Battling is BattlingBase, ERC1155Holder {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
+    // BUSD mainnet
+    // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+
+    // TODO remove
+    address public BUSD;
+
     // Pancake Swap
     IPancakeRouter02 public pancakeRouter;
     IPancakePair public pancakePair;
@@ -35,12 +41,6 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // Treasury Wallet
     address public treasuryWallet;
-
-    // TODO
-    // BUSD mainnet
-    // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-    // BUSD testnet (TestnetBEP20Token)
-    address public BUSD = 0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
 
     // initial cost of supplies to send troops to battle
     uint256 public suppliesCost;
@@ -119,11 +119,25 @@ contract Battling is BattlingBase, ERC1155Holder {
     // constructor
 
     constructor(address _fortunasToken, address _fortunasAssets) {
-        // TODO
+        // TODO remove
+        if (block.chainid == 97) {
+            BUSD = 0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
+        }
+        else if (block.chainid == 4) {
+            BUSD = 0x7D9385C733a967793EE14D933212ee44025f1B9d;
+        }
+
         // PancakeRouter02 mainnet
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-        // PancakeRouter02 testnet
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+
+        // TODO remove
+        IPancakeRouter02 _pancakeRouter;
+        if (block.chainid == 97) {
+            _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        }
+        else if (block.chainid == 4) {
+            _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        }
         address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
         pancakeRouter = _pancakeRouter;
@@ -137,7 +151,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         battlingExtension = new BattlingExtension();
 
-        // TODO
+        // TODO change
         treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
 
         suppliesCost = 5000;
