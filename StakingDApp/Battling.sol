@@ -23,7 +23,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     // TODO remove
     address public BUSD;
 
-    // Pancake Swap
+    // PancakeSwap
     IPancakeRouter02 public pancakeRouter;
     IPancakePair public pancakePair;
 
