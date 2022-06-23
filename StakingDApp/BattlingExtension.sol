@@ -54,7 +54,7 @@ contract BattlingExtension is BattlingBase {
         rng_pancakePair3 = IPancakePair(_addressForPancakePair3);
         rng_pancakePair4 = IPancakePair(_addressForPancakePair4);
 
-        defeatChance = [300, 500, 800, 900];
+        defeatChance = [250, 500, 800, 900];
     }
 
     // RNG functions
