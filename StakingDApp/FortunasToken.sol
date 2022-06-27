@@ -524,8 +524,4 @@ contract FortunasToken is ERC20, Ownable {
         require(msg.sender == battling, "FRTNA: Only Fortunas Battling Contract can call this function");
         _;
     }
-
-    receive() external payable {
-
-  	}
 }

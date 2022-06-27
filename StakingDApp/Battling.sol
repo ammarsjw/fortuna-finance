@@ -42,22 +42,22 @@ contract Battling is BattlingBase, ERC1155Holder {
     // Treasury Wallet
     address public treasuryWallet;
 
-    // initial cost of supplies to send troops to battle
+    // Initial cost of supplies to send troops to battle
     uint256 public suppliesCost;
 
-    // initial staked tokens percentage at which battle resets
+    // Initial staked tokens percentage at which battle resets
     uint256 public battleResetPercentage;
 
-    // each hero's/cavalry's effect on current/total battle APY
+    // Each hero's/cavalry's effect on current/total battle APY
     uint256[10] public assetPercentages;
 
-    // percentage cost of LP for purchasing each hero/cavalry
+    // Percentage cost of LP for purchasing each hero/cavalry
     uint256[10] public assetPrices;
 
-    // percentage cost of LP for purchasing a random hero
+    // Percentage cost of LP for purchasing a random hero
     uint256 public randomAssetPrice;
 
-    // percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
+    // Percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
     uint256 public loseAssetChance;
 
     // mappings
@@ -145,7 +145,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         LPToken = IERC20(_addressForPancakePair);
 
-        fortunasToken = IFortunasToken(payable(_fortunasToken));
+        fortunasToken = IFortunasToken(_fortunasToken);
 
         fortunasAssets = IFortunasAssets(_fortunasAssets);
 
