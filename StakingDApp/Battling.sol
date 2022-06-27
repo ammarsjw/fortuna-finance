@@ -118,6 +118,11 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // constructor
 
+    /*
+     * @dev all rations related variables for battling are defined and initialized in base class
+     * @dev all reward related variables for battling are defined base class
+     * @dev all reward related variables for battling are initialized outside of constructor in parent class
+     */
     constructor(address _fortunasToken, address _fortunasAssets) {
         // TODO remove
         if (block.chainid == 97) {
@@ -158,8 +163,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         battleResetPercentage = 200;
 
-        assetPercentages = [200000, 400000, 600000, 800000, 1000000,
-                            100000, 200000, 300000, 400000, 500000];
+        assetPercentages = [20, 40, 60, 80, 100,
+                            2083, 4167, 6250, 8333, 10417];
 
         assetPrices = [2500, 5000, 7500, 10000, 12500,
                         2500, 5000, 7500, 10000, 12500];
@@ -167,8 +172,6 @@ contract Battling is BattlingBase, ERC1155Holder {
         randomAssetPrice = 5000;
 
         loseAssetChance = 50;
-
-        // setting all reward related variables for battling outside of constructor
     }
 
     // getters
@@ -328,27 +331,31 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(_amountToRemove < tempTotalTokens, "removeTroops::WA");
         require(minStakeAmount[_battleType - 1] <= tempTotalTokens.sub(_amountToRemove), "removeTroops::MIN");
 
-        if (_amountToRemove > tempBattle.additionalTokens) {
-            _amountToRemove -= tempBattle.additionalTokens;
+        uint256 tempAmountToRemove = _amountToRemove;
+        uint256 rewardsToMint;
+        if (tempAmountToRemove > tempBattle.additionalTokens) {
+            tempAmountToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
-            if (_amountToRemove > tempBattle.rewards) {
-                _amountToRemove -= tempBattle.rewards;
+            if (tempAmountToRemove > tempBattle.rewards) {
+                rewardsToMint = tempBattle.rewards;
+                tempAmountToRemove -= tempBattle.rewards;
                 tempBattle.rewards = 0;
-                tempBattle.initialTokensStaked -= _amountToRemove;
+                tempBattle.initialTokensStaked -= tempAmountToRemove;
             }
             else {
-                tempBattle.rewards -= _amountToRemove;
+                rewardsToMint = tempAmountToRemove;
+                tempBattle.rewards -= tempAmountToRemove;
             }
         }
         else {
-            tempBattle.additionalTokens -= _amountToRemove;
+            tempBattle.additionalTokens -= tempAmountToRemove;
         }
 
-        uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
+        bool isMint = rewardsToMint != 0;
 
-        if (_amountToRemove > totalContractBalance) {
-            uint256 toMint = _amountToRemove.sub(totalContractBalance);
-            fortunasToken.mint(address(this), toMint);
+        if (isMint) {
+            fortunasToken.mint(msg.sender, rewardsToMint);
+            _amountToRemove -= rewardsToMint;
         }
 
         fortunasToken.transfer(msg.sender, _amountToRemove);
@@ -559,35 +566,33 @@ contract Battling is BattlingBase, ERC1155Holder {
         tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 
         if (_battleType == 2) {
-            uint256 tokensToReturn = tempBattle.initialTokensStaked;
-            LPToken.transfer(msg.sender, tokensToReturn);
+            LPToken.transfer(msg.sender, tempBattle.initialTokensStaked);
 
-            uint256 tokensToTransfer = tempBattle.rewards;
-            uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
+            uint256 rewardsToMint = tempBattle.rewards/*.add(tempBattle.passiveRewards)*/;
 
-            if (tokensToTransfer > totalContractBalance) {
-                uint256 toMint = tokensToTransfer.sub(totalContractBalance);
-                fortunasToken.mint(address(this), toMint);
+            bool isMint = rewardsToMint != 0;
+
+            if (isMint) {
+                fortunasToken.mint(msg.sender, rewardsToMint);
             }
-            fortunasToken.transfer(msg.sender, tokensToTransfer);
         }
         else {
-            uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens);
-
             bool isDefeat = battlingExtension.determineBattleOutcome(tempBattle.battleDaysExpended, _battleType);
 
             if (isDefeat) {
                 tempBattle.rewards = 0;
             }
 
-            tokensToTransfer += tempBattle.rewards;
+            uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens);
 
-            uint256 totalContractBalance = fortunasToken.balanceOf(address(this));
+            uint256 rewardsToMint = tempBattle.rewards/*.add(tempBattle.passiveRewards)*/;
 
-            if (tokensToTransfer > totalContractBalance) {
-                uint256 toMint = tokensToTransfer.sub(totalContractBalance);
-                fortunasToken.mint(address(this), toMint);
+            bool isMint = rewardsToMint != 0;
+
+            if (isMint) {
+                fortunasToken.mint(msg.sender, rewardsToMint);
             }
+
             fortunasToken.transfer(msg.sender, tokensToTransfer);
 
             uint256 chanceToLoseAssets = loseAssetChance;
@@ -764,3 +769,23 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
     }
 }
+// TODO:
+// Done - typo in battle 6 reward percentage
+// Done - mint directly to user
+// lose/win percentage calculation
+// save to collect percentage^ in mapping
+// save number of times lost^ in mapping
+// passive rewards (scenario 1) after battle end
+// save amount of this^ into mapping
+// calculate extra rewards internally before and after each reward calculation
+// save number of extra reward cycles remaining^
+// remove reward base, reward increase per day and change reward limit to reward percentage and save x/48 value
+// heroes now change percentage to win by up to 10%
+// cavalries now change battle reward percentage by up to .05%
+// ration prices now increase by 12.5 percent after reaching 100% winrate
+// additional troops now resets winrate rather than reward percentage
+// explain to amanullah how to estimate rewards
+// maybe add a new function updateAllBattles()
+// update events
+// update graphs
+// (battle == NULL) etc in mapping.ts of both Battling and FortunasToken Graphs

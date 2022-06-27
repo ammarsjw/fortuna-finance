@@ -131,6 +131,12 @@ contract BattlingExtension is BattlingBase {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards).add(_extraRewards);
         uint256 tempRations;
         uint256 totalPercentage;
+
+        if (_tempBattle.dayForLimitReached == 0 && _tempBattle.currentToCollectPercentage >= 975) {
+            uint256 daysTillLimit = uint256(1005).safeSub(_tempBattle.currentToCollectPercentage).div(5);
+            _tempBattle.dayForLimitReached += daysTillLimit;
+        }
+
         if (
             _tempBattle.rationsDaysTotal + _rationDays >= _tempBattle.dayForLimitReached &&
             _tempBattle.dayForLimitReached != 0
@@ -198,26 +204,17 @@ contract BattlingExtension is BattlingBase {
 
                 uint256 exponent;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (
-                        _tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit &&
-                        _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit
-                    ) {
-                        _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
-                        trueRewardPercentage = _tempBattle.currentRewardPercentage.roundDiv(48);
-                        ratio = trueRewardPercentage.mul(10 ** 18).div(multiplierForReward);
+                    _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
+                    trueRewardPercentage = _tempBattle.currentRewardPercentage.roundDiv(48);
+                    ratio = trueRewardPercentage.mul(10 ** 18).div(multiplierForReward);
 
-                        compoundReward = _compoundReward(
-                            tempTotalTokens,
-                            ratio,
-                            48
-                        );
-                        _tempBattle.rewards += compoundReward;
-                        tempTotalTokens += compoundReward;
-                    }
-                    else if (_tempBattle.dayForLimitReached == 0) {
-                        _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.add(i + 1);
-                        _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    }
+                    compoundReward = _compoundReward(
+                        tempTotalTokens,
+                        ratio,
+                        48
+                    );
+                    _tempBattle.rewards += compoundReward;
+                    tempTotalTokens += compoundReward;
 
                     if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
                         exponent = daysForReward - i;
@@ -317,26 +314,17 @@ contract BattlingExtension is BattlingBase {
 
                 uint256 exponent;
                 for (uint256 i = 0 ; i < daysForReward ; i++) {
-                    if (
-                        _tempBattle.currentRewardPercentage < _tempBattle.currentRewardLimit &&
-                        _tempBattle.currentRewardPercentage + rewardIncreasePerDay < _tempBattle.currentRewardLimit
-                    ) {
-                        _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
-                        trueRewardPercentage = _tempBattle.currentRewardPercentage.roundDiv(48);
-                        ratio = trueRewardPercentage.mul(10 ** 18).div(multiplierForReward);
+                    _tempBattle.currentRewardPercentage += rewardIncreasePerDay;
+                    trueRewardPercentage = _tempBattle.currentRewardPercentage.roundDiv(48);
+                    ratio = trueRewardPercentage.mul(10 ** 18).div(multiplierForReward);
 
-                        compoundReward = _compoundReward(
-                            tempTotalTokens,
-                            ratio,
-                            48
-                        );
-                        _tempBattle.rewards += compoundReward;
-                        tempTotalTokens += compoundReward;
-                    }
-                    else if (_tempBattle.dayForLimitReached == 0) {
-                        _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended.add(i + 1);
-                        _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    }
+                    compoundReward = _compoundReward(
+                        tempTotalTokens,
+                        ratio,
+                        48
+                    );
+                    _tempBattle.rewards += compoundReward;
+                    tempTotalTokens += compoundReward;
 
                     if (_tempBattle.currentRewardPercentage == _tempBattle.currentRewardLimit) {
                         exponent = daysForReward - i;
@@ -371,7 +359,7 @@ contract BattlingExtension is BattlingBase {
         bool isInteger = _ratio.mod(10000000) == 0;
 
         uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
-        
+
         if (isInteger) {
             accruedReward++;
         }

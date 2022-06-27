@@ -23,11 +23,11 @@ contract BattlingBase is Ownable {
     uint256[5] public rationsBase;                          // rations %
     uint256[5] public rationsIncrease;                      // percentage increase in rations percentages when reward limit is reached
 
-    uint256[6] rewardBasePercentages;
-    uint256 rewardIncreasePerDay;
+    uint256[6] toCollectPercentages;                        // chance to win for every iteration
+    uint256 toCollectIncreasePerDay;                        // increase in chance to win for every ration day
 
-    uint256[6] rewardLimit;                                 // rewardBase cannot exceed these amounts
-    uint256[6] rewardBase;                                  // reward % per day
+    uint256[6] rewardPercentages;                           // reward percentage per day
+    uint256[6] rewardPercentagesPerCycle;                   // reward percentage per reward iteration
     uint256[6] public minStakeAmount;                       // minimum stake amount to be able to receive rewards
 
     // structs
@@ -38,10 +38,12 @@ contract BattlingBase is Ownable {
         uint256 additionalTokens;
         uint256 rewards;
         uint256 rations;
-        uint256 currentRewardLimit;
-        uint256 currentRewardPercentage;
+        uint256 passiveRewards;//
+        uint256 currentRewardPercentagePerCycle;//
+        uint256 currentToCollectPercentage;//
         uint256 battleStartTime;
         uint256 battleDaysExpended;
+        uint256 rewardCyclesExpended;
         uint256 rationsDaysTotal;
         uint256 dayForLimitReached;
         uint256 hero;
@@ -50,6 +52,9 @@ contract BattlingBase is Ownable {
 
     // constructor
 
+    /*
+     * @dev all reward related variables for battling are initialized outside of constructor in parent class
+     */
     constructor() {
         // rewardTime = 1800;
         // oneDayTime = 86400;
@@ -66,7 +71,8 @@ contract BattlingBase is Ownable {
         rationsBase = [2500, 5000, 7500, 10000, 12500];
         _setRations();
 
-        // setting all rewards in battling contract
+        toCollectPercentages = [1000, 1000, 750, 500, 200, 100];
+        toCollectIncreasePerDay = 5;
     }
 
     // setters
@@ -77,14 +83,12 @@ contract BattlingBase is Ownable {
         }
     }
 
-    function _setAllRewards(uint256[6] memory _basePercentages, uint256 _increasePerDay, uint256[6] memory _limit) internal {
-        rewardBasePercentages = _basePercentages;
-        rewardIncreasePerDay = _increasePerDay;
+    function _setAllRewards(uint256[6] memory _rewardPercentages) internal {
+        rewardPercentages = _rewardPercentages;
 
-        rewardLimit = _limit;
         for (uint256 i = 0 ; i < 6 ; i++) {
-            rewardBase[i] = rewardLimit[i].mul(rewardBasePercentages[i]).roundDiv(100);
-            minStakeAmount[i] = multiplierForReward.ceilDiv(rewardBase[i].roundDiv(48));
+            rewardPercentagesPerCycle[i] = rewardPercentages[i].roundDiv(48);
+            minStakeAmount[i] = multiplierForReward.ceilDiv(rewardPercentagesPerCycle[i]);
         }
     }
 }
