@@ -23,6 +23,11 @@ contract BattlingExtension is BattlingBase {
     IPancakePair public rng_pancakePair3;
     IPancakePair public rng_pancakePair4;
 
+    // variables
+
+    uint256[5] public rationsPercentages;                   // rations %
+    uint256 public rationsIncreasePercentage;               // percentage increase in rations percentages when to collect limit is reached
+
     // constructor
 
     constructor() {
@@ -32,7 +37,7 @@ contract BattlingExtension is BattlingBase {
         // TODO remove
         IPancakeRouter02 _pancakeRouter;
         if (block.chainid == 97) {
-            _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+            _pancakeRouter = IPancakeRouter02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
         }
         else if (block.chainid == 4) {
             _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
@@ -51,6 +56,9 @@ contract BattlingExtension is BattlingBase {
         rng_pancakePair2 = IPancakePair(_addressForPancakePair2);
         rng_pancakePair3 = IPancakePair(_addressForPancakePair3);
         rng_pancakePair4 = IPancakePair(_addressForPancakePair4);
+
+        rationsPercentages = [2500, 5000, 7500, 10000, 12500];
+        rationsIncreasePercentage = 125000;
     }
 
     // RNG functions

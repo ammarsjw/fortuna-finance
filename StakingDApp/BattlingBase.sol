@@ -18,9 +18,6 @@ contract BattlingBase is Ownable {
     uint256 multiplier;
     uint256 multiplierForReward;
 
-    uint256[5] public rationsPercentages;                   // rations %
-    uint256 public rationsIncreasePercentage;               // percentage increase in rations percentages when to collect limit is reached
-
     uint256[6] toCollectPercentages;                        // chance to win for every iteration
     uint256 toCollectIncreasePerDay;                        // increase in chance to win for every ration day
 
@@ -59,9 +56,6 @@ contract BattlingBase is Ownable {
 
         multiplier = 10 ** 6;
         multiplierForReward = 10 ** 9;
-
-        rationsPercentages = [2500, 5000, 7500, 10000, 12500];
-        rationsIncreasePercentage = 125000;
 
         toCollectPercentages = [1000, 1000, 750, 500, 200, 100];
         toCollectIncreasePerDay = 5;

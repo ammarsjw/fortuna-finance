@@ -6,7 +6,7 @@ import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./BattlingBase.sol";
 import "./BattlingExtension.sol";
-import "./IFortunasToken.sol";
+import "./FortunasToken.sol";
 import "./IFortunasAssets.sol";
 import "./ERC1155Holder.sol";
 import "./IPancakePair.sol";
@@ -31,7 +31,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     IERC20 public LPToken;
 
     // FRTNA
-    IFortunasToken public fortunasToken;
+    FortunasToken public fortunasToken;
 
     // Fortunas Multi Token for heroes and cavalry
     IFortunasAssets public fortunasAssets;
@@ -74,7 +74,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 additionalTokens,
         uint256 rewards,
         uint256 rations,
-        uint256 passiveRewards,//
+        uint256 passiveRewards,
         uint256 battleStartTime,
         uint256 battleDurationInDays,
         uint256 hero,
@@ -89,7 +89,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 additionalTokens,
         uint256 rewards,
         uint256 rations,
-        uint256 passiveRewards,//
+        uint256 passiveRewards,
         uint256 battleStartTime,
         uint256 battleDurationInDays,
         uint256 hero,
@@ -104,7 +104,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 additionalTokens,
         uint256 rewards,
         uint256 rations,
-        uint256 passiveRewards,//
+        uint256 passiveRewards,
         uint256 battleStartTime,
         uint256 battleDurationInDays,
         uint256 hero,
@@ -141,7 +141,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         // TODO remove
         IPancakeRouter02 _pancakeRouter;
         if (block.chainid == 97) {
-            _pancakeRouter = IPancakeRouter02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+            _pancakeRouter = IPancakeRouter02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
         }
         else if (block.chainid == 4) {
             _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
@@ -153,7 +153,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         LPToken = IERC20(_addressForPancakePair);
 
-        fortunasToken = IFortunasToken(_fortunasToken);
+        fortunasToken = FortunasToken(payable(_fortunasToken));
 
         fortunasAssets = IFortunasAssets(_fortunasAssets);
 
@@ -722,9 +722,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         rewardTime = _seconds;
         oneDayTime = _seconds.mul(48);
         baseBattleTime = _seconds.mul(144);
+
+        battlingExtension.testRewardTime(_seconds);
     }
 
     function testToCollectPercentage(uint256 _chanceToCollect) public {
         toCollectPercentages = [1000, 1000, _chanceToCollect, _chanceToCollect, _chanceToCollect, _chanceToCollect];
+
+        battlingExtension.testToCollectPercentage(_chanceToCollect);
     }
 }
