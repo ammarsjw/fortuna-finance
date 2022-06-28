@@ -322,9 +322,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(_amountToRemove < tempTotalTokens, "removeTroops::WA");
         require(minStakeAmount[_battleType - 1] <= tempTotalTokens.sub(_amountToRemove), "removeTroops::MIN");
 
-        uint256 tempAmountToRemove = _amountToRemove;
         uint256 rewardsToMint;
-        if (tempAmountToRemove > tempBattle.additionalTokens) {
+        if (_amountToRemove > tempBattle.additionalTokens) {
+            uint256 tempAmountToRemove = _amountToRemove;
+
             tempAmountToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
             if (tempAmountToRemove > tempBattle.rewards) {
@@ -339,7 +340,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
         }
         else {
-            tempBattle.additionalTokens -= tempAmountToRemove;
+            tempBattle.additionalTokens -= _amountToRemove;
         }
 
         bool isMint = rewardsToMint != 0;
@@ -358,26 +359,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
         }
 
-        if (chanceToLoseAssets != 0) {
-            bool heroResult;
-            bool cavalryResult;
-            if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-                cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-
-                tempBattle = handleLoss(tempBattle, false, heroResult, cavalryResult);
-            }
-            else if (tempBattle.hero != 0) {
-                heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-
-                tempBattle = handleLoss(tempBattle, false, heroResult, false);
-            }
-            else if (tempBattle.cavalry != 0) {
-                cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-
-                tempBattle = handleLoss(tempBattle, false, false, cavalryResult);
-            }
-        }
+        tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 
@@ -575,26 +557,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
             }
 
-            if (chanceToLoseAssets != 0) {
-                bool heroResult;
-                bool cavalryResult;
-                if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                    heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-                    cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-
-                    handleLoss(tempBattle, true, heroResult, cavalryResult);
-                }
-                else if (tempBattle.hero != 0) {
-                    heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-
-                    handleLoss(tempBattle, true, heroResult, false);
-                }
-                else if (tempBattle.cavalry != 0) {
-                    cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
-
-                    handleLoss(tempBattle, true, false, cavalryResult);
-                }
-            }
+            tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
         }
 
         Battle memory emptyBattle;
@@ -617,11 +580,26 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function handleLoss(
         Battle memory _tempBattle,
-        bool _isEndBattle,
-        bool _isHeroLost,
-        bool _isCavalryLost
+        uint256 _chanceToLoseAssets,
+        bool _isEndBattle
     ) internal returns (Battle memory) {
-        if (_isHeroLost) {
+        bool isHeroLost;
+        bool isCavalryLost;
+
+        if (_chanceToLoseAssets != 0) {
+            if (_tempBattle.hero != 0 && _tempBattle.cavalry != 0) {
+                isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+                isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            }
+            else if (_tempBattle.hero != 0) {
+                isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            }
+            else if (_tempBattle.cavalry != 0) {
+                isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            }
+        }
+
+        if (isHeroLost) {
             fortunasAssets.burnWithCheck(address(this), _tempBattle.hero, 1);
 
             if (!_isEndBattle) {
@@ -637,7 +615,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             _tempBattle.hero = 0;
         }
 
-        if (_isCavalryLost) {
+        if (isCavalryLost) {
             fortunasAssets.burnWithCheck(address(this), _tempBattle.cavalry, 1);
 
             if (!_isEndBattle) {
@@ -735,22 +713,3 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
     }
 }
-// TODO:
-// Done - typo in battle 6 reward percentage
-// Done - mint directly to user
-// lose/win percentage calculation
-// ^save to collect percentage in mapping
-// ^save number of times lost in mapping
-// passive rewards (scenario 1) after battle end
-// ^save amount of this into mapping
-// Done - remove reward base, reward increase per day and change reward limit to reward percentage and save x/48 value^
-// Done - (Add/Remove hero) heroes now change percentage to win by up to 10%
-// Done - (Add/Remove cavalry) cavalries now change current reward percentage by up to .05%
-// Done - (calculate rations) ration prices now increase by 12.5 percent (compounded) after reaching 100% winrate
-// Done - (add/remove troops) additional troops now resets winrate rather than reward percentage
-// rework send rations in battling, that is, all changes should be reflected
-// rework viewAllRewards to remove any calculateExtraRewards
-// rework startBattle, initialization of battle
-// maybe add a new function updateAllBattles()
-// update events
-// update graphs

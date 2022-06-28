@@ -327,7 +327,7 @@ contract BattlingExtension is BattlingBase {
                     compoundReward = _compound(
                         tempTotalTokens,
                         ratio,
-                        48
+                        cyclesForReward
                     );
                     _tempBattle.rewards += compoundReward;
                     tempTotalTokens += compoundReward;
