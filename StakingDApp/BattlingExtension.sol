@@ -110,7 +110,11 @@ contract BattlingExtension is BattlingBase {
         return result;
     }
 
-    function determineRewardCycles(uint256 _currentToCollectPercentage, uint256 _numberOfCycles, bool isStatic) public view onlyOwner returns (uint256, uint256) {
+    function determineRewardCycles(
+        uint256 _currentToCollectPercentage,
+        uint256 _numberOfCycles,
+        bool isStatic
+    ) public view onlyOwner returns (uint256, uint256) {
         uint256 numberOfWins;
 
         if (isStatic) {
