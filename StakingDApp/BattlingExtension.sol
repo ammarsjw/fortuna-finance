@@ -23,8 +23,6 @@ contract BattlingExtension is BattlingBase {
     IPancakePair public rng_pancakePair3;
     IPancakePair public rng_pancakePair4;
 
-    uint256[] private defeatChance;
-
     // constructor
 
     constructor() {
@@ -53,13 +51,11 @@ contract BattlingExtension is BattlingBase {
         rng_pancakePair2 = IPancakePair(_addressForPancakePair2);
         rng_pancakePair3 = IPancakePair(_addressForPancakePair3);
         rng_pancakePair4 = IPancakePair(_addressForPancakePair4);
-
-        defeatChance = [250, 500, 800, 900];
     }
 
     // RNG functions
 
-    function createRandomnessForLoss(uint256 _chanceToLose, uint256 _multiplier) public view onlyOwner returns (bool) {
+    function createRandomness(uint256 _chance, uint256 _multiplier) public view onlyOwner returns (bool) {
         uint256 a = rng_pancakePair1.price0CumulativeLast();
         uint256 b = rng_pancakePair1.price1CumulativeLast();
 
@@ -75,7 +71,7 @@ contract BattlingExtension is BattlingBase {
         uint256 randomChance =
             uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, g, h, block.timestamp))).mod(_multiplier).add(1);
 
-        return randomChance <= _chanceToLose;
+        return randomChance <= _chance;
     }
 
     function createRandomnessForAsset() external view onlyOwner returns (uint256) {
@@ -114,15 +110,38 @@ contract BattlingExtension is BattlingBase {
         return result;
     }
 
-    function determineBattleOutcome(uint256 _battleDaysExpended, uint8 _battleType) external view onlyOwner returns (bool) {
-        uint256 chanceDecrease = _battleDaysExpended.mul(5);
-        uint256 chanceForDefeat = defeatChance[_battleType - 3].safeSub(chanceDecrease);
+    function determineRewardCycles(uint256 _currentToCollectPercentage, uint256 _numberOfCycles, bool isStatic) public view onlyOwner returns (uint256, uint256) {
+        uint256 numberOfWins;
 
-        if (chanceForDefeat != 0) {
-            return createRandomnessForLoss(chanceForDefeat, 1000);
+        if (isStatic) {
+            for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
+                bool result = createRandomness(_currentToCollectPercentage, 1000);
+
+                if (result) {
+                    numberOfWins++;
+                }
+            }
+        }
+        else {
+            for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
+                if (i.mod(48) == 0) {
+                    _currentToCollectPercentage += toCollectIncreasePerDay;
+                }
+
+                if (_currentToCollectPercentage == 1000) {
+                    numberOfWins += _numberOfCycles.sub(i);
+                    break;
+                }
+
+                bool result = createRandomness(_currentToCollectPercentage, 1000);
+
+                if (result) {
+                    numberOfWins++;
+                }
+            }
         }
 
-        return false;
+        return (_currentToCollectPercentage, numberOfWins);
     }
 
     // functions
@@ -154,16 +173,19 @@ contract BattlingExtension is BattlingBase {
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
         uint256 daysForReward;
+        uint256 cyclesForReward;
         uint256 compoundReward;
 
         if (daysWagingBattle.sub(_tempBattle.battleDaysExpended) != 0) {
             if (daysWagingBattle < 3) {
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
+                (, cyclesForReward) = determineRewardCycles(_tempBattle.currentToCollectPercentage, daysForReward.mul(48), true);
+
                 compoundReward = _compound(
                     tempTotalTokens,
                     ratio,
-                    daysForReward.mul(48)
+                    cyclesForReward
                 );
                 _tempBattle.rewards += compoundReward;
             }
@@ -175,10 +197,12 @@ contract BattlingExtension is BattlingBase {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
+                    (, cyclesForReward) = determineRewardCycles(_tempBattle.currentToCollectPercentage, daysForReward.mul(48), true);
+
                     compoundReward = _compound(
                         tempTotalTokens,
                         ratio,
-                        daysForReward.mul(48)
+                        cyclesForReward
                     );
                     _tempBattle.rewards += compoundReward;
                     tempTotalTokens += compoundReward;
@@ -188,10 +212,16 @@ contract BattlingExtension is BattlingBase {
 
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
+                (_tempBattle.currentToCollectPercentage, cyclesForReward) = determineRewardCycles(
+                    _tempBattle.currentToCollectPercentage,
+                    daysForReward.mul(48),
+                    false
+                );
+
                 compoundReward = _compound(
                     tempTotalTokens,
                     ratio,
-                    48
+                    cyclesForReward
                 );
                 _tempBattle.rewards += compoundReward;
                 tempTotalTokens += compoundReward;
@@ -209,14 +239,17 @@ contract BattlingExtension is BattlingBase {
     function calculateExtraRewards(Battle memory _tempBattle) public view onlyOwner returns (uint256, uint256) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
-        uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        uint256 cyclesRemaining =
+            block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
 
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+
+        (, uint256 cyclesForReward) = determineRewardCycles(_tempBattle.currentToCollectPercentage, cyclesRemaining, true);
 
         uint256 extraRewards = _compound(
             tempTotalTokens,
             ratio,
-            cyclesRemaining
+            cyclesForReward
         );
         tempTotalTokens += extraRewards;
 
@@ -246,15 +279,18 @@ contract BattlingExtension is BattlingBase {
 
             uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
+            uint256 cyclesForReward;
             uint256 compoundReward;
 
             if (_tempBattle.battleType == 2) {
                 require(block.timestamp >= battleEndTime, "calculateRewardsForEndBattle::BNE");
 
+                (, cyclesForReward) = determineRewardCycles(_tempBattle.currentToCollectPercentage, daysForReward.mul(48), true);
+
                 compoundReward = _compound(
                     tempTotalTokens,
                     ratio,
-                    daysForReward.mul(48)
+                    cyclesForReward
                 );
                 _tempBattle.rewards += compoundReward;
             }
@@ -262,10 +298,12 @@ contract BattlingExtension is BattlingBase {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
+                    (, cyclesForReward) = determineRewardCycles(_tempBattle.currentToCollectPercentage, daysForReward.mul(48), true);
+
                     compoundReward = _compound(
                         tempTotalTokens,
                         ratio,
-                        daysForReward.mul(48)
+                        cyclesForReward
                     );
                     _tempBattle.rewards += compoundReward;
                     tempTotalTokens += compoundReward;
@@ -279,6 +317,12 @@ contract BattlingExtension is BattlingBase {
 
                 if (continueBattle) {
                     daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
+
+                    (_tempBattle.currentToCollectPercentage, cyclesForReward) = determineRewardCycles(
+                        _tempBattle.currentToCollectPercentage,
+                        daysForReward.mul(48),
+                        false
+                    );
 
                     compoundReward = _compound(
                         tempTotalTokens,

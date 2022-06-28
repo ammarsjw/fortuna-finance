@@ -362,18 +362,18 @@ contract Battling is BattlingBase, ERC1155Holder {
             bool heroResult;
             bool cavalryResult;
             if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
-                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
+                cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
 
                 tempBattle = handleLoss(tempBattle, false, heroResult, cavalryResult);
             }
             else if (tempBattle.hero != 0) {
-                heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
 
                 tempBattle = handleLoss(tempBattle, false, heroResult, false);
             }
             else if (tempBattle.cavalry != 0) {
-                cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
 
                 tempBattle = handleLoss(tempBattle, false, false, cavalryResult);
             }
@@ -579,18 +579,18 @@ contract Battling is BattlingBase, ERC1155Holder {
                 bool heroResult;
                 bool cavalryResult;
                 if (tempBattle.hero != 0 && tempBattle.cavalry != 0) {
-                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
-                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                    heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
+                    cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
 
                     handleLoss(tempBattle, true, heroResult, cavalryResult);
                 }
                 else if (tempBattle.hero != 0) {
-                    heroResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                    heroResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
 
                     handleLoss(tempBattle, true, heroResult, false);
                 }
                 else if (tempBattle.cavalry != 0) {
-                    cavalryResult = battlingExtension.createRandomnessForLoss(chanceToLoseAssets, 100);
+                    cavalryResult = battlingExtension.createRandomness(chanceToLoseAssets, 100);
 
                     handleLoss(tempBattle, true, false, cavalryResult);
                 }
