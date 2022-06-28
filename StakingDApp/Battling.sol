@@ -359,7 +359,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
         }
 
-        tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
+        if (chanceToLoseAssets != 0) {
+            tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
+        }
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 
@@ -557,7 +559,9 @@ contract Battling is BattlingBase, ERC1155Holder {
                 chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
             }
 
-            tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
+            if (chanceToLoseAssets != 0) {
+                tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
+            }
         }
 
         Battle memory emptyBattle;
@@ -586,17 +590,15 @@ contract Battling is BattlingBase, ERC1155Holder {
         bool isHeroLost;
         bool isCavalryLost;
 
-        if (_chanceToLoseAssets != 0) {
-            if (_tempBattle.hero != 0 && _tempBattle.cavalry != 0) {
-                isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
-                isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
-            }
-            else if (_tempBattle.hero != 0) {
-                isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
-            }
-            else if (_tempBattle.cavalry != 0) {
-                isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
-            }
+        if (_tempBattle.hero != 0 && _tempBattle.cavalry != 0) {
+            isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+        }
+        else if (_tempBattle.hero != 0) {
+            isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+        }
+        else if (_tempBattle.cavalry != 0) {
+            isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
         }
 
         if (isHeroLost) {

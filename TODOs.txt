@@ -42,3 +42,23 @@
 // Code Size? - Replace some imports with Interfaces (IFortunasToken, IFortunasAssets)?
 // Code Size? - Shorten require statements after testing
 // Code Size? - move sendRations calculations to battlingHelper contract
+
+// TODO:
+// Done - typo in battle 6 reward percentage
+// Done - mint directly to user
+// Done - lose/win percentage calculation
+// ^save to collect percentage in mapping
+// ^save number of times lost in mapping
+// passive rewards (scenario 1) after battle end
+// ^save amount of this into mapping
+// Done - remove reward base, reward increase per day and change reward limit to reward percentage and save x/48 value^
+// Done - (Add/Remove hero) heroes now change percentage to win by up to 10%
+// Done - (Add/Remove cavalry) cavalries now change current reward percentage by up to .05%
+// Done - (calculate rations) ration prices now increase by 12.5 percent (compounded) after reaching 100% winrate
+// Done - (add/remove troops) additional troops now resets winrate rather than reward percentage
+// rework send rations in battling, that is, all changes should be reflected
+// rework viewAllRewards to remove any calculateExtraRewards
+// rework startBattle, initialization of battle
+// maybe add a new function updateAllBattles()
+// update events
+// update graphs
