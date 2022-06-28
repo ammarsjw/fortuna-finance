@@ -190,14 +190,6 @@ contract Battling is BattlingBase, ERC1155Holder {
         battleResetPercentage = _battleResetPercentage;
     }
 
-    function setAllRewards(
-        uint256[6] memory _basePercentages,
-        uint256 _increasePerDay,
-        uint256[6] memory _limit
-    ) external onlyOwner {
-        _setAllRewards(_basePercentages, _increasePerDay, _limit);
-    }
-
     // functions
 
     function startBattle(
@@ -220,7 +212,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasToken.transferFrom(msg.sender, address(this), _amount);
         }
 
-        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, rewardLimit[_battleType - 1], rewardBase[_battleType - 1], block.timestamp, 0, 0, 0, 0, 0);
+        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], block.timestamp, 0, 0, 0, 0);
 
         emit BattleStarted (
             msg.sender,
@@ -264,7 +256,6 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         battleForAddress[msg.sender][_battleType].rations += tempRations;
         battleForAddress[msg.sender][_battleType].rationsDaysTotal += _rationDays;
-        battleForAddress[msg.sender][_battleType].dayForLimitReached = tempBattle.dayForLimitReached;
 
         tempBattle = battleForAddress[msg.sender][_battleType];
 
@@ -292,11 +283,11 @@ contract Battling is BattlingBase, ERC1155Holder {
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
         tempBattle.additionalTokens += _amountToAdd;
-        if (tempBattle.additionalTokens + _amountToAdd >
+        if (tempBattle.additionalTokens >
             tempBattle.initialTokensStaked.mul(battleResetPercentage).div(100)) {
-            tempBattle.currentRewardPercentage = rewardBase[tempBattle.battleType - 1];
-            if (tempBattle.hero > 0) {
-                tempBattle.currentRewardPercentage += assetPercentages[tempBattle.hero - 1];
+            tempBattle.currentToCollectPercentage = toCollectPercentages[tempBattle.battleType - 1];
+            if (tempBattle.hero != 0) {
+                tempBattle.currentToCollectPercentage += assetPercentages[tempBattle.hero - 1];
             }
         }
 
@@ -453,11 +444,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentRewardPercentage += assetPercentages[_assetToDeploy - 1];
-            if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
-                tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
-                tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
-            }
+            tempBattle.currentToCollectPercentage += assetPercentages[_assetToDeploy - 1];
+
             tempBattle.hero = _assetToDeploy;
         }
         else {
@@ -465,12 +453,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentRewardLimit += assetPercentages[_assetToDeploy - 1];
-            if (tempBattle.dayForLimitReached != 0) {
-                if (tempBattle.currentRewardPercentage < tempBattle.currentRewardLimit) {
-                    tempBattle.dayForLimitReached = 0;
-                }
-            }
+            tempBattle.currentRewardPercentagePerCycle += assetPercentages[_assetToDeploy - 1];
+
             tempBattle.cavalry = _assetToDeploy;
         }
 
@@ -512,10 +496,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentRewardPercentage -= assetPercentages[_assetToReturn - 1];
-            if (tempBattle.dayForLimitReached != 0) {
-                tempBattle.dayForLimitReached = 0;
-            }
+            tempBattle.currentToCollectPercentage -= assetPercentages[_assetToReturn - 1];
+
             tempBattle.hero = 0;
         }
         else {
@@ -523,11 +505,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentRewardLimit -= assetPercentages[_assetToReturn - 1];
-            if (tempBattle.currentRewardPercentage >= tempBattle.currentRewardLimit) {
-                tempBattle.currentRewardPercentage = tempBattle.currentRewardLimit;
-                tempBattle.dayForLimitReached = tempBattle.battleDaysExpended;
-            }
+            tempBattle.currentRewardPercentagePerCycle -= assetPercentages[_assetToReturn - 1];
+
             tempBattle.cavalry = 0;
         }
 
@@ -568,7 +547,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         if (_battleType == 2) {
             LPToken.transfer(msg.sender, tempBattle.initialTokensStaked);
 
-            uint256 rewardsToMint = tempBattle.rewards/*.add(tempBattle.passiveRewards)*/;
+            uint256 rewardsToMint = tempBattle.rewards.add(tempBattle.passiveRewards);
 
             bool isMint = rewardsToMint != 0;
 
@@ -577,15 +556,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
         }
         else {
-            bool isDefeat = battlingExtension.determineBattleOutcome(tempBattle.battleDaysExpended, _battleType);
+            uint256 tokensToReturn = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens);
 
-            if (isDefeat) {
-                tempBattle.rewards = 0;
-            }
-
-            uint256 tokensToTransfer = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens);
-
-            uint256 rewardsToMint = tempBattle.rewards/*.add(tempBattle.passiveRewards)*/;
+            uint256 rewardsToMint = tempBattle.rewards.add(tempBattle.passiveRewards);
 
             bool isMint = rewardsToMint != 0;
 
@@ -593,7 +566,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 fortunasToken.mint(msg.sender, rewardsToMint);
             }
 
-            fortunasToken.transfer(msg.sender, tokensToTransfer);
+            fortunasToken.transfer(msg.sender, tokensToReturn);
 
             uint256 chanceToLoseAssets = loseAssetChance;
 
@@ -652,10 +625,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasAssets.burnWithCheck(address(this), _tempBattle.hero, 1);
 
             if (!_isEndBattle) {
-                _tempBattle.currentRewardPercentage -= assetPercentages[_tempBattle.hero - 1];
-                if (_tempBattle.dayForLimitReached != 0) {
-                    _tempBattle.dayForLimitReached = 0;
-                }
+                _tempBattle.currentToCollectPercentage -= assetPercentages[_tempBattle.hero - 1];
             }
 
             emit AssetLost (
@@ -671,11 +641,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasAssets.burnWithCheck(address(this), _tempBattle.cavalry, 1);
 
             if (!_isEndBattle) {
-                _tempBattle.currentRewardLimit -= assetPercentages[_tempBattle.cavalry - 1];
-                if (_tempBattle.currentRewardPercentage >= _tempBattle.currentRewardLimit) {
-                    _tempBattle.currentRewardPercentage = _tempBattle.currentRewardLimit;
-                    _tempBattle.dayForLimitReached = _tempBattle.battleDaysExpended;
-                }
+                _tempBattle.currentRewardPercentagePerCycle -= assetPercentages[_tempBattle.cavalry - 1];
             }
 
             emit AssetLost (
@@ -773,19 +739,18 @@ contract Battling is BattlingBase, ERC1155Holder {
 // Done - typo in battle 6 reward percentage
 // Done - mint directly to user
 // lose/win percentage calculation
-// save to collect percentage^ in mapping
-// save number of times lost^ in mapping
+// ^save to collect percentage in mapping
+// ^save number of times lost in mapping
 // passive rewards (scenario 1) after battle end
-// save amount of this^ into mapping
-// calculate extra rewards internally before and after each reward calculation
-// save number of extra reward cycles remaining^
-// remove reward base, reward increase per day and change reward limit to reward percentage and save x/48 value
-// heroes now change percentage to win by up to 10%
-// cavalries now change battle reward percentage by up to .05%
-// ration prices now increase by 12.5 percent after reaching 100% winrate
-// additional troops now resets winrate rather than reward percentage
-// explain to amanullah how to estimate rewards
+// ^save amount of this into mapping
+// Done - remove reward base, reward increase per day and change reward limit to reward percentage and save x/48 value^
+// Done - (Add/Remove hero) heroes now change percentage to win by up to 10%
+// Done - (Add/Remove cavalry) cavalries now change current reward percentage by up to .05%
+// Done - (calculate rations) ration prices now increase by 12.5 percent (compounded) after reaching 100% winrate
+// Done - (add/remove troops) additional troops now resets winrate rather than reward percentage
+// rework send rations in battling, that is, all changes should be reflected
+// rework viewAllRewards to remove any calculateExtraRewards
+// rework startBattle, initialization of battle
 // maybe add a new function updateAllBattles()
 // update events
 // update graphs
-// (battle == NULL) etc in mapping.ts of both Battling and FortunasToken Graphs

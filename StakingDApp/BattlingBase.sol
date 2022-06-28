@@ -18,10 +18,8 @@ contract BattlingBase is Ownable {
     uint256 multiplier;
     uint256 multiplierForReward;
 
-    uint256 public rationsIncreasePercentage;
-
-    uint256[5] public rationsBase;                          // rations %
-    uint256[5] public rationsIncrease;                      // percentage increase in rations percentages when reward limit is reached
+    uint256[5] public rationsPercentages;                   // rations %
+    uint256 public rationsIncreasePercentage;               // percentage increase in rations percentages when to collect limit is reached
 
     uint256[6] toCollectPercentages;                        // chance to win for every iteration
     uint256 toCollectIncreasePerDay;                        // increase in chance to win for every ration day
@@ -43,18 +41,13 @@ contract BattlingBase is Ownable {
         uint256 currentToCollectPercentage;//
         uint256 battleStartTime;
         uint256 battleDaysExpended;
-        uint256 rewardCyclesExpended;
         uint256 rationsDaysTotal;
-        uint256 dayForLimitReached;
         uint256 hero;
         uint256 cavalry;
     }
 
     // constructor
 
-    /*
-     * @dev all reward related variables for battling are initialized outside of constructor in parent class
-     */
     constructor() {
         // rewardTime = 1800;
         // oneDayTime = 86400;
@@ -66,26 +59,19 @@ contract BattlingBase is Ownable {
         multiplier = 10 ** 6;
         multiplierForReward = 10 ** 9;
 
+        rationsPercentages = [2500, 5000, 7500, 10000, 12500];
         rationsIncreasePercentage = 125000;
-
-        rationsBase = [2500, 5000, 7500, 10000, 12500];
-        _setRations();
 
         toCollectPercentages = [1000, 1000, 750, 500, 200, 100];
         toCollectIncreasePerDay = 5;
+
+        rewardPercentages = [2500000, 5000000, 10000000, 12500000, 20000000, 25000000];
+        _setRewards();
     }
 
     // setters
 
-    function _setRations() internal {
-        for (uint256 i = 0 ; i < 5 ; i++) {
-            rationsIncrease[i] = rationsBase[i].mul(rationsIncreasePercentage).roundDiv(multiplier);
-        }
-    }
-
-    function _setAllRewards(uint256[6] memory _rewardPercentages) internal {
-        rewardPercentages = _rewardPercentages;
-
+    function _setRewards() internal {
         for (uint256 i = 0 ; i < 6 ; i++) {
             rewardPercentagesPerCycle[i] = rewardPercentages[i].roundDiv(48);
             minStakeAmount[i] = multiplierForReward.ceilDiv(rewardPercentagesPerCycle[i]);

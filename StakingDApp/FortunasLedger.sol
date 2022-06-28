@@ -74,7 +74,7 @@ contract FortunasLedger is Ownable {
 
             uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
 
-            uint256 compoundReward = _compoundReward(
+            uint256 compoundReward = _compound(
                 balance.add(tempTotalPassiveRewards),
                 ratio,
                 rewardCycles
@@ -100,7 +100,7 @@ contract FortunasLedger is Ownable {
 
         uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
 
-        uint256 compoundReward = _compoundReward(
+        uint256 compoundReward = _compound(
             balance.add(tempTotalPassiveRewards),
             ratio,
             1
@@ -153,7 +153,7 @@ contract FortunasLedger is Ownable {
 
             uint256 rewardCycles = timeToConsider.div(passiveRewardTime);
 
-            compoundReward = _compoundReward(
+            compoundReward = _compound(
                 balance.add(tempTotalPassiveRewards),
                 ratio,
                 rewardCycles
@@ -161,7 +161,7 @@ contract FortunasLedger is Ownable {
             tempTotalPassiveRewards += compoundReward;
         }
 
-        compoundReward = _compoundReward(
+        compoundReward = _compound(
             balance.add(tempTotalPassiveRewards),
             ratio,
             1
@@ -171,7 +171,7 @@ contract FortunasLedger is Ownable {
         return (tempTotalPassiveRewards, nextPassiveReward);
     }
 
-    function _compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
+    function _compound(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
         if (_exponent == 0) {
             return _principal;
         }
