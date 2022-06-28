@@ -74,6 +74,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 additionalTokens,
         uint256 rewards,
         uint256 rations,
+        uint256 passiveRewards,//
         uint256 battleStartTime,
         uint256 battleDurationInDays,
         uint256 hero,
@@ -88,6 +89,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 additionalTokens,
         uint256 rewards,
         uint256 rations,
+        uint256 passiveRewards,//
         uint256 battleStartTime,
         uint256 battleDurationInDays,
         uint256 hero,
@@ -102,6 +104,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 additionalTokens,
         uint256 rewards,
         uint256 rations,
+        uint256 passiveRewards,//
         uint256 battleStartTime,
         uint256 battleDurationInDays,
         uint256 hero,
@@ -219,13 +222,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             _battleType,
             true,
             _amount,
-            0,
-            0,
-            0,
+            0, 0, 0, 0,
             battleForAddress[msg.sender][_battleType].battleStartTime,
-            3,
-            0,
-            0
+            3, 0, 0
         );
     }
 
@@ -267,6 +266,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.additionalTokens,
             tempBattle.rewards,
             tempBattle.rations,
+            tempBattle.passiveRewards,
             tempBattle.battleStartTime,
             tempBattle.rationsDaysTotal.add(3),
             tempBattle.hero,
@@ -303,6 +303,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.additionalTokens,
             tempBattle.rewards,
             tempBattle.rations,
+            tempBattle.passiveRewards,
             tempBattle.battleStartTime,
             tempBattle.rationsDaysTotal.add(3),
             tempBattle.hero,
@@ -322,9 +323,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(_amountToRemove < tempTotalTokens, "removeTroops::WA");
         require(minStakeAmount[_battleType - 1] <= tempTotalTokens.sub(_amountToRemove), "removeTroops::MIN");
 
-        uint256 rewardsToMint;
-        if (_amountToRemove > tempBattle.additionalTokens) {
-            uint256 tempAmountToRemove = _amountToRemove;
+        uint256 tempAmountToRemove = _amountToRemove;
+        if (tempAmountToRemove > tempBattle.additionalTokens) {
+            uint256 rewardsToMint;
 
             tempAmountToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
@@ -338,16 +339,16 @@ contract Battling is BattlingBase, ERC1155Holder {
                 rewardsToMint = tempAmountToRemove;
                 tempBattle.rewards -= tempAmountToRemove;
             }
+
+            bool isMint = rewardsToMint != 0;
+
+            if (isMint) {
+                fortunasToken.mint(msg.sender, rewardsToMint);
+                _amountToRemove -= rewardsToMint;
+            }
         }
         else {
-            tempBattle.additionalTokens -= _amountToRemove;
-        }
-
-        bool isMint = rewardsToMint != 0;
-
-        if (isMint) {
-            fortunasToken.mint(msg.sender, rewardsToMint);
-            _amountToRemove -= rewardsToMint;
+            tempBattle.additionalTokens -= tempAmountToRemove;
         }
 
         fortunasToken.transfer(msg.sender, _amountToRemove);
@@ -373,6 +374,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.additionalTokens,
             tempBattle.rewards,
             tempBattle.rations,
+            tempBattle.passiveRewards,
             tempBattle.battleStartTime,
             tempBattle.rationsDaysTotal.add(3),
             tempBattle.hero,
@@ -460,6 +462,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.additionalTokens,
             tempBattle.rewards,
             tempBattle.rations,
+            tempBattle.passiveRewards,
             tempBattle.battleStartTime,
             tempBattle.rationsDaysTotal.add(3),
             tempBattle.hero,
@@ -512,6 +515,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.additionalTokens,
             tempBattle.rewards,
             tempBattle.rations,
+            tempBattle.passiveRewards,
             tempBattle.battleStartTime,
             tempBattle.rationsDaysTotal.add(3),
             tempBattle.hero,
@@ -526,7 +530,8 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(2 <= _battleType && _battleType <= 6, "endBattle::WBT1");
         require(tempBattle.initialTokensStaked != 0, "endBattle:WB");
 
-        tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
+        uint256 passiveRewards;
+        (tempBattle, passiveRewards) = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 
         if (_battleType == 2) {
             LPToken.transfer(msg.sender, tempBattle.initialTokensStaked);
@@ -574,11 +579,8 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.initialTokensStaked,
             tempBattle.additionalTokens,
             tempBattle.rewards,
-            0,
-            0,
-            0,
-            0,
-            0
+            tempBattle.passiveRewards,
+            0, 0, 0, 0, 0
         );
     }
 
@@ -683,7 +685,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                     tempBattle.rewards += extraRewards;
                 }
                 else {
-                    tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
+                    (tempBattle, ) = battlingExtension.calculateRewardsForEndBattle(tempBattle);
                 }
             }
             tempRewards[i] = tempBattle.rewards;
@@ -713,5 +715,16 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function _validBattleType(uint8 _battleType) internal pure {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
+    }
+
+    // testing only
+    function testRewardTime(uint256 _seconds) public {
+        rewardTime = _seconds;
+        oneDayTime = _seconds.mul(48);
+        baseBattleTime = _seconds.mul(144);
+    }
+
+    function testToCollectPercentage(uint256 _chanceToCollect) public {
+        toCollectPercentages = [1000, 1000, _chanceToCollect, _chanceToCollect, _chanceToCollect, _chanceToCollect];
     }
 }
