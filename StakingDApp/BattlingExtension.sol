@@ -391,7 +391,8 @@ contract BattlingExtension is BattlingBase {
 
             _tempBattle.battleDaysExpended = daysWagingBattle;
 
-            uint256 passiveRewardCycles = block.timestamp.sub(battleEndTime).div(rewardTime);
+            // TODO change "60" to "rewardTime"
+            uint256 passiveRewardCycles = block.timestamp.sub(battleEndTime).div(60);
 
             ratio = rewardPercentages[0].mul(10 ** 18).div(multiplierForReward);
 

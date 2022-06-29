@@ -659,7 +659,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         return _tempBattle;
     }
 
-    /**
+    /*
      * @dev Should be called if updated battle data needed
      * @dev Ideally to be called only if an update on current reward amount is needed
      * @dev Function "endBattle" should be called if unstaking
