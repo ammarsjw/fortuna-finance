@@ -169,7 +169,8 @@ contract FortunasToken is ERC20, Ownable {
     // getters and setters
 
     function initializeBattling(address contractAddress) external onlyOwner {
-        require(battling == address(0), "FRTNA: Battling has already been initialized");
+        // TODO uncomment
+        // require(battling == address(0), "FRTNA: Battling has already been initialized");
         battling = contractAddress;
 
         excludeFromPassiveRewards(battling, true);

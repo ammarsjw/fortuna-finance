@@ -530,8 +530,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(2 <= _battleType && _battleType <= 6, "endBattle::WBT1");
         require(tempBattle.initialTokensStaked != 0, "endBattle:WB");
 
-        uint256 passiveRewards;
-        (tempBattle, passiveRewards) = battlingExtension.calculateRewardsForEndBattle(tempBattle);
+        tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 
         if (_battleType == 2) {
             LPToken.transfer(msg.sender, tempBattle.initialTokensStaked);
@@ -675,17 +674,15 @@ contract Battling is BattlingBase, ERC1155Holder {
         for (uint8 i = 0 ; i < 5 ; i++) {
             tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
-                if (
-                    block.timestamp <
-                    tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))
-                ) {
+                if (block.timestamp <
+                    tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
                     tempBattle = battlingExtension.calculateRewards(tempBattle);
 
                     (extraRewards, nextRewards[i]) = battlingExtension.calculateExtraRewards(tempBattle);
                     tempBattle.rewards += extraRewards;
                 }
                 else {
-                    (tempBattle, ) = battlingExtension.calculateRewardsForEndBattle(tempBattle);
+                    tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
                 }
             }
             tempRewards[i] = tempBattle.rewards;

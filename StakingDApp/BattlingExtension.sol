@@ -303,9 +303,8 @@ contract BattlingExtension is BattlingBase {
 
     function calculateRewardsForEndBattle(
         Battle memory _tempBattle
-    ) external view onlyOwner returns (Battle memory, uint256) {
+    ) external view onlyOwner returns (Battle memory) {
         uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
-        uint256 passiveRewards;
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
             _tempBattle = calculateRewards(_tempBattle);
@@ -396,14 +395,14 @@ contract BattlingExtension is BattlingBase {
 
             ratio = rewardPercentages[0].mul(10 ** 18).div(multiplierForReward);
 
-            passiveRewards = _compound(
+            _tempBattle.passiveRewards = _compound(
                 tempTotalTokens,
                 ratio,
                 passiveRewardCycles
             );
         }
 
-        return (_tempBattle, passiveRewards);
+        return _tempBattle;
     }
 
     function _compound(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {

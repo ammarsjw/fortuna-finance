@@ -35,7 +35,8 @@ contract FortunasAssets is Ownable, ERC1155 {
     function initializeBattling(
         address _battling
     ) external onlyOwner {
-        require(battling == address(0), "initializeBattling::Battling has already been initialized");
+        // TODO uncomment
+        // require(battling == address(0), "initializeBattling::Battling has already been initialized");
         battling = _battling;
     }
 
