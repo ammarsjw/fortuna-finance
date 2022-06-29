@@ -196,6 +196,8 @@ contract BattlingExtension is BattlingBase {
             if (daysWagingBattle < 3) {
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
+                cyclesForReward = daysForReward.mul(48);
+
                 if (_tempBattle.currentToCollectPercentage != 1000) {
                     (, cyclesForReward) = determineRewardCycles(
                         _tempBattle.currentToCollectPercentage,
@@ -219,6 +221,8 @@ contract BattlingExtension is BattlingBase {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
 
+                    cyclesForReward = daysForReward.mul(48);
+
                     if (_tempBattle.currentToCollectPercentage != 1000) {
                         (, cyclesForReward) = determineRewardCycles(
                             _tempBattle.currentToCollectPercentage,
@@ -239,6 +243,8 @@ contract BattlingExtension is BattlingBase {
                 }
 
                 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
+
+                cyclesForReward = daysForReward.mul(48);
 
                 if (_tempBattle.currentToCollectPercentage != 1000) {
                     (_tempBattle.currentToCollectPercentage, cyclesForReward) = determineRewardCycles(
@@ -272,10 +278,10 @@ contract BattlingExtension is BattlingBase {
     function calculateExtraRewards(Battle memory _tempBattle) public view onlyOwner returns (uint256, uint256) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
-        uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
-        uint256 cyclesForReward;
-
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
+
+        uint256 cyclesRemaining = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        uint256 cyclesForReward = cyclesRemaining;
 
         if (_tempBattle.currentToCollectPercentage != 1000) {
             (, cyclesForReward) = determineRewardCycles(
@@ -326,24 +332,18 @@ contract BattlingExtension is BattlingBase {
             if (_tempBattle.battleType == 2) {
                 require(block.timestamp >= battleEndTime, "calculateRewardsForEndBattle::BNE");
 
-                if (_tempBattle.currentToCollectPercentage != 1000) {
-                    (, cyclesForReward) = determineRewardCycles(
-                        _tempBattle.currentToCollectPercentage,
-                        daysForReward.mul(48),
-                        true
-                    );
-                }
-
                 compoundReward = _compound(
                     tempTotalTokens,
                     ratio,
-                    cyclesForReward
+                    daysForReward.mul(48)
                 );
                 _tempBattle.rewards += compoundReward;
             }
             else {
                 if (_tempBattle.battleDaysExpended < 3) {
                     daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
+
+                    cyclesForReward = daysForReward.mul(48);
 
                     if (_tempBattle.currentToCollectPercentage != 1000) {
                         (, cyclesForReward) = determineRewardCycles(
@@ -371,6 +371,8 @@ contract BattlingExtension is BattlingBase {
                 if (continueBattle) {
                     daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
 
+                    cyclesForReward = daysForReward.mul(48);
+
                     if (_tempBattle.currentToCollectPercentage != 1000) {
                         (_tempBattle.currentToCollectPercentage, cyclesForReward) = determineRewardCycles(
                             _tempBattle.currentToCollectPercentage,
@@ -394,7 +396,7 @@ contract BattlingExtension is BattlingBase {
             // TODO change "60" to "rewardTime"
             uint256 passiveRewardCycles = block.timestamp.sub(battleEndTime).div(60);
 
-            ratio = rewardPercentages[0].mul(10 ** 18).div(multiplierForReward);
+            ratio = rewardPercentagesPerCycle[0].mul(10 ** 18).div(multiplierForReward);
 
             _tempBattle.passiveRewards = _compound(
                 tempTotalTokens,
@@ -408,7 +410,7 @@ contract BattlingExtension is BattlingBase {
 
     function _compound(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
         if (_exponent == 0) {
-            return _principal;
+            return 0;
         }
 
         bool isInteger = _ratio.mod(10000000) == 0;
