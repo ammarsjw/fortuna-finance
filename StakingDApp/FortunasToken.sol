@@ -168,11 +168,12 @@ contract FortunasToken is ERC20, Ownable {
 
     // getters and setters
 
-    function setBattling(address newBattling) external onlyOwner {
-        battling = newBattling;
+    function initializeBattling(address contractAddress) external onlyOwner {
+        require(battling == address(0), "FRTNA: Battling has already been initialized");
+        battling = contractAddress;
 
-        excludeFromPassiveRewards(newBattling, true);
-        excludeFromFees(newBattling, true);
+        excludeFromPassiveRewards(battling, true);
+        excludeFromFees(battling, true);
     }
 
     function setSwapAndLiquifyEnabled(bool state) external onlyOwner {
