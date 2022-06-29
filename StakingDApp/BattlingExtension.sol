@@ -166,16 +166,19 @@ contract BattlingExtension is BattlingBase {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards).add(_extraRewards);
         uint256 tempRations;
 
+        tempRations = tempTotalTokens.mul(rationsPercentages[_rationDays - 1]).div(multiplier);
+
         if (_tempBattle.currentToCollectPercentage == 1000) {
-            tempRations = tempTotalTokens.mul(rationsPercentages[_rationDays - 1]).div(multiplier);
+            // TODO uncomment
+            // uint256 ratio = rationsIncreasePercentage.mul(10 ** 18).div(multiplier);
 
-            uint256 rationsIncreaseAmount = _compound(
-                tempRations,
-                rationsIncreasePercentage,
-                _rationDays
-            );
+            // uint256 rationsIncreaseAmount = _compound(
+            //     tempRations,
+            //     ratio,
+            //     _rationDays
+            // );
 
-            tempRations += rationsIncreaseAmount;
+            // tempRations += rationsIncreaseAmount;
         }
 
         return (_tempBattle, tempRations);
