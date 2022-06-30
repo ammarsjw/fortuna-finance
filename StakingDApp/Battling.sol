@@ -648,8 +648,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.initialTokensStaked,
             tempBattle.additionalTokens,
             tempBattle.rewards,
+            0,
             tempBattle.passiveRewards,
-            0, 0, 0, 0, 0
+            0, 0, 0, 0
         );
     }
 
