@@ -36,6 +36,8 @@ contract BattlingBase is Ownable {
         uint256 passiveRewards;
         uint256 currentRewardPercentagePerCycle;
         uint256 currentToCollectPercentage;
+        uint256 cyclesCompleted;
+        uint256 cyclesRemaining;
         uint256 battleStartTime;
         uint256 battleDaysExpended;
         uint256 rationsDaysTotal;

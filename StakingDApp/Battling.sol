@@ -215,7 +215,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasToken.transferFrom(msg.sender, address(this), _amount);
         }
 
-        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], block.timestamp, 0, 0, 0, 0);
+        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], 0, 0, block.timestamp, 0, 0, 0, 0);
 
         emit BattleStarted (
             msg.sender,
@@ -246,17 +246,14 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-        (uint256 extraRewards, ) = battlingExtension.calculateExtraRewards(tempBattle);
-
-        uint256 tempRations;
-        (tempBattle, tempRations) = battlingExtension.calculateRations(tempBattle, extraRewards, _rationDays);
+        uint256 tempRations = battlingExtension.calculateRations(tempBattle, _rationDays);
 
         fortunasToken.burn(msg.sender, tempRations);
 
-        battleForAddress[msg.sender][_battleType].rations += tempRations;
-        battleForAddress[msg.sender][_battleType].rationsDaysTotal += _rationDays;
+        tempBattle.rations += tempRations;
+        tempBattle.rationsDaysTotal += _rationDays;
 
-        tempBattle = battleForAddress[msg.sender][_battleType];
+        battleForAddress[msg.sender][_battleType] = tempBattle;
 
         emit BattleUpdated (
             msg.sender,
@@ -670,29 +667,38 @@ contract Battling is BattlingBase, ERC1155Holder {
      */
     function viewAllRewards(
         address _user
-    ) external view returns (uint256[] memory, uint256[] memory) {
-        uint256[] memory tempRewards = new uint256[](5);
-        uint256[] memory nextRewards = new uint256[](5);
-        uint256 extraRewards;
+    ) external view returns (uint256[] memory, uint256[] memory, uint256[] memory) {
+        uint256[] memory committedRewards = new uint256[](5);
+        uint256[] memory potentialRewards = new uint256[](5);
+        uint256[] memory passiveRewards = new uint256[](5);
+
         Battle memory tempBattle;
+
         for (uint8 i = 0 ; i < 5 ; i++) {
             tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
                 if (block.timestamp <
                     tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
+                    committedRewards[i] = tempBattle.rewards;
+                    
+                    tempBattle.currentToCollectPercentage = 1000;
                     tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-                    (extraRewards, nextRewards[i]) = battlingExtension.calculateExtraRewards(tempBattle);
-                    tempBattle.rewards += extraRewards;
+                    potentialRewards[i] = tempBattle.rewards.sub(committedRewards[i]);
                 }
                 else {
+                    committedRewards[i] = tempBattle.rewards;
+                    
+                    tempBattle.currentToCollectPercentage = 1000;
                     tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
+
+                    potentialRewards[i] = tempBattle.rewards.sub(committedRewards[i]);
+                    passiveRewards[i] = tempBattle.passiveRewards;
                 }
             }
-            tempRewards[i] = tempBattle.rewards;
         }
 
-        return (tempRewards, nextRewards);
+        return (committedRewards, potentialRewards, passiveRewards);
     }
 
     // modifiers
