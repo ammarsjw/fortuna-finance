@@ -348,7 +348,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             bool isMint = rewardsToReturn > stakingWalletBalance;
 
             if (isMint) {
-                fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                if (stakingWalletBalance != 0) {
+                    fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                }
 
                 fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
             }
@@ -581,7 +583,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             bool isMint = rewardsToReturn > stakingWalletBalance;
 
             if (isMint) {
-                fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                if (stakingWalletBalance != 0) {
+                    fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                }
 
                 fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
             }
@@ -599,7 +603,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             bool isMint = rewardsToReturn > stakingWalletBalance;
 
             if (isMint) {
-                fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                if (stakingWalletBalance != 0) {
+                    fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                }
 
                 fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
             }

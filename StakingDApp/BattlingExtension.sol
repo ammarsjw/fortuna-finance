@@ -283,7 +283,7 @@ contract BattlingExtension is BattlingBase {
             cyclesToComplete > 0 &&
             _tempBattle.cyclesCompleted == 0
         ) {
-            _tempBattle = completeRemainingCycles(_tempBattle);
+            _tempBattle = completeCycles(_tempBattle);
         }
 
         require(
@@ -301,7 +301,7 @@ contract BattlingExtension is BattlingBase {
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
         uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
-        if (cyclesToComplete >= 48) {
+        if (cyclesToComplete.add(_tempBattle.cyclesCompleted) >= 48) {
             cyclesToComplete = _tempBattle.cyclesRemaining;
             _tempBattle.cyclesCompleted = 0;
             _tempBattle.cyclesRemaining = 0;
