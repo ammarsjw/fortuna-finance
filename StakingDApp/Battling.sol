@@ -353,15 +353,17 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasToken.transfer(msg.sender, _amountToRemove);
 
-        uint256 chanceToLoseAssets = loseAssetChance;
+        if (tempBattle.hero != 0 || tempBattle.cavalry != 0) {
+            uint256 chanceToLoseAssets = loseAssetChance;
 
-        if (tempBattle.battleDaysExpended > 3) {
-            uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
-            chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
-        }
+            if (tempBattle.battleDaysExpended > 3) {
+                uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
+            }
 
-        if (chanceToLoseAssets != 0) {
-            tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
+            if (chanceToLoseAssets != 0) {
+                tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
+            }
         }
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
@@ -556,15 +558,17 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             fortunasToken.transfer(msg.sender, tokensToReturn);
 
-            uint256 chanceToLoseAssets = loseAssetChance;
+            if (tempBattle.hero != 0 || tempBattle.cavalry != 0) {
+                uint256 chanceToLoseAssets = loseAssetChance;
 
-            if (tempBattle.battleDaysExpended > 3) {
-                uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
-                chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
-            }
+                if (tempBattle.battleDaysExpended > 3) {
+                    uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                    chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
+                }
 
-            if (chanceToLoseAssets != 0) {
-                tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
+                if (chanceToLoseAssets != 0) {
+                    tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
+                }
             }
         }
 

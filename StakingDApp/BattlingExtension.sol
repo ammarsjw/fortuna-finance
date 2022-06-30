@@ -310,9 +310,7 @@ contract BattlingExtension is BattlingBase {
         return (extraRewards, nextReward);
     }
 
-    function calculateRewardsForEndBattle(
-        Battle memory _tempBattle
-    ) external view onlyOwner returns (Battle memory) {
+    function calculateRewardsForEndBattle(Battle memory _tempBattle) external view onlyOwner returns (Battle memory) {
         uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
