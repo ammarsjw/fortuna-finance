@@ -243,11 +243,20 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(1 <= _rationDays && _rationDays <= 5, "sendRations::WR1");
 
         if (tempBattle.rationsDaysTotal != 0) {
-            uint256 rationsExpended = 
-                block.timestamp.sub(tempBattle.battleStartTime.add(baseBattleTime)).ceilDiv(oneDayTime);
-            uint256 currentRationsDays =
-                tempBattle.rationsDaysTotal.sub(rationsExpended).add(_rationDays);
-            require(currentRationsDays <= 5, "sendRations::WR2");
+            uint256 battleDaysTotal = tempBattle.rationsDaysTotal.add(3);
+
+            uint256 daysWagingBattle;
+            if (block.timestamp.sub(tempBattle.battleStartTime).div(oneDayTime) <= 3) {
+                daysWagingBattle = 3;
+            }
+            else {
+                daysWagingBattle = block.timestamp.sub(tempBattle.battleStartTime).div(oneDayTime);
+            }
+
+            uint256 unusedRations = battleDaysTotal.sub(daysWagingBattle);
+            uint256 rationsAcceptable = uint256(5).sub(unusedRations);
+
+            require(_rationDays <= rationsAcceptable, "sendRations::WR2");
         }
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
