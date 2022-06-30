@@ -42,6 +42,9 @@ contract Battling is BattlingBase, ERC1155Holder {
     // Treasury Wallet
     address public treasuryWallet;
 
+    // Staking Wallet
+    address public stakingWallet;
+
     // Initial cost of supplies to send troops to battle
     uint256 public suppliesCost;
 
@@ -58,7 +61,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     uint256 public randomAssetPrice;
 
     // Percentage chance of losing hero/cavalry in a battle that is being ended or having tokens removed
-    uint256 public loseAssetChance;
+    uint256 public baseChanceToLoseAssets;
 
     // mappings
 
@@ -162,6 +165,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         // TODO change
         treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
 
+        // TODO change
+        stakingWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
+
         suppliesCost = 5000;
 
         battleResetPercentage = 200;
@@ -174,7 +180,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         randomAssetPrice = 5000;
 
-        loseAssetChance = 50;
+        baseChanceToLoseAssets = 50;
     }
 
     // getters
@@ -322,26 +328,32 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         uint256 tempAmountToRemove = _amountToRemove;
         if (tempAmountToRemove > tempBattle.additionalTokens) {
-            uint256 rewardsToMint;
+            uint256 rewardsToReturn;
 
             tempAmountToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
             if (tempAmountToRemove > tempBattle.rewards) {
-                rewardsToMint = tempBattle.rewards;
+                rewardsToReturn = tempBattle.rewards;
                 tempAmountToRemove -= tempBattle.rewards;
                 tempBattle.rewards = 0;
                 tempBattle.initialTokensStaked -= tempAmountToRemove;
             }
             else {
-                rewardsToMint = tempAmountToRemove;
+                rewardsToReturn = tempAmountToRemove;
                 tempBattle.rewards -= tempAmountToRemove;
             }
 
-            bool isMint = rewardsToMint != 0;
+            uint256 stakingWalletBalance = fortunasToken.balanceOf(stakingWallet);
+
+            bool isMint = rewardsToReturn > stakingWalletBalance;
 
             if (isMint) {
-                fortunasToken.mint(msg.sender, rewardsToMint);
-                _amountToRemove -= rewardsToMint;
+                fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+
+                fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
+            }
+            else {
+                fortunasToken.transferFrom(stakingWallet, msg.sender, rewardsToReturn);
             }
         }
         else {
@@ -351,7 +363,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         fortunasToken.transfer(msg.sender, _amountToRemove);
 
         if (tempBattle.hero != 0 || tempBattle.cavalry != 0) {
-            uint256 chanceToLoseAssets = loseAssetChance;
+            uint256 chanceToLoseAssets = baseChanceToLoseAssets;
 
             if (tempBattle.battleDaysExpended > 3) {
                 uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
@@ -359,7 +371,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
 
             if (chanceToLoseAssets != 0) {
-                tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
+                tempBattle = handleLoss(tempBattle, chanceToLoseAssets, chanceToLoseAssets, false);
             }
         }
 
@@ -482,21 +494,49 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentToCollectPercentage -= assetPercentages[_assetToReturn - 1];
+            uint256 chanceToLoseHero = baseChanceToLoseAssets;
 
-            tempBattle.hero = 0;
+            if (tempBattle.battleDaysExpended > 3) {
+                uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                chanceToLoseHero = chanceToLoseHero.safeSub(chanceDecrease);
+            }
+
+            if (chanceToLoseHero != 0) {
+                tempBattle = handleLoss(tempBattle, chanceToLoseHero, 0, false);
+            }
+
+            if (tempBattle.hero != 0) {
+                tempBattle.currentToCollectPercentage -= assetPercentages[_assetToReturn - 1];
+
+                tempBattle.hero = 0;
+
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _assetToReturn, 1, "");
+            }
         }
         else {
             require(tempBattle.cavalry == _assetToReturn, "returnAsset::CNIB");
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentRewardPercentagePerCycle -= assetPercentages[_assetToReturn - 1];
+            uint256 chanceToLoseCavalry = baseChanceToLoseAssets;
 
-            tempBattle.cavalry = 0;
+            if (tempBattle.battleDaysExpended > 3) {
+                uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                chanceToLoseCavalry = chanceToLoseCavalry.safeSub(chanceDecrease);
+            }
+
+            if (chanceToLoseCavalry != 0) {
+                tempBattle = handleLoss(tempBattle, 0, chanceToLoseCavalry, false);
+            }
+
+            if (tempBattle.cavalry != 0) {
+                tempBattle.currentRewardPercentagePerCycle -= assetPercentages[_assetToReturn - 1];
+
+                tempBattle.cavalry = 0;
+
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _assetToReturn, 1, "");
+            }
         }
-
-        fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _assetToReturn, 1, "");
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
 
@@ -534,29 +574,43 @@ contract Battling is BattlingBase, ERC1155Holder {
         if (_battleType == 2) {
             LPToken.transfer(msg.sender, tempBattle.initialTokensStaked);
 
-            uint256 rewardsToMint = tempBattle.rewards.add(tempBattle.passiveRewards);
+            uint256 rewardsToReturn = tempBattle.rewards.add(tempBattle.passiveRewards);
 
-            bool isMint = rewardsToMint != 0;
+            uint256 stakingWalletBalance = fortunasToken.balanceOf(stakingWallet);
+
+            bool isMint = rewardsToReturn > stakingWalletBalance;
 
             if (isMint) {
-                fortunasToken.mint(msg.sender, rewardsToMint);
+                fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+
+                fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
+            }
+            else {
+                fortunasToken.transferFrom(stakingWallet, msg.sender, rewardsToReturn);
             }
         }
         else {
             uint256 tokensToReturn = tempBattle.initialTokensStaked.add(tempBattle.additionalTokens);
 
-            uint256 rewardsToMint = tempBattle.rewards.add(tempBattle.passiveRewards);
+            uint256 rewardsToReturn = tempBattle.rewards.add(tempBattle.passiveRewards);
 
-            bool isMint = rewardsToMint != 0;
+            uint256 stakingWalletBalance = fortunasToken.balanceOf(stakingWallet);
+
+            bool isMint = rewardsToReturn > stakingWalletBalance;
 
             if (isMint) {
-                fortunasToken.mint(msg.sender, rewardsToMint);
+                fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+
+                fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
+            }
+            else {
+                fortunasToken.transferFrom(stakingWallet, msg.sender, rewardsToReturn);
             }
 
             fortunasToken.transfer(msg.sender, tokensToReturn);
 
             if (tempBattle.hero != 0 || tempBattle.cavalry != 0) {
-                uint256 chanceToLoseAssets = loseAssetChance;
+                uint256 chanceToLoseAssets = baseChanceToLoseAssets;
 
                 if (tempBattle.battleDaysExpended > 3) {
                     uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
@@ -564,7 +618,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
 
                 if (chanceToLoseAssets != 0) {
-                    tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
+                    tempBattle = handleLoss(tempBattle, chanceToLoseAssets, chanceToLoseAssets, true);
                 }
             }
         }
@@ -586,21 +640,22 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function handleLoss(
         Battle memory _tempBattle,
-        uint256 _chanceToLoseAssets,
+        uint256 _chanceToLoseHero,
+        uint256 _chanceToLoseCavalry,
         bool _isEndBattle
     ) internal returns (Battle memory) {
         bool isHeroLost;
         bool isCavalryLost;
 
         if (_tempBattle.hero != 0 && _tempBattle.cavalry != 0) {
-            isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
-            isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            isHeroLost = battlingExtension.createRandomness(_chanceToLoseHero, 100);
+            isCavalryLost = battlingExtension.createRandomness(_chanceToLoseCavalry, 100);
         }
         else if (_tempBattle.hero != 0) {
-            isHeroLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            isHeroLost = battlingExtension.createRandomness(_chanceToLoseHero, 100);
         }
         else if (_tempBattle.cavalry != 0) {
-            isCavalryLost = battlingExtension.createRandomness(_chanceToLoseAssets, 100);
+            isCavalryLost = battlingExtension.createRandomness(_chanceToLoseCavalry, 100);
         }
 
         if (isHeroLost) {

@@ -64,6 +64,9 @@ contract BattlingExtension is BattlingBase {
     // RNG functions
 
     function createRandomness(uint256 _chance, uint256 _multiplier) public view onlyOwner returns (bool) {
+        if (_chance == 0) {
+            return false;
+        }
         uint256 a = rng_pancakePair1.price0CumulativeLast();
         uint256 b = rng_pancakePair1.price1CumulativeLast();
 
