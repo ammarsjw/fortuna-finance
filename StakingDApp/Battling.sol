@@ -195,6 +195,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         treasuryWallet = _treasuryWallet;
     }
 
+    function setStakingWallet(address _stakingWallet) external onlyOwner {
+        stakingWallet = _stakingWallet;
+    }
+
     function setBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
         battleResetPercentage = _battleResetPercentage;
     }
@@ -751,7 +755,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 if (block.timestamp <
                     tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
                     committedRewards[i] = tempBattle.rewards;
-                    
+
                     tempBattle.currentToCollectPercentage = 1000;
                     tempBattle = battlingExtension.calculateRewards(tempBattle);
 
@@ -759,7 +763,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
                 else {
                     committedRewards[i] = tempBattle.rewards;
-                    
+
                     tempBattle.currentToCollectPercentage = 1000;
                     tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 

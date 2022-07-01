@@ -18,11 +18,6 @@ contract BattlingExtension is BattlingBase {
     IPancakeRouter02 public rng_pancakeRouter;
     IPancakeFactory public rng_pancakeFactory;
 
-    IPancakePair public rng_pancakePair1;
-    IPancakePair public rng_pancakePair2;
-    IPancakePair public rng_pancakePair3;
-    IPancakePair public rng_pancakePair4;
-
     // variables
 
     uint256[5] public rationsPercentages;                   // rations %
@@ -44,18 +39,8 @@ contract BattlingExtension is BattlingBase {
         }
         IPancakeFactory _pancakeFactory = IPancakeFactory(_pancakeRouter.factory());
 
-        address _addressForPancakePair1 = _pancakeFactory.allPairs(0);
-        address _addressForPancakePair2 = _pancakeFactory.allPairs(1);
-        address _addressForPancakePair3 = _pancakeFactory.allPairs(2);
-        address _addressForPancakePair4 = _pancakeFactory.allPairs(3);
-
         rng_pancakeRouter = _pancakeRouter;
         rng_pancakeFactory = _pancakeFactory;
-
-        rng_pancakePair1 = IPancakePair(_addressForPancakePair1);
-        rng_pancakePair2 = IPancakePair(_addressForPancakePair2);
-        rng_pancakePair3 = IPancakePair(_addressForPancakePair3);
-        rng_pancakePair4 = IPancakePair(_addressForPancakePair4);
 
         rationsPercentages = [2500, 5000, 7500, 10000, 12500];
         rationsIncreasePercentage = 125000;
@@ -67,40 +52,78 @@ contract BattlingExtension is BattlingBase {
         if (_chance == 0) {
             return false;
         }
-        uint256 a = rng_pancakePair1.price0CumulativeLast();
-        uint256 b = rng_pancakePair1.price1CumulativeLast();
 
-        uint256 c = rng_pancakePair2.price0CumulativeLast();
-        uint256 d = rng_pancakePair2.price1CumulativeLast();
+        uint256 pairSelector =
+            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin)))
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
 
-        uint256 e = rng_pancakePair3.price0CumulativeLast();
-        uint256 f = rng_pancakePair3.price1CumulativeLast();
+        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
+        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
+        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector++);
 
-        uint256 g = rng_pancakePair4.price0CumulativeLast();
-        uint256 h = rng_pancakePair4.price1CumulativeLast();
+        uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
+        uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
+
+        uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
+        uint256 d = IPancakePair(addressForPancakePair2).price1CumulativeLast();
+
+        uint256 e = IPancakePair(addressForPancakePair3).price0CumulativeLast();
+        uint256 f = IPancakePair(addressForPancakePair3).price1CumulativeLast();
 
         uint256 randomChance =
-            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, g, h, block.timestamp))).mod(_multiplier).add(1);
+            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, block.timestamp))).mod(_multiplier).add(1);
+
+        return randomChance <= _chance;
+    }
+
+    function createMassRandomness(uint256 _chance, uint256 _multiplier, uint256 counter) public view onlyOwner returns (bool) {
+        if (_chance == 0) {
+            return false;
+        }
+
+        uint256 pairSelector =
+            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, counter)))
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(1));
+
+        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
+        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
+
+        uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
+        uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
+
+        uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
+
+        uint256 randomChance =
+            uint256(keccak256(abi.encodePacked(a, b, c, counter))).mod(_multiplier).add(1);
 
         return randomChance <= _chance;
     }
 
     function createRandomnessForAsset() external view onlyOwner returns (uint256) {
+        uint256 pairSelector =
+            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin)))
+                .mod(rng_pancakeFactory.allPairsLength());
+
+        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector++);
+        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
+        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector++);
+
+        uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
+        uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
+        (uint256 c, , ) = IPancakePair(addressForPancakePair1).getReserves();
+
+        uint256 d = IPancakePair(addressForPancakePair2).price0CumulativeLast();
+        uint256 e = IPancakePair(addressForPancakePair2).price1CumulativeLast();
+        (uint256 f, , ) = IPancakePair(addressForPancakePair2).getReserves();
+
+        uint256 g = IPancakePair(addressForPancakePair3).price0CumulativeLast();
+        uint256 h = IPancakePair(addressForPancakePair3).price1CumulativeLast();
+        (uint256 i, , ) = IPancakePair(addressForPancakePair3).getReserves();
+
+        uint256 randomChance =
+            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, g, h, i, block.timestamp))).mod(100).add(1);
+
         uint256 result;
-
-        uint256 a = rng_pancakePair1.price0CumulativeLast();
-        uint256 b = rng_pancakePair1.price1CumulativeLast();
-        (uint256 c, , ) = rng_pancakePair1.getReserves();
-
-        uint256 d = rng_pancakePair2.price0CumulativeLast();
-        uint256 e = rng_pancakePair2.price1CumulativeLast();
-        (uint256 f, , ) = rng_pancakePair2.getReserves();
-
-        uint256 g = rng_pancakePair3.price0CumulativeLast();
-        uint256 h = rng_pancakePair3.price1CumulativeLast();
-        (uint256 i, , ) = rng_pancakePair3.getReserves();
-
-        uint256 randomChance = uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, g, h, i, block.timestamp))).mod(100).add(1);
 
         if (randomChance <= 50) {
             result = 1;
@@ -121,6 +144,8 @@ contract BattlingExtension is BattlingBase {
         return result;
     }
 
+    // functions
+
     function determineRewardCycles(
         uint256 _currentToCollectPercentage,
         uint256 _numberOfCycles,
@@ -130,7 +155,7 @@ contract BattlingExtension is BattlingBase {
 
         if (isStatic) {
             for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
-                bool result = createRandomness(_currentToCollectPercentage, 1000);
+                bool result = createMassRandomness(_currentToCollectPercentage, 1000, i);
 
                 if (result) {
                     numberOfWins++;
@@ -148,7 +173,7 @@ contract BattlingExtension is BattlingBase {
                     break;
                 }
 
-                bool result = createRandomness(_currentToCollectPercentage, 1000);
+                bool result = createMassRandomness(_currentToCollectPercentage, 1000, i);
 
                 if (result) {
                     numberOfWins++;
@@ -158,8 +183,6 @@ contract BattlingExtension is BattlingBase {
 
         return (_currentToCollectPercentage, numberOfWins);
     }
-
-    // functions
 
     function calculateRations(
         Battle memory _tempBattle,
