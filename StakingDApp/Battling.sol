@@ -41,10 +41,10 @@ contract Battling is BattlingBase, ERC1155Holder {
     // Contract that handles calculations for Battling
     BattlingExtension public battlingExtension;
 
-    // Treasury Wallet
+    // Treasury wallet
     address public treasuryWallet;
 
-    // Staking Wallet
+    // Staking wallet
     address public stakingWallet;
 
     // Initial cost of supplies to send troops to battle

@@ -16,32 +16,40 @@ contract FortunasToken is ERC20, Ownable {
 
     // BUSD mainnet
     // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-    
+
     // TODO remove
     address public BUSD;
 
     // PancakeSwap
     IPancakeRouter02 public pancakeRouter;
     address public immutable pancakePair;
-    // address public pancakePair;
 
     bool private swapping;
-    bool public swapAndLiquifyEnabled = true;
 
-    // Bookkeeper for all FRTNA holders
+    // Swaps and adds liquidity if enabled otherwise sends funds to liquidity wallet
+    bool public swapAndLiquifyEnabled;
+
+    // Ledger for all FRTNA holders
     FortunasLedger public fortunasLedger;
 
+    // Battling contract address
     address public battling;
-    
+
+    // Liquidity wallet
     address public liquidityWallet;
+
+    // Treasury wallet
     address public treasuryWallet;
 
-    // buy fees
+    // Staking wallet
+    address public stakingWallet;
+
+    // Buy fees
     uint256 public liquidityBuyingFee;
     uint256 public treasuryBuyingFee;
     uint256 public burnBuyingFee;
 
-    // sell fees
+    // Sell fees
     uint256 public liquiditySellingFee;
     uint256 public treasurySellingFee;
     uint256 public burnSellingFee;
@@ -52,23 +60,25 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public totalSellingFeesAccumulated;
 
+    // TODO confirm
     uint256 public swapAndTransferTokensAtAmount = 1000 * (10**18);
 
-    // timestamp for when the token can be traded freely on PanackeSwap
-    uint256 public immutable tradingEnabledTimestamp = 1623967200; //June 17, 22:00 UTC, 2021
+    // TODO change
+    // Timestamp for when the token can be traded freely on PanackeSwap
+    uint256 public immutable tradingEnabledTimestamp = 1623967200; // June 17, 22:00 UTC, 2021
 
     // mappings
 
-    // addresses that are excluded from buying and selling fees
+    // Addresses that are excluded from buying and selling fees
     mapping (address => bool) private isExcludedFromFees;
 
-    // addresses that are excluded from FRTNA holder's rewards
+    // Addresses that are excluded from FRTNA holder's rewards
     mapping (address => bool) private isExcludedFromPassiveRewards;
 
-    // addresses that can make transfers before trading is enabled
+    // Addresses that can make transfers before trading is enabled
     mapping (address => bool) private canTransferBeforeTradingIsEnabled;
 
-    // store addresses that are automatic market maker pairs
+    // Store addresses that are automatic market maker pairs
     mapping (address => bool) public automatedMarketMakerPairs;
 
     // events
@@ -84,6 +94,8 @@ contract FortunasToken is ERC20, Ownable {
     event LiquidityWalletUpdated(address indexed newLiquidityWallet, address indexed oldLiquidityWallet);
 
     event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
+
+    event StakingWalletUpdated(address indexed newStakingWallet, address indexed oldStakingWallet);
 
     event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiqudity);
 
@@ -125,9 +137,13 @@ contract FortunasToken is ERC20, Ownable {
 
         fortunasLedger = new FortunasLedger();
 
-        // TODO change
     	liquidityWallet = address(owner());
-        treasuryWallet = address(0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80);
+
+        // TODO change
+        treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
+
+        // TODO change
+        stakingWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
 
         uint256 _liquidityBuyingFee = 25;
         uint256 _treasuryBuyingFee = 75;
@@ -165,6 +181,8 @@ contract FortunasToken is ERC20, Ownable {
         // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
 
+        // TODO mint to staking wallet
+        // TODO change initial supply
         _mint(owner(), 1000000000 * (10 ** 18));
     }
 
@@ -176,6 +194,7 @@ contract FortunasToken is ERC20, Ownable {
         battling = contractAddress;
 
         excludeFromPassiveRewards(battling, true);
+
         excludeFromFees(battling, true);
     }
 
@@ -264,6 +283,14 @@ contract FortunasToken is ERC20, Ownable {
         treasuryWallet = newTreasuryWallet;
     }
 
+    function updateStakingWallet(address newStakingWallet) public onlyOwner {
+        require(newStakingWallet != stakingWallet, "FRTNA: The staking wallet is already this address");
+        excludeFromFees(stakingWallet, false);
+        excludeFromFees(newStakingWallet, true);
+        emit StakingWalletUpdated(newStakingWallet, stakingWallet);
+        stakingWallet = newStakingWallet;
+    }
+
     function getTradingIsEnabled() public view returns (bool) {
         return block.timestamp >= tradingEnabledTimestamp;
     }
@@ -321,44 +348,39 @@ contract FortunasToken is ERC20, Ownable {
             if (totalSellingFeesAccumulated > 0) {
                 totalBuyingFeesAccumulated -= totalSellingFeesAccumulated;
 
-                toLiquidityAmount = totalSellingFeesAccumulated
+                toLiquidityAmount += totalSellingFeesAccumulated
                     .mul(liquiditySellingFee).div(100);
-                if (swapAndLiquifyEnabled) {
-                    swapAndLiquify(toLiquidityAmount);
-                }
-                else {
-                    super._transfer(address(this), liquidityWallet, toLiquidityAmount);
-                }
 
-                toTreasuryAmount = totalSellingFeesAccumulated
+                toTreasuryAmount += totalSellingFeesAccumulated
                     .mul(treasurySellingFee).div(100);
-                super._transfer(address(this), treasuryWallet, toTreasuryAmount);
 
-                toBurnAmount = totalSellingFeesAccumulated
+                toBurnAmount += totalSellingFeesAccumulated
                     .mul(burnSellingFee).div(100);
-                _burn(address(this), toBurnAmount);
 
                 totalSellingFeesAccumulated = 0;
             }
-            
+
             if (totalBuyingFeesAccumulated > 0) {
-                toLiquidityAmount = totalBuyingFeesAccumulated
+                toLiquidityAmount += totalBuyingFeesAccumulated
                     .mul(liquidityBuyingFee).div(100);
-                if (swapAndLiquifyEnabled) {
-                    swapAndLiquify(toLiquidityAmount);
-                }
-                else {
-                    super._transfer(address(this), liquidityWallet, toLiquidityAmount);
-                }
-
-                toTreasuryAmount = totalBuyingFeesAccumulated
+                
+                toTreasuryAmount += totalBuyingFeesAccumulated
                     .mul(treasuryBuyingFee).div(100);
-                super._transfer(address(this), treasuryWallet, toTreasuryAmount);
 
-                toBurnAmount = totalBuyingFeesAccumulated
+                toBurnAmount += totalBuyingFeesAccumulated
                     .mul(burnBuyingFee).div(100);
-                _burn(address(this), toBurnAmount);
             }
+
+            if (swapAndLiquifyEnabled) {
+                swapAndLiquify(toLiquidityAmount);
+            }
+            else {
+                super._transfer(address(this), liquidityWallet, toLiquidityAmount);
+            }
+
+            super._transfer(address(this), treasuryWallet, toTreasuryAmount);
+
+            _burn(address(this), toBurnAmount);
 
             swapping = false;
         }
@@ -438,7 +460,20 @@ contract FortunasToken is ERC20, Ownable {
             require(false, "FRTNA: No rewards to claim");
         }
 
-        _mint(msg.sender, totalPassiveRewards);
+        uint256 stakingWalletBalance = balanceOf(stakingWallet);
+
+        bool isMint = totalPassiveRewards > stakingWalletBalance;
+
+        if (isMint) {
+            if (stakingWalletBalance != 0) {
+                _transfer(stakingWallet, msg.sender, stakingWalletBalance);
+            }
+
+            _mint(msg.sender, totalPassiveRewards.sub(stakingWalletBalance));
+        }
+        else {
+            _transfer(stakingWallet, msg.sender, totalPassiveRewards);
+        }
 
         emit LedgerClaimed(
             msg.sender,
