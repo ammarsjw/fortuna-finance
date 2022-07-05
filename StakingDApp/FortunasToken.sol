@@ -42,7 +42,7 @@ contract FortunasToken is ERC20, Ownable {
     address public treasuryWallet;
 
     // Staking wallet
-    address public stakingWallet;
+    address public rewardWallet;
 
     // Buy fees
     uint256 public liquidityBuyingFee;
@@ -95,7 +95,7 @@ contract FortunasToken is ERC20, Ownable {
 
     event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
 
-    event StakingWalletUpdated(address indexed newStakingWallet, address indexed oldStakingWallet);
+    event RewardWalletUpdated(address indexed newRewardWallet, address indexed oldRewardWallet);
 
     event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiqudity);
 
@@ -143,7 +143,7 @@ contract FortunasToken is ERC20, Ownable {
         treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
 
         // TODO change
-        stakingWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
+        rewardWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
 
         uint256 _liquidityBuyingFee = 25;
         uint256 _treasuryBuyingFee = 75;
@@ -283,12 +283,12 @@ contract FortunasToken is ERC20, Ownable {
         treasuryWallet = newTreasuryWallet;
     }
 
-    function updateStakingWallet(address newStakingWallet) public onlyOwner {
-        require(newStakingWallet != stakingWallet, "FRTNA: The staking wallet is already this address");
-        excludeFromFees(stakingWallet, false);
-        excludeFromFees(newStakingWallet, true);
-        emit StakingWalletUpdated(newStakingWallet, stakingWallet);
-        stakingWallet = newStakingWallet;
+    function updateRewardWallet(address newRewardWallet) public onlyOwner {
+        require(newRewardWallet != rewardWallet, "FRTNA: The staking wallet is already this address");
+        excludeFromFees(rewardWallet, false);
+        excludeFromFees(newRewardWallet, true);
+        emit RewardWalletUpdated(newRewardWallet, rewardWallet);
+        rewardWallet = newRewardWallet;
     }
 
     function getTradingIsEnabled() public view returns (bool) {
@@ -460,19 +460,19 @@ contract FortunasToken is ERC20, Ownable {
             require(false, "FRTNA: No rewards to claim");
         }
 
-        uint256 stakingWalletBalance = balanceOf(stakingWallet);
+        uint256 rewardWalletBalance = balanceOf(rewardWallet);
 
-        bool isMint = totalPassiveRewards > stakingWalletBalance;
+        bool isMint = totalPassiveRewards > rewardWalletBalance;
 
         if (isMint) {
-            if (stakingWalletBalance != 0) {
-                _transfer(stakingWallet, msg.sender, stakingWalletBalance);
+            if (rewardWalletBalance != 0) {
+                _transfer(rewardWallet, msg.sender, rewardWalletBalance);
             }
 
-            _mint(msg.sender, totalPassiveRewards.sub(stakingWalletBalance));
+            _mint(msg.sender, totalPassiveRewards.sub(rewardWalletBalance));
         }
         else {
-            _transfer(stakingWallet, msg.sender, totalPassiveRewards);
+            _transfer(rewardWallet, msg.sender, totalPassiveRewards);
         }
 
         emit LedgerClaimed(

@@ -45,7 +45,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     address public treasuryWallet;
 
     // Staking wallet
-    address public stakingWallet;
+    address public rewardWallet;
 
     // Initial cost of supplies to send troops to battle
     uint256 public suppliesCost;
@@ -168,7 +168,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
 
         // TODO change
-        stakingWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
+        rewardWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
 
         suppliesCost = 5000;
 
@@ -197,8 +197,8 @@ contract Battling is BattlingBase, ERC1155Holder {
         treasuryWallet = _treasuryWallet;
     }
 
-    function setStakingWallet(address _stakingWallet) external onlyOwner {
-        stakingWallet = _stakingWallet;
+    function setRewardWallet(address _rewardWallet) external onlyOwner {
+        rewardWallet = _rewardWallet;
     }
 
     function setBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
@@ -358,19 +358,19 @@ contract Battling is BattlingBase, ERC1155Holder {
                 tempBattle.rewards -= tempAmountToRemove;
             }
 
-            uint256 stakingWalletBalance = fortunasToken.balanceOf(stakingWallet);
+            uint256 rewardWalletBalance = fortunasToken.balanceOf(rewardWallet);
 
-            bool isMint = rewardsToReturn > stakingWalletBalance;
+            bool isMint = rewardsToReturn > rewardWalletBalance;
 
             if (isMint) {
-                if (stakingWalletBalance != 0) {
-                    fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                if (rewardWalletBalance != 0) {
+                    fortunasToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
                 }
 
-                fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
+                fortunasToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
             }
             else {
-                fortunasToken.transferFrom(stakingWallet, msg.sender, rewardsToReturn);
+                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
             }
         }
         else {
@@ -593,19 +593,19 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             uint256 rewardsToReturn = tempBattle.rewards.add(tempBattle.passiveRewards);
 
-            uint256 stakingWalletBalance = fortunasToken.balanceOf(stakingWallet);
+            uint256 rewardWalletBalance = fortunasToken.balanceOf(rewardWallet);
 
-            bool isMint = rewardsToReturn > stakingWalletBalance;
+            bool isMint = rewardsToReturn > rewardWalletBalance;
 
             if (isMint) {
-                if (stakingWalletBalance != 0) {
-                    fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                if (rewardWalletBalance != 0) {
+                    fortunasToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
                 }
 
-                fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
+                fortunasToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
             }
             else {
-                fortunasToken.transferFrom(stakingWallet, msg.sender, rewardsToReturn);
+                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
             }
         }
         else {
@@ -613,19 +613,19 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             uint256 rewardsToReturn = tempBattle.rewards.add(tempBattle.passiveRewards);
 
-            uint256 stakingWalletBalance = fortunasToken.balanceOf(stakingWallet);
+            uint256 rewardWalletBalance = fortunasToken.balanceOf(rewardWallet);
 
-            bool isMint = rewardsToReturn > stakingWalletBalance;
+            bool isMint = rewardsToReturn > rewardWalletBalance;
 
             if (isMint) {
-                if (stakingWalletBalance != 0) {
-                    fortunasToken.transferFrom(stakingWallet, msg.sender, stakingWalletBalance);
+                if (rewardWalletBalance != 0) {
+                    fortunasToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
                 }
 
-                fortunasToken.mint(msg.sender, rewardsToReturn.sub(stakingWalletBalance));
+                fortunasToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
             }
             else {
-                fortunasToken.transferFrom(stakingWallet, msg.sender, rewardsToReturn);
+                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
             }
 
             fortunasToken.transfer(msg.sender, tokensToReturn);
