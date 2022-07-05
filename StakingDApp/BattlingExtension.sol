@@ -4,10 +4,12 @@ pragma solidity ^0.8.0;
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 import "./ABDKMath64x64.sol";
+
 import "./BattlingBase.sol";
-import "./IPancakePair.sol";
-import "./IPancakeRouter02.sol";
+
 import "./IPancakeFactory.sol";
+import "./IPancakeRouter02.sol";
+import "./IPancakePair.sol";
 
 contract BattlingExtension is BattlingBase {
     using SafeMath for uint256;

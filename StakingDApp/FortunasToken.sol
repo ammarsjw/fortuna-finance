@@ -3,11 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 import "./SafeMath.sol";
+
 import "./ERC20.sol";
+import "./FortunasLedger.sol";
+
 import "./IPancakeFactory.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakePair.sol";
-import "./FortunasLedger.sol";
 
 contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;

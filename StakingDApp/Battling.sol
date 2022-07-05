@@ -4,14 +4,16 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
+
 import "./BattlingBase.sol";
 import "./BattlingExtension.sol";
 import "./FortunasToken.sol";
-import "./IFortunasAssets.sol";
 import "./ERC1155Holder.sol";
-import "./IPancakePair.sol";
-import "./IPancakeRouter02.sol";
+
+import "./IFortunasAssets.sol";
 import "./IPancakeFactory.sol";
+import "./IPancakeRouter02.sol";
+import "./IPancakePair.sol";
 
 contract Battling is BattlingBase, ERC1155Holder {
     using SafeMath for uint256;
@@ -124,7 +126,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // constructor
 
-    /*
+    /**
      * @dev all rations related variables for battling are defined and initialized in base class
      * @dev all reward related variables for battling are defined base class
      * @dev all reward related variables for battling are initialized outside of constructor in parent class
@@ -735,7 +737,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         return _tempBattle;
     }
 
-    /*
+    /**
      * @dev Should be called if updated battle data needed
      * @dev Ideally to be called only if an update on current reward amount is needed
      * @dev Function "endBattle" should be called if unstaking

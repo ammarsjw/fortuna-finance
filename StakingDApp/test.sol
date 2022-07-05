@@ -4,12 +4,21 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
-import "./FortunasToken.sol";
 import "./ABDKMath64x64.sol";
+
+import "./FortunasToken.sol";
 
 abstract contract BaseTest {
 
+    uint256 public num1 = 1;
+
+    uint256 public num2;
+
     mapping (uint256 => uint256) values;
+
+    constructor() {
+        num2 = 2;
+    }
 
     function adding(uint256 a, uint256 b) public virtual returns (uint256) {
         return a + b;

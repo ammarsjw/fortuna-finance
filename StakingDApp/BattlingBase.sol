@@ -2,11 +2,9 @@ pragma solidity ^0.8.0;
 // SPDX-License-Identifier: Unlicense
 
 import "./Ownable.sol";
-import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 
-contract BattlingBase is Ownable {
-    using SafeMath for uint256;
+abstract contract BattlingBase is Ownable {
     using MathUpgradeable for uint256;
 
     // variables
