@@ -744,10 +744,11 @@ contract Battling is BattlingBase, ERC1155Holder {
      */
     function viewAllRewards(
         address _user
-    ) external view returns (uint256[] memory, uint256[] memory, uint256[] memory) {
+    ) external view returns (uint256[] memory, uint256[] memory, uint256[] memory, uint256[] memory) {
         uint256[] memory committedRewards = new uint256[](5);
         uint256[] memory potentialRewards = new uint256[](5);
         uint256[] memory passiveRewards = new uint256[](5);
+        uint256[] memory nextReward = new uint256[](5);
 
         Battle memory tempBattle;
 
@@ -762,6 +763,11 @@ contract Battling is BattlingBase, ERC1155Holder {
                     tempBattle = battlingExtension.calculateRewards(tempBattle);
 
                     potentialRewards[i] = tempBattle.rewards.sub(committedRewards[i]);
+
+                    nextReward[i] = battlingExtension.calculateNextReward(
+                        committedRewards[i].add(potentialRewards[i]),
+                        tempBattle.currentRewardPercentagePerCycle
+                    );
                 }
                 else {
                     committedRewards[i] = tempBattle.rewards;
@@ -775,7 +781,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
         }
 
-        return (committedRewards, potentialRewards, passiveRewards);
+        return (committedRewards, potentialRewards, passiveRewards, nextReward);
     }
 
     // modifiers

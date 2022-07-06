@@ -508,14 +508,14 @@ contract FortunasToken is ERC20, Ownable {
         // how much ETH did we just swap into?
         uint256 newBalance = address(this).balance.sub(initialBalance);
 
-        // add liquidity to uniswap
+        // add liquidity to PancakeSwap
         addLiquidity(otherHalf, newBalance);
         
         emit SwapAndLiquify(half, newBalance, otherHalf);
     }
 
     function swapTokensForEth(uint256 tokenAmount) private {
-        // generate the uniswap pair path of token -> weth
+        // generate the PancakeSwap pair path of token -> weth
         address[] memory path = new address[](2);
         path[0] = address(this);
         path[1] = pancakeRouter.WETH();
@@ -556,7 +556,8 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function circulatingSupply() external view returns (uint256) {
-        return totalSupply().sub(balanceOf(address(battling)));
+        uint256 lockedSupply = balanceOf(liquidityWallet).add(balanceOf(treasuryWallet)).add(balanceOf(rewardWallet));
+        return totalSupply().sub(lockedSupply);
     }
 
     modifier onlyContract {
