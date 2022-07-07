@@ -62,7 +62,7 @@ contract FortunasToken is ERC20, Ownable {
 
     // TODO change
     // Timestamp for when the token can be traded freely on PanackeSwap
-    uint256 public immutable tradingEnabledTimestamp = 1623967200; // June 17, 22:00 UTC, 2021
+    uint256 public immutable tradingEnabledTimestamp = 1654041600; // June 1, 00:00 GMT, 2022
 
     // mappings
 
@@ -178,7 +178,7 @@ contract FortunasToken is ERC20, Ownable {
         // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
 
-        // TODO mint to staking wallet
+        // TODO mint to reward wallet
         // TODO change initial supply
         _mint(owner(), 1000000000 * (10 ** 18));
     }
