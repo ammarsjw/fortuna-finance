@@ -57,7 +57,7 @@ contract BattlingExtension is BattlingBase {
 
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin)))
-                .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(3));
 
         address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
         address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
@@ -85,7 +85,7 @@ contract BattlingExtension is BattlingBase {
 
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, counter)))
-                .mod(rng_pancakeFactory.allPairsLength().safeSub(1));
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
 
         address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
         address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
@@ -303,6 +303,8 @@ contract BattlingExtension is BattlingBase {
 
             _tempBattle.battleDaysExpended = daysWagingBattle;
         }
+
+        cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
 
         if (
             cyclesToComplete > 0 &&

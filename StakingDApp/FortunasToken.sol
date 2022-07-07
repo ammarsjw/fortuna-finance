@@ -26,9 +26,6 @@ contract FortunasToken is ERC20, Ownable {
 
     bool private swapping;
 
-    // Swaps and adds liquidity if enabled otherwise sends funds to liquidity wallet
-    bool public swapAndLiquifyEnabled;
-
     // Ledger for all FRTNA holders
     FortunasLedger public fortunasLedger;
 
@@ -41,7 +38,7 @@ contract FortunasToken is ERC20, Ownable {
     // Treasury wallet
     address public treasuryWallet;
 
-    // Staking wallet
+    // Reward wallet
     address public rewardWallet;
 
     // Buy fees
@@ -96,8 +93,6 @@ contract FortunasToken is ERC20, Ownable {
     event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
 
     event RewardWalletUpdated(address indexed newRewardWallet, address indexed oldRewardWallet);
-
-    event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiqudity);
 
     event LedgerCreated(address indexed account, uint256 totalPassiveRewards, uint256 nextReward);
 
@@ -166,10 +161,11 @@ contract FortunasToken is ERC20, Ownable {
 
         multiplierForTotalFee = 10 ** 3;
 
-        // exclude from receiving rewards
+        // exclude from receiving passive holding rewards
         excludeFromPassiveRewards(address(this), true);
         excludeFromPassiveRewards(liquidityWallet, true);
         excludeFromPassiveRewards(treasuryWallet, true);
+        excludeFromPassiveRewards(rewardWallet, true);
         excludeFromPassiveRewards(_pancakePair, true);
         excludeFromPassiveRewards(address(0), true);
 
@@ -177,6 +173,7 @@ contract FortunasToken is ERC20, Ownable {
         excludeFromFees(address(this), true);
         excludeFromFees(liquidityWallet, true);
         excludeFromFees(treasuryWallet, true);
+        excludeFromFees(rewardWallet, true);
 
         // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
@@ -196,11 +193,6 @@ contract FortunasToken is ERC20, Ownable {
         excludeFromPassiveRewards(battling, true);
 
         excludeFromFees(battling, true);
-    }
-
-    function setSwapAndLiquifyEnabled(bool state) external onlyOwner {
-        require(swapAndLiquifyEnabled != state, "FRTNA: SwapAndLiquifyEnabled is already of the value 'state'");
-        swapAndLiquifyEnabled = state;
     }
 
     function updateBuyingFees(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
@@ -371,12 +363,7 @@ contract FortunasToken is ERC20, Ownable {
                     .mul(burnBuyingFee).div(100);
             }
 
-            if (swapAndLiquifyEnabled) {
-                swapAndLiquify(toLiquidityAmount);
-            }
-            else {
-                super._transfer(address(this), liquidityWallet, toLiquidityAmount);
-            }
+            super._transfer(address(this), liquidityWallet, toLiquidityAmount);
 
             super._transfer(address(this), treasuryWallet, toTreasuryAmount);
 
@@ -440,6 +427,7 @@ contract FortunasToken is ERC20, Ownable {
                 totalPassiveRewards,
                 nextPassiveReward
             );
+
             return;
         }
 
@@ -491,62 +479,6 @@ contract FortunasToken is ERC20, Ownable {
         return (totalPassiveRewards, nextPassiveReward);
     }
 
-    function swapAndLiquify(uint256 tokens) private {
-        // split the contract balance into halves
-        uint256 half = tokens.div(2);
-        uint256 otherHalf = tokens.sub(half);
-
-        // capture the contract's current ETH balance.
-        // this is so that we can capture exactly the amount of ETH that the
-        // swap creates, and not make the liquidity event include any ETH that
-        // has been manually sent to the contract
-        uint256 initialBalance = address(this).balance;
-
-        // swap tokens for ETH
-        swapTokensForEth(half); // <- this breaks the ETH -> HATE swap when swap+liquify is triggered
-
-        // how much ETH did we just swap into?
-        uint256 newBalance = address(this).balance.sub(initialBalance);
-
-        // add liquidity to PancakeSwap
-        addLiquidity(otherHalf, newBalance);
-        
-        emit SwapAndLiquify(half, newBalance, otherHalf);
-    }
-
-    function swapTokensForEth(uint256 tokenAmount) private {
-        // generate the PancakeSwap pair path of token -> weth
-        address[] memory path = new address[](2);
-        path[0] = address(this);
-        path[1] = pancakeRouter.WETH();
-
-        _approve(address(this), address(pancakeRouter), tokenAmount);
-
-        // make the swap
-        pancakeRouter.swapExactTokensForETHSupportingFeeOnTransferTokens(
-            tokenAmount,
-            0, // accept any amount of ETH
-            path,
-            address(this),
-            block.timestamp.add(1800)
-        );
-    }
-
-    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
-        // approve token transfer to cover all possible scenarios
-        _approve(address(this), address(pancakeRouter), tokenAmount);
-
-        // add the liquidity
-        pancakeRouter.addLiquidityETH{value: ethAmount}(
-            address(this),
-            tokenAmount,
-            0, // slippage is unavoidable
-            0, // slippage is unavoidable
-            liquidityWallet,
-            block.timestamp.add(1800)
-        );
-    }
-
     function mint(address account, uint256 amount) external onlyContract {
         _mint(account, amount);
     }
@@ -564,8 +496,4 @@ contract FortunasToken is ERC20, Ownable {
         require(msg.sender == battling, "FRTNA: Only Fortunas Battling Contract can call this function");
         _;
     }
-
-    receive() external payable {
-
-  	}
 }

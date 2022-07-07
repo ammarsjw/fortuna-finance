@@ -98,7 +98,7 @@ contract Battling is Ownable {
 
         // LPToken = IERC20(_addressForPancakePair);
 
-        fortunasAssets = new FortunasAssets("", address(this));
+        // fortunasAssets = new FortunasAssets("", address(this));
 
         contractStartTime = 1652421600;
         // rewardTime = 1800;
@@ -372,7 +372,7 @@ contract Battling is Ownable {
             cost = assetPrices[_heroToPurchase - 1];
         }
         require(_heroToPurchase != 6, "purchaseHero::Error in randomizer");
-        require(fortunasAssets.ownershipOf(msg.sender, _heroToPurchase) == false, "purchaseHero::You already own this hero");
+        // require(fortunasAssets.ownershipOf(msg.sender, _heroToPurchase) == false, "purchaseHero::You already own this hero");
 
 
         (uint256 reserves, , ) = pancakePair.getReserves();
@@ -385,7 +385,7 @@ contract Battling is Ownable {
 
     function purchaseCavalry(uint8 _cavalryToPurchase) external {
         require(6 <= _cavalryToPurchase && _cavalryToPurchase <= 10, "purchaseCavalry::Incorrect cavalry specified");
-        require(fortunasAssets.ownershipOf(msg.sender, _cavalryToPurchase) == false, "purchaseCavalry::You already own this cavalry");
+        // require(fortunasAssets.ownershipOf(msg.sender, _cavalryToPurchase) == false, "purchaseCavalry::You already own this cavalry");
 
 
         (uint256 reserves, , ) = pancakePair.getReserves();
@@ -399,7 +399,7 @@ contract Battling is Ownable {
     function addHero(uint8 _heroToAdd, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(1 <= _heroToAdd && _heroToAdd <= 5, "addHero::Incorrect hero specified");
-        require(fortunasAssets.ownershipOf(msg.sender, _heroToAdd), "addHero::User does not own this hero");
+        // require(fortunasAssets.ownershipOf(msg.sender, _heroToAdd), "addHero::User does not own this hero");
         require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "addHero::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addHero::User can only add hero to easy, medium, hard or very hard battles");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addHero::Cannot add heroes to battles that have already finished");
@@ -415,7 +415,7 @@ contract Battling is Ownable {
         }
         tempBattle.hero = _heroToAdd;
 
-        fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _heroToAdd, 1, "");
+        // fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _heroToAdd, 1, "");
 
         addressForHeroBattle[msg.sender][_heroToAdd] = _battleNumber;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -424,7 +424,7 @@ contract Battling is Ownable {
     function removeHero(uint8 _heroToRemove, uint8 _battleType, uint256 _battleNumber) public {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(1 <= _heroToRemove && _heroToRemove <= 5, "removeHero::Incorrect hero specified");
-        require(fortunasAssets.ownershipOf(msg.sender, _heroToRemove), "removeHero::User does not own this hero");
+        // require(fortunasAssets.ownershipOf(msg.sender, _heroToRemove), "removeHero::User does not own this hero");
         require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "removeHero::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeHero::User can only remove hero from easy, medium, hard or very hard battles");
         require(addressForHeroBattle[msg.sender][_heroToRemove] == _battleNumber, "removeHero::Incorrect hero or battle number given");
@@ -437,7 +437,7 @@ contract Battling is Ownable {
         }
         tempBattle.hero = 0;
 
-        fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _heroToRemove, 1, "");
+        // fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _heroToRemove, 1, "");
 
         addressForHeroBattle[msg.sender][_heroToRemove] = 0;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -446,7 +446,7 @@ contract Battling is Ownable {
     function addCavalry(uint8 _cavalryToAdd, uint8 _battleType, uint256 _battleNumber) external {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(6 <= _cavalryToAdd && _cavalryToAdd <= 10, "addCavalry::Incorrect cavalry specified");
-        require(fortunasAssets.ownershipOf(msg.sender, _cavalryToAdd), "addCavalry::User does not own this cavalry");
+        // require(fortunasAssets.ownershipOf(msg.sender, _cavalryToAdd), "addCavalry::User does not own this cavalry");
         require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "addCavalry::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "addCavalry::User can only add cavalry to easy, medium, hard or very hard battles");
         require(block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime)), "addCavalry::Cannot add cavalries to battles that have already finished");
@@ -463,7 +463,7 @@ contract Battling is Ownable {
         }
         tempBattle.cavalry = _cavalryToAdd;
         
-        fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _cavalryToAdd, 1, "");
+        // fortunasAssets.safeTransferFromWithoutCheck(msg.sender, address(this), _cavalryToAdd, 1, "");
 
         addressForCavalryBattle[msg.sender][_cavalryToAdd] = _battleNumber;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -472,7 +472,7 @@ contract Battling is Ownable {
     function removeCavalry(uint8 _cavalryToRemove, uint8 _battleType, uint256 _battleNumber) public {
         Battle memory tempBattle = addressForBattle[msg.sender][_battleNumber - 1];
         require(6 <= _cavalryToRemove && _cavalryToRemove <= 10, "removeCavalry::Incorrect cavalry specified");
-        require(fortunasAssets.ownershipOf(msg.sender, _cavalryToRemove), "removeCavalry::User does not own this cavalry");
+        // require(fortunasAssets.ownershipOf(msg.sender, _cavalryToRemove), "removeCavalry::User does not own this cavalry");
         require(tempBattle.initialTokensStaked != 0 && tempBattle.battleType == _battleType, "removeCavalry::No such battle is currently taking place");
         require(3 <= tempBattle.battleType && tempBattle.battleType <= 6, "removeCavalry::User can only remove cavalry from easy, medium, hard or very hard battles");
         require(addressForCavalryBattle[msg.sender][_cavalryToRemove] == _battleNumber, "removeCavalry::Incorrect cavalry unit or battle number given");
@@ -486,7 +486,7 @@ contract Battling is Ownable {
         }
         tempBattle.cavalry = 0;
 
-        fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _cavalryToRemove, 1, "");
+        // fortunasAssets.safeTransferFromWithoutCheck(address(this), msg.sender, _cavalryToRemove, 1, "");
 
         addressForCavalryBattle[msg.sender][_cavalryToRemove] = 0;
         addressForBattle[msg.sender][_battleNumber - 1] = tempBattle;
@@ -749,7 +749,7 @@ contract Battling is Ownable {
             }
         }
 
-        // return (_tempBattle, extraRewards);
+        return _tempBattle;
     }
 
     function compoundReward(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {

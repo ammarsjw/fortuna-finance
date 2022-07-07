@@ -175,7 +175,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         battleResetPercentage = 200;
 
         assetPercentages = [20, 40, 60, 80, 100,
-                            101, 102, 103, 104, 105];
+                            2083, 4167, 6250, 8333, 10417];
 
         assetPrices = [2500, 5000, 7500, 10000, 12500,
                         2500, 5000, 7500, 10000, 12500];
@@ -467,7 +467,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentRewardPercentagePerCycle = rewardPercentages[tempBattle.battleType - 1].mul(assetPercentages[_assetToDeploy - 1]).div(100).roundDiv(48);
+            tempBattle.currentRewardPercentagePerCycle += assetPercentages[_assetToDeploy - 1];
 
             tempBattle.cavalry = _assetToDeploy;
         }
@@ -480,6 +480,87 @@ contract Battling is BattlingBase, ERC1155Holder {
             msg.sender,
             _assetToDeploy,
             fortunasAssets.balanceOf(msg.sender, _assetToDeploy)
+        );
+
+        emit BattleUpdated (
+            msg.sender,
+            _battleType,
+            true,
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
+            tempBattle.rewards,
+            tempBattle.rations,
+            tempBattle.passiveRewards,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
+        );
+    }
+
+    function returnAsset(
+        uint256 _assetToReturn,
+        uint8 _battleType
+    ) public validBattleType(_battleType) validBattle(_battleType) {
+        Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
+
+        require(1 <= _assetToReturn && _assetToReturn <= 10, "returnAsset::WA");
+
+        if (_assetToReturn <= 5) {
+            require(tempBattle.hero == _assetToReturn, "returnAsset::HNIB");
+
+            tempBattle = battlingExtension.calculateRewards(tempBattle);
+
+            uint256 chanceToLoseHero = baseChanceToLoseAssets;
+
+            if (tempBattle.battleDaysExpended > 3) {
+                uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                chanceToLoseHero = chanceToLoseHero.safeSub(chanceDecrease);
+            }
+
+            if (chanceToLoseHero != 0) {
+                tempBattle = handleLoss(tempBattle, chanceToLoseHero, 0, false);
+            }
+
+            if (tempBattle.hero != 0) {
+                tempBattle.currentToCollectPercentage -= assetPercentages[_assetToReturn - 1];
+
+                tempBattle.hero = 0;
+
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _assetToReturn, 1, "");
+            }
+        }
+        else {
+            require(tempBattle.cavalry == _assetToReturn, "returnAsset::CNIB");
+
+            tempBattle = battlingExtension.calculateRewards(tempBattle);
+
+            uint256 chanceToLoseCavalry = baseChanceToLoseAssets;
+
+            if (tempBattle.battleDaysExpended > 3) {
+                uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                chanceToLoseCavalry = chanceToLoseCavalry.safeSub(chanceDecrease);
+            }
+
+            if (chanceToLoseCavalry != 0) {
+                tempBattle = handleLoss(tempBattle, 0, chanceToLoseCavalry, false);
+            }
+
+            if (tempBattle.cavalry != 0) {
+                tempBattle.currentRewardPercentagePerCycle -= assetPercentages[_assetToReturn - 1];
+
+                tempBattle.cavalry = 0;
+
+                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _assetToReturn, 1, "");
+            }
+        }
+
+        battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit AssetReturned (
+            msg.sender,
+            _assetToReturn,
+            fortunasAssets.balanceOf(msg.sender, _assetToReturn)
         );
 
         emit BattleUpdated (
@@ -619,7 +700,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasAssets.burnWithCheck(address(this), _tempBattle.cavalry, 1);
 
             if (!_isEndBattle) {
-                _tempBattle.currentRewardPercentagePerCycle = rewardPercentagesPerCycle[_tempBattle.battleType - 1];
+                _tempBattle.currentRewardPercentagePerCycle -= assetPercentages[_tempBattle.cavalry - 1];
             }
 
             emit AssetLost (

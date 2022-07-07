@@ -307,8 +307,9 @@ contract Test is Ownable, BaseTest {
         return a.add(baseBattleTime).add(b.mul(oneDayTime));
     }
 
-    function fun20(uint256 a) external view returns (uint256) {
-        return block.timestamp.sub(a).div(oneDayTime);
+    function fun20(uint256 a, uint256 b) external view returns (uint256) {
+        return block.timestamp.sub(a.mul(2880).add(b)).div(60);
+        // block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
     }
 
     function fun21(uint256 _rationDays) external view returns (uint256, uint256) {
