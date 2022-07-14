@@ -24,7 +24,7 @@ contract FortunasToken is ERC20, Ownable {
     IPancakeRouter02 public pancakeRouter;
     address public immutable pancakePair;
 
-    bool private swapping;
+    bool private transferring;
 
     // Ledger for all FRTNA holders
     FortunasLedger public fortunasLedger;
@@ -58,7 +58,7 @@ contract FortunasToken is ERC20, Ownable {
     uint256 public totalSellingFeesAccumulated;
 
     // TODO confirm
-    uint256 public swapAndTransferTokensAtAmount = 1000 * (10**18);
+    uint256 public transferTokensAtAmount = 1000 * (10**18);
 
     // TODO change
     // Timestamp for when the token can be traded freely on PanackeSwap
@@ -320,17 +320,17 @@ contract FortunasToken is ERC20, Ownable {
 
         uint256 contractTokenBalance = balanceOf(address(this));
 
-        bool canSwapAndTransfer = contractTokenBalance >= swapAndTransferTokensAtAmount;
+        bool canTransfer = contractTokenBalance >= transferTokensAtAmount;
 
         if (
             tradingIsEnabled &&
-            canSwapAndTransfer &&
-            !swapping &&
+            canTransfer &&
+            !transferring &&
             !_isBuy(from) &&
             from != liquidityWallet &&
             to != liquidityWallet
         ) {
-            swapping = true;
+            transferring = true;
 
             uint256 totalBuyingFeesAccumulated = contractTokenBalance;
             uint256 toLiquidityAmount;
@@ -369,7 +369,7 @@ contract FortunasToken is ERC20, Ownable {
 
             _burn(address(this), toBurnAmount);
 
-            swapping = false;
+            transferring = false;
         }
 
         if (

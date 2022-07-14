@@ -328,7 +328,7 @@ contract BattlingExtension is BattlingBase {
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
         uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
-        if (cyclesToComplete.add(_tempBattle.cyclesCompleted) >= 48) {
+        if (cyclesToComplete >= 48) {
             cyclesToComplete = _tempBattle.cyclesRemaining;
             _tempBattle.cyclesCompleted = 0;
             _tempBattle.cyclesRemaining = 0;
@@ -365,6 +365,10 @@ contract BattlingExtension is BattlingBase {
 
         uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
         uint256 cyclesForReward = cyclesToComplete;
+
+        if (_tempBattle.battleDaysExpended >= 3) {
+            _tempBattle.currentToCollectPercentage += toCollectIncreasePerDay;
+        }
 
         if (_tempBattle.currentToCollectPercentage != 1000) {
             (, cyclesForReward) = determineRewardCycles(
