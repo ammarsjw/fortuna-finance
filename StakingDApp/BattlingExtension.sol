@@ -493,20 +493,6 @@ contract BattlingExtension is BattlingBase {
         return _tempBattle;
     }
 
-    function calculateNextReward(uint256 _tempTotalTokens, uint256 _currentRewardPercentagePerCycle) external view onlyOwner returns (uint256) {
-        uint256 nextReward;
-
-        uint256 ratio = _currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
-
-        nextReward = _compound(
-            _tempTotalTokens,
-            ratio,
-            1
-        );
-
-        return nextReward;
-    }
-
     function _compound(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
         if (_exponent == 0) {
             return 0;

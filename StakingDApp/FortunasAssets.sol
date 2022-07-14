@@ -56,7 +56,7 @@ contract FortunasAssets is Ownable, ERC1155 {
 
     // functions
 
-    function mint(
+    function mintWithCheck(
         address _to,
         uint256 _tokenId,
         uint256 _amount,
