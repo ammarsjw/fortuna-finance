@@ -94,11 +94,9 @@ contract FortunasToken is ERC20, Ownable {
 
     event RewardWalletUpdated(address indexed newRewardWallet, address indexed oldRewardWallet);
 
-    event LedgerCreated(address indexed account, uint256 totalPassiveRewards, uint256 nextReward);
-
-    event LedgerUpdated(address indexed account, uint256 totalPassiveRewards, uint256 nextReward);
+    event LedgerCreated(address indexed account);
     
-    event LedgerClaimed(address indexed account, uint256 totalPassiveRewards, uint256 nextReward);
+    event LedgerClaimed(address indexed account, uint256 totalPassiveRewards);
 
     // constructor
 
@@ -415,33 +413,20 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function _updateLedger(address account) internal {
-        (uint256 totalPassiveRewards, bool isFirstTransaction) =
+        (, bool isFirstTransaction) =
             fortunasLedger.updatePassiveRewards(account, balanceOf(account));
-
-        uint256 nextPassiveReward =
-            fortunasLedger.calculateNextPassiveReward(account, balanceOf(account));
 
         if (isFirstTransaction) {
             emit LedgerCreated(
-                account,
-                totalPassiveRewards,
-                nextPassiveReward
+                account
             );
-
-            return;
         }
-
-        emit LedgerUpdated(
-            account,
-            totalPassiveRewards,
-            nextPassiveReward
-        );
     }
 
     function claimLedger() external {
         require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
 
-        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
+        uint256 totalPassiveRewards =
             fortunasLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
 
         if (totalPassiveRewards == 0) {
@@ -465,18 +450,17 @@ contract FortunasToken is ERC20, Ownable {
 
         emit LedgerClaimed(
             msg.sender,
-            0,
-            nextPassiveReward
+            totalPassiveRewards
         );
     }
 
-    function viewLedger(address account) external view returns (uint256, uint256) {
+    function viewLedger(address account) external view returns (uint256) {
         require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
 
-        (uint256 totalPassiveRewards, uint256 nextPassiveReward) =
+        uint256 totalPassiveRewards =
             fortunasLedger.getCurrentLedgerStatus(account, balanceOf(account));
 
-        return (totalPassiveRewards, nextPassiveReward);
+        return totalPassiveRewards;
     }
 
     function mint(address account, uint256 amount) external onlyContract {

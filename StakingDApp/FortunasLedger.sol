@@ -89,31 +89,8 @@ contract FortunasLedger is Ownable {
         return (_totalPassiveRewards[account], false);
     }
 
-    function calculateNextPassiveReward(address account, uint256 balance) public view returns (uint256) {
-        uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
-
-        if (
-            balance == 0 &&
-            tempTotalPassiveRewards == 0
-        ) {
-            return 0;
-        }
-
-        uint256 ratio = passiveRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForPassiveReward);
-
-        uint256 compoundReward = _compound(
-            balance.add(tempTotalPassiveRewards),
-            ratio,
-            1
-        );
-        uint256 nextPassiveReward = compoundReward;
-
-        return nextPassiveReward;
-    }
-
-    function claimPassiveRewards(address account, uint256 balance) external onlyOwner returns (uint256, uint256) {
+    function claimPassiveRewards(address account, uint256 balance) external onlyOwner returns (uint256) {
         (uint256 updatedPassiveRewards, ) = updatePassiveRewards(account, balance);
-        uint256 nextPassiveReward;
 
         bool isClaimable = updatedPassiveRewards > 0;
 
@@ -121,19 +98,12 @@ contract FortunasLedger is Ownable {
             _totalPassiveRewards[account] = 0;
         }
 
-        bool hasBalance = balance > 0;
-
-        if (hasBalance) {
-            nextPassiveReward = calculateNextPassiveReward(account, balance);
-        }
-
-        return (updatedPassiveRewards, nextPassiveReward);
+        return updatedPassiveRewards;
     }
 
-    function getCurrentLedgerStatus(address account, uint256 balance) external view returns (uint256, uint256) {
+    function getCurrentLedgerStatus(address account, uint256 balance) external view returns (uint256) {
         uint256 tempTotalPassiveRewards = _totalPassiveRewards[account];
         uint256 tempLastUpdate = _lastUpdate[account];
-        uint256 nextPassiveReward;
 
         uint256 currentTime = block.timestamp;
 
@@ -141,7 +111,7 @@ contract FortunasLedger is Ownable {
             balance == 0 &&
             tempTotalPassiveRewards == 0
         ) {
-            return (0, 0);
+            return 0;
         }
 
         bool isValid = currentTime > tempLastUpdate.add(passiveRewardTime);
@@ -162,14 +132,7 @@ contract FortunasLedger is Ownable {
             tempTotalPassiveRewards += compoundReward;
         }
 
-        compoundReward = _compound(
-            balance.add(tempTotalPassiveRewards),
-            ratio,
-            1
-        );
-        nextPassiveReward = compoundReward;
-
-        return (tempTotalPassiveRewards, nextPassiveReward);
+        return tempTotalPassiveRewards;
     }
 
     function _compound(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {

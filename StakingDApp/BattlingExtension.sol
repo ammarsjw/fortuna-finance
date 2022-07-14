@@ -516,7 +516,7 @@ contract BattlingExtension is BattlingBase {
         baseBattleTime = _seconds.mul(144);
     }
 
-    function testToCollectPercentage(uint256 _chanceToCollect) public {
-        toCollectPercentages = [1000, 1000, _chanceToCollect, _chanceToCollect, _chanceToCollect, _chanceToCollect];
+    function testToCollectPercentage(uint256 _battleType, uint256 _chanceToCollect) public {
+        toCollectPercentages[_battleType] = _chanceToCollect;
     }
 }

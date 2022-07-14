@@ -71,24 +71,56 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // events
 
-    event TreasuryWalletUpdated (address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
+    event BattleStarted (
+        address indexed user,
+        uint256 battleType,
+        bool battleStatus,
+        uint256 initialTokensStaked,
+        uint256 additionalTokens,
+        uint256 rewards,
+        uint256 rations,
+        uint256 passiveRewards,
+        uint256 battleStartTime,
+        uint256 battleDurationInDays,
+        uint256 hero,
+        uint256 cavalry
+    );
 
-    event RewardWalletUpdated (address indexed newRewardWallet, address indexed oldRewardWallet);
-
-    event BattleResetPercentageUpdated (uint256 newBattleResetPercentage, uint256 oldBattleResetPercentage);
+    event BattleUpdated (
+        address indexed user,
+        uint256 battleType,
+        bool battleStatus,
+        uint256 initialTokensStaked,
+        uint256 additionalTokens,
+        uint256 rewards,
+        uint256 rations,
+        uint256 passiveRewards,
+        uint256 battleStartTime,
+        uint256 battleDurationInDays,
+        uint256 hero,
+        uint256 cavalry
+    );
 
     event BattleEnded (
         address indexed user,
         uint256 battleType,
+        bool battleStatus,
         uint256 initialTokensStaked,
         uint256 additionalTokens,
         uint256 rewards,
+        uint256 rations,
         uint256 passiveRewards,
         uint256 battleStartTime,
-        uint256 battleDurationInDays
+        uint256 battleDurationInDays,
+        uint256 hero,
+        uint256 cavalry
     );
 
     event AssetPurchased (address indexed user, uint256 asset, uint256 amount);
+
+    event AssetDeployed (address indexed user, uint256 asset, uint256 amount);
+
+    event AssetReturned (address indexed user, uint256 asset, uint256 amount);
 
     event AssetLost (address indexed user, uint256 asset, uint256 amount);
 
@@ -157,20 +189,14 @@ contract Battling is BattlingBase, ERC1155Holder {
     // setters
 
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
-        require(treasuryWallet != _treasuryWallet, "setTreasuryWallet::TW");
-        emit TreasuryWalletUpdated (_treasuryWallet, treasuryWallet);
         treasuryWallet = _treasuryWallet;
     }
 
     function setRewardWallet(address _rewardWallet) external onlyOwner {
-        require(rewardWallet != _rewardWallet, "setRewardWallet::RW");
-        emit RewardWalletUpdated (_rewardWallet, rewardWallet);
         rewardWallet = _rewardWallet;
     }
 
     function setBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
-        require(battleResetPercentage != _battleResetPercentage, "setBattleResetPercentage::BRP");
-        emit BattleResetPercentageUpdated (_battleResetPercentage, battleResetPercentage);
         battleResetPercentage = _battleResetPercentage;
     }
 
@@ -197,6 +223,16 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], 0, 0, block.timestamp, 0, 0, 0, 0);
+
+        emit BattleStarted (
+            msg.sender,
+            _battleType,
+            true,
+            _amount,
+            0, 0, 0, 0,
+            battleForAddress[msg.sender][_battleType].battleStartTime,
+            3, 0, 0
+        );
     }
 
     function sendRations(
@@ -234,6 +270,21 @@ contract Battling is BattlingBase, ERC1155Holder {
         tempBattle.rationsDaysTotal += _rationDays;
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit BattleUpdated (
+            msg.sender,
+            _battleType,
+            true,
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
+            tempBattle.rewards,
+            tempBattle.rations,
+            tempBattle.passiveRewards,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
+        );
     }
 
     function addTroops(
@@ -256,6 +307,21 @@ contract Battling is BattlingBase, ERC1155Holder {
         fortunasToken.transferFrom(msg.sender, address(this), _amountToAdd);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit BattleUpdated (
+            msg.sender,
+            _battleType,
+            true,
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
+            tempBattle.rewards,
+            tempBattle.rations,
+            tempBattle.passiveRewards,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
+        );
     }
 
     function removeTroops(
@@ -322,6 +388,21 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit BattleUpdated (
+            msg.sender,
+            _battleType,
+            true,
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
+            tempBattle.rewards,
+            tempBattle.rations,
+            tempBattle.passiveRewards,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
+        );
     }
 
     function purchaseAsset(
@@ -389,6 +470,27 @@ contract Battling is BattlingBase, ERC1155Holder {
         fortunasAssets.safeTransferFromWithCheck(msg.sender, address(this), _assetToDeploy, 1, "");
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
+
+        emit AssetDeployed (
+            msg.sender,
+            _assetToDeploy,
+            fortunasAssets.balanceOf(msg.sender, _assetToDeploy)
+        );
+
+        emit BattleUpdated (
+            msg.sender,
+            _battleType,
+            true,
+            tempBattle.initialTokensStaked,
+            tempBattle.additionalTokens,
+            tempBattle.rewards,
+            tempBattle.rations,
+            tempBattle.passiveRewards,
+            tempBattle.battleStartTime,
+            tempBattle.rationsDaysTotal.add(3),
+            tempBattle.hero,
+            tempBattle.cavalry
+        );
     }
 
     function endBattle(
@@ -462,12 +564,13 @@ contract Battling is BattlingBase, ERC1155Holder {
         emit BattleEnded (
             msg.sender,
             _battleType,
+            false,
             tempBattle.initialTokensStaked,
             tempBattle.additionalTokens,
             tempBattle.rewards,
+            0,
             tempBattle.passiveRewards,
-            tempBattle.battleStartTime,
-            tempBattle.rationsDaysTotal.add(3)
+            0, 0, 0, 0
         );
     }
 
@@ -526,10 +629,22 @@ contract Battling is BattlingBase, ERC1155Holder {
         if (_isEndBattle) {
             if (_tempBattle.hero != 0) {
                 fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _tempBattle.hero, 1, "");
+
+                emit AssetReturned (
+                    msg.sender,
+                    _tempBattle.hero,
+                    fortunasAssets.balanceOf(msg.sender, _tempBattle.hero)
+                );
             }
 
             if (_tempBattle.cavalry != 0) {
                 fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _tempBattle.cavalry, 1, "");
+
+                emit AssetReturned (
+                    msg.sender,
+                    _tempBattle.cavalry,
+                    fortunasAssets.balanceOf(msg.sender, _tempBattle.cavalry)
+                );
             }
         }
 
@@ -604,9 +719,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         battlingExtension.testRewardTime(_seconds);
     }
 
-    function testToCollectPercentage(uint256 _battleType, uint256 _chanceToCollect) public {
-        toCollectPercentages[_battleType] = _chanceToCollect;
+    function testToCollectPercentage(uint256 _chanceToCollect) public {
+        toCollectPercentages = [1000, 1000, _chanceToCollect, _chanceToCollect, _chanceToCollect, _chanceToCollect];
 
-        battlingExtension.testToCollectPercentage(_battleType, _chanceToCollect);
+        battlingExtension.testToCollectPercentage(_chanceToCollect);
     }
 }
