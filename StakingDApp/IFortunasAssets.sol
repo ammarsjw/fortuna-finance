@@ -5,7 +5,7 @@ import "./IERC1155.sol";
 
 interface IFortunasAssets is IERC1155 {
 
-    function mint(
+    function mintWithCheck(
         address _to,
         uint256 _tokenId,
         uint256 _amount,

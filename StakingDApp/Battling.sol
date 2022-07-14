@@ -349,7 +349,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 price = reserves.mul(pricePercentage).roundDiv(multiplier);
         fortunasToken.transferFrom(msg.sender, address(this), price);
 
-        fortunasAssets.mint(msg.sender, _assetToPurchase, 1, "");
+        fortunasAssets.mintWithCheck(msg.sender, _assetToPurchase, 1, "");
 
         emit AssetPurchased (
             msg.sender,
