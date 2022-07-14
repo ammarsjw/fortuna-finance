@@ -25,7 +25,7 @@ contract FortunasLedger is Ownable {
     constructor() {
         // TODO
         // passiveRewardTime = 1800;
-        passiveRewardTime = 144;
+        passiveRewardTime = 60;
 
         multiplierForPassiveReward = 10 ** 9;
 

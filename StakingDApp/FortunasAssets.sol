@@ -44,7 +44,7 @@ contract FortunasAssets is Ownable, ERC1155 {
     function setIsTransferEnabled(
         bool _state
     ) external onlyOwner {
-        require(isTransferEnabled != _state, "setIsTransferEnabled::isTransferEnabled is already of the value '_state'");
+        require(isTransferEnabled != _state, "setIsTransferEnabled::isTransferEnabled is already set to this state");
         isTransferEnabled = _state;
     }
 
