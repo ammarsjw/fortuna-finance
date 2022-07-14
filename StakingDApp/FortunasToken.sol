@@ -80,23 +80,23 @@ contract FortunasToken is ERC20, Ownable {
 
     // events
 
-    event UpdatePancakeRouter(address indexed newAddress, address indexed oldAddress);
+    event UpdatedPancakeRouter(address indexed newAddress, address indexed oldAddress);
 
-    event ExcludeFromFees(address indexed account, bool isExcluded);
+    event ExcludedFromFees(address indexed account, bool isExcluded);
 
-    event ExcludeMultipleAccountsFromFees(address[] accounts, bool isExcluded);
+    event ExcludedMultipleAccountsFromFees(address[] accounts, bool isExcluded);
 
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
 
-    event LiquidityWalletUpdated(address indexed newLiquidityWallet, address indexed oldLiquidityWallet);
+    event UpdatedLiquidityWallet(address indexed newLiquidityWallet, address indexed oldLiquidityWallet);
 
-    event TreasuryWalletUpdated(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
+    event UpdatedTreasuryWallet(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
 
-    event RewardWalletUpdated(address indexed newRewardWallet, address indexed oldRewardWallet);
+    event UpdatedRewardWallet(address indexed newRewardWallet, address indexed oldRewardWallet);
 
-    event LedgerCreated(address indexed account);
+    event CreatedLedger(address indexed account);
     
-    event LedgerClaimed(address indexed account, uint256 totalPassiveRewards);
+    event ClaimedLedger(address indexed account, uint256 totalPassiveRewards);
 
     // constructor
 
@@ -213,7 +213,7 @@ contract FortunasToken is ERC20, Ownable {
 
     function updatePancakeRouter(address newAddress) public onlyOwner {
         require(newAddress != address(pancakeRouter), "FRTNA: The router already has that address");
-        emit UpdatePancakeRouter(newAddress, address(pancakeRouter));
+        emit UpdatedPancakeRouter(newAddress, address(pancakeRouter));
         pancakeRouter = IPancakeRouter02(newAddress);
     }
 
@@ -221,7 +221,7 @@ contract FortunasToken is ERC20, Ownable {
         require(isExcludedFromFees[account] != excluded, "FRTNA: Account is already the value of 'excluded'");
         isExcludedFromFees[account] = excluded;
 
-        emit ExcludeFromFees(account, excluded);
+        emit ExcludedFromFees(account, excluded);
     }
 
     function excludeMultipleAccountsFromFees(address[] calldata accounts, bool excluded) public onlyOwner {
@@ -229,7 +229,7 @@ contract FortunasToken is ERC20, Ownable {
             isExcludedFromFees[accounts[i]] = excluded;
         }
 
-        emit ExcludeMultipleAccountsFromFees(accounts, excluded);
+        emit ExcludedMultipleAccountsFromFees(accounts, excluded);
     }
 
     function excludeFromPassiveRewards(address account, bool excluded) public onlyOwner {
@@ -261,7 +261,7 @@ contract FortunasToken is ERC20, Ownable {
         require(newLiquidityWallet != liquidityWallet, "FRTNA: The liquidity wallet is already this address");
         excludeFromFees(liquidityWallet, false);
         excludeFromFees(newLiquidityWallet, true);
-        emit LiquidityWalletUpdated(newLiquidityWallet, liquidityWallet);
+        emit UpdatedLiquidityWallet(newLiquidityWallet, liquidityWallet);
         liquidityWallet = newLiquidityWallet;
     }
 
@@ -269,7 +269,7 @@ contract FortunasToken is ERC20, Ownable {
         require(newTreasuryWallet != treasuryWallet, "FRTNA: The treasury wallet is already this address");
         excludeFromFees(treasuryWallet, false);
         excludeFromFees(newTreasuryWallet, true);
-        emit TreasuryWalletUpdated(newTreasuryWallet, treasuryWallet);
+        emit UpdatedTreasuryWallet(newTreasuryWallet, treasuryWallet);
         treasuryWallet = newTreasuryWallet;
     }
 
@@ -277,7 +277,7 @@ contract FortunasToken is ERC20, Ownable {
         require(newRewardWallet != rewardWallet, "FRTNA: The staking wallet is already this address");
         excludeFromFees(rewardWallet, false);
         excludeFromFees(newRewardWallet, true);
-        emit RewardWalletUpdated(newRewardWallet, rewardWallet);
+        emit UpdatedRewardWallet(newRewardWallet, rewardWallet);
         rewardWallet = newRewardWallet;
     }
 
@@ -417,7 +417,7 @@ contract FortunasToken is ERC20, Ownable {
             fortunasLedger.updatePassiveRewards(account, balanceOf(account));
 
         if (isFirstTransaction) {
-            emit LedgerCreated(
+            emit CreatedLedger(
                 account
             );
         }
@@ -448,7 +448,7 @@ contract FortunasToken is ERC20, Ownable {
             _transfer(rewardWallet, msg.sender, totalPassiveRewards);
         }
 
-        emit LedgerClaimed(
+        emit ClaimedLedger(
             msg.sender,
             totalPassiveRewards
         );
@@ -475,6 +475,8 @@ contract FortunasToken is ERC20, Ownable {
         uint256 lockedSupply = balanceOf(liquidityWallet).add(balanceOf(treasuryWallet)).add(balanceOf(rewardWallet));
         return totalSupply().sub(lockedSupply);
     }
+
+    // modifiers
 
     modifier onlyContract {
         require(msg.sender == battling, "FRTNA: Only Fortunas Battling Contract can call this function");

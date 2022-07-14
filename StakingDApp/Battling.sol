@@ -71,13 +71,13 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // events
 
-    event TreasuryWalletUpdated (address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
+    event UpdatedTreasuryWallet(address indexed newTreasuryWallet, address indexed oldTreasuryWallet);
 
-    event RewardWalletUpdated (address indexed newRewardWallet, address indexed oldRewardWallet);
+    event UpdatedRewardWallet(address indexed newRewardWallet, address indexed oldRewardWallet);
 
-    event BattleResetPercentageUpdated (uint256 newBattleResetPercentage, uint256 oldBattleResetPercentage);
+    event UpdatedBattleResetPercentage(uint256 newBattleResetPercentage, uint256 oldBattleResetPercentage);
 
-    event BattleEnded (
+    event EndedBattle(
         address indexed user,
         uint256 battleType,
         uint256 initialTokensStaked,
@@ -88,9 +88,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 battleDurationInDays
     );
 
-    event AssetPurchased (address indexed user, uint256 asset, uint256 amount);
+    event PurchasedAsset(address indexed user, uint256 asset, uint256 amount);
 
-    event AssetLost (address indexed user, uint256 asset, uint256 amount);
+    event LostAsset(address indexed user, uint256 asset, uint256 amount);
 
     // constructor
 
@@ -158,19 +158,19 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
         require(treasuryWallet != _treasuryWallet, "setTreasuryWallet::TW");
-        emit TreasuryWalletUpdated (_treasuryWallet, treasuryWallet);
+        emit UpdatedTreasuryWallet(_treasuryWallet, treasuryWallet);
         treasuryWallet = _treasuryWallet;
     }
 
     function setRewardWallet(address _rewardWallet) external onlyOwner {
         require(rewardWallet != _rewardWallet, "setRewardWallet::RW");
-        emit RewardWalletUpdated (_rewardWallet, rewardWallet);
+        emit UpdatedRewardWallet(_rewardWallet, rewardWallet);
         rewardWallet = _rewardWallet;
     }
 
     function setBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
         require(battleResetPercentage != _battleResetPercentage, "setBattleResetPercentage::BRP");
-        emit BattleResetPercentageUpdated (_battleResetPercentage, battleResetPercentage);
+        emit UpdatedBattleResetPercentage(_battleResetPercentage, battleResetPercentage);
         battleResetPercentage = _battleResetPercentage;
     }
 
@@ -351,7 +351,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         fortunasAssets.mintWithCheck(msg.sender, _assetToPurchase, 1, "");
 
-        emit AssetPurchased (
+        emit PurchasedAsset(
             msg.sender,
             _assetToPurchase,
             fortunasAssets.balanceOf(msg.sender, _assetToPurchase)
@@ -459,7 +459,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         Battle memory emptyBattle;
         battleForAddress[msg.sender][_battleType] = emptyBattle;
 
-        emit BattleEnded (
+        emit EndedBattle(
             msg.sender,
             _battleType,
             tempBattle.initialTokensStaked,
@@ -498,7 +498,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 _tempBattle.currentToCollectPercentage -= assetPercentages[_tempBattle.hero - 1];
             }
 
-            emit AssetLost (
+            emit LostAsset(
                 msg.sender,
                 _tempBattle.hero,
                 fortunasAssets.balanceOf(msg.sender, _tempBattle.hero)
@@ -514,7 +514,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 _tempBattle.currentRewardPercentagePerCycle = rewardPercentagesPerCycle[_tempBattle.battleType - 1];
             }
 
-            emit AssetLost (
+            emit LostAsset(
                 msg.sender,
                 _tempBattle.cavalry,
                 fortunasAssets.balanceOf(msg.sender, _tempBattle.cavalry)
