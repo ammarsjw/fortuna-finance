@@ -138,7 +138,7 @@ contract BattlingExtension is BattlingBase {
         }
         else {
             for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
-                if (i.mod(48) == 0) {
+                if (i.mod(48) == 0 && _currentToCollectPercentage != 1000) {
                     _currentToCollectPercentage += toCollectIncreasePerDay;
                 }
 

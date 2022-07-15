@@ -374,7 +374,12 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             tempBattle = battlingExtension.calculateRewards(tempBattle);
 
-            tempBattle.currentToCollectPercentage += assetPercentages[_assetToDeploy - 1];
+            if (tempBattle.currentToCollectPercentage.add(assetPercentages[_assetToDeploy - 1]) >= 1000) {
+                tempBattle.currentToCollectPercentage = 1000;
+            }
+            else {
+                tempBattle.currentToCollectPercentage += assetPercentages[_assetToDeploy - 1];
+            }
 
             tempBattle.hero = _assetToDeploy;
         }
