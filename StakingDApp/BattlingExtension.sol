@@ -50,41 +50,13 @@ contract BattlingExtension is BattlingBase {
 
     // RNG functions
 
-    function createRandomness(uint256 _chance, uint256 _multiplier) public view onlyOwner returns (bool) {
+    function createRandomness(uint256 _chance, uint256 _multiplier, uint256 _helper) public view onlyOwner returns (bool) {
         if (_chance == 0) {
             return false;
         }
 
         uint256 pairSelector =
-            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin)))
-                .mod(rng_pancakeFactory.allPairsLength().safeSub(3));
-
-        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
-        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
-        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector++);
-
-        uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
-        uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
-
-        uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
-        uint256 d = IPancakePair(addressForPancakePair2).price1CumulativeLast();
-
-        uint256 e = IPancakePair(addressForPancakePair3).price0CumulativeLast();
-        uint256 f = IPancakePair(addressForPancakePair3).price1CumulativeLast();
-
-        uint256 randomChance =
-            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, block.timestamp))).mod(_multiplier).add(1);
-
-        return randomChance <= _chance;
-    }
-
-    function createMassRandomness(uint256 _chance, uint256 _multiplier, uint256 counter) public view onlyOwner returns (bool) {
-        if (_chance == 0) {
-            return false;
-        }
-
-        uint256 pairSelector =
-            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, counter)))
+            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _helper)))
                 .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
 
         address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
@@ -96,12 +68,12 @@ contract BattlingExtension is BattlingBase {
         uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
 
         uint256 randomChance =
-            uint256(keccak256(abi.encodePacked(a, b, c, counter))).mod(_multiplier).add(1);
+            uint256(keccak256(abi.encodePacked(a, b, c, _helper))).mod(_multiplier).add(1);
 
         return randomChance <= _chance;
     }
 
-    function createRandomnessForAsset() external view onlyOwner returns (uint256) {
+    function createAssetRandomness() external view onlyOwner returns (uint256) {
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin)))
                 .mod(rng_pancakeFactory.allPairsLength());
@@ -157,7 +129,7 @@ contract BattlingExtension is BattlingBase {
 
         if (isStatic) {
             for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
-                bool result = createMassRandomness(_currentToCollectPercentage, 1000, i);
+                bool result = createRandomness(_currentToCollectPercentage, 1000, i);
 
                 if (result) {
                     numberOfWins++;
@@ -175,7 +147,7 @@ contract BattlingExtension is BattlingBase {
                     break;
                 }
 
-                bool result = createMassRandomness(_currentToCollectPercentage, 1000, i);
+                bool result = createRandomness(_currentToCollectPercentage, 1000, i);
 
                 if (result) {
                     numberOfWins++;
