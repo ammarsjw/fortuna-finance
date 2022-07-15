@@ -272,34 +272,36 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         uint256 tempAmountToRemove = _amountToRemove;
         if (tempAmountToRemove > tempBattle.additionalTokens) {
-            uint256 rewardsToReturn;
+            uint256 rewardsToRemove;
 
             tempAmountToRemove -= tempBattle.additionalTokens;
             tempBattle.additionalTokens = 0;
             if (tempAmountToRemove > tempBattle.rewards) {
-                rewardsToReturn = tempBattle.rewards;
+                rewardsToRemove = tempBattle.rewards;
                 tempAmountToRemove -= tempBattle.rewards;
                 tempBattle.rewards = 0;
                 tempBattle.initialTokensStaked -= tempAmountToRemove;
             }
             else {
-                rewardsToReturn = tempAmountToRemove;
+                rewardsToRemove = tempAmountToRemove;
                 tempBattle.rewards -= tempAmountToRemove;
             }
 
+            _amountToRemove -= rewardsToRemove;
+
             uint256 rewardWalletBalance = fortunasToken.balanceOf(rewardWallet);
 
-            bool isMint = rewardsToReturn > rewardWalletBalance;
+            bool isMint = rewardsToRemove > rewardWalletBalance;
 
             if (isMint) {
                 if (rewardWalletBalance != 0) {
                     fortunasToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
                 }
 
-                fortunasToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
+                fortunasToken.mint(msg.sender, rewardsToRemove.sub(rewardWalletBalance));
             }
             else {
-                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
+                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToRemove);
             }
         }
         else {
