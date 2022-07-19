@@ -95,7 +95,7 @@ contract FortunasToken is ERC20, Ownable {
     event UpdatedRewardWallet(address indexed newRewardWallet, address indexed oldRewardWallet);
 
     event CreatedLedger(address indexed account);
-    
+
     event ClaimedLedger(address indexed account, uint256 totalPassiveRewards);
 
     // constructor
