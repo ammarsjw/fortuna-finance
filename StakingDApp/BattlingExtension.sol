@@ -338,7 +338,7 @@ contract BattlingExtension is BattlingBase {
         uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
         uint256 cyclesForReward = cyclesToComplete;
 
-        if (_tempBattle.battleDaysExpended >= 3) {
+        if (_tempBattle.battleDaysExpended >= 3 && _tempBattle.currentToCollectPercentage != 1000) {
             _tempBattle.currentToCollectPercentage += toCollectIncreasePerDay;
         }
 
