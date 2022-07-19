@@ -470,13 +470,7 @@ contract BattlingExtension is BattlingBase {
             return 0;
         }
 
-        bool isInteger = _ratio.mod(10000000) == 0;
-
         uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
-
-        if (isInteger) {
-            accruedReward++;
-        }
 
         return accruedReward.sub(_principal);
     }

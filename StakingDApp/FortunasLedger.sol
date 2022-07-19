@@ -137,10 +137,11 @@ contract FortunasLedger is Ownable {
 
     function _compound(uint256 _principal, uint256 _ratio, uint256 _exponent) internal pure returns (uint256) {
         if (_exponent == 0) {
-            return _principal;
+            return 0;
         }
 
         uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
+
         return accruedReward.sub(_principal);
     }
 }
