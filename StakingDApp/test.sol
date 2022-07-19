@@ -286,6 +286,7 @@ contract Test is Ownable, BaseTest {
         return numberOfRewardCycles;
     }
 
+    // isInteger is not needed
     function fun18(uint256 _principal, uint256 _ratio, uint256 _exponent) external pure returns (uint256, uint256) {
         // Multiply _ratio by 10 ** 7 and then send it as an argument
         bool isInteger = false;
