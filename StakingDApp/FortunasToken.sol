@@ -183,42 +183,42 @@ contract FortunasToken is ERC20, Ownable {
 
     // getters and setters
 
-    function initializeBattling(address contractAddress) external onlyOwner {
+    function initializeBattling(address battlingContractAddress) external onlyOwner {
         // TODO uncomment
-        // require(battling == address(0), "FRTNA: Battling has already been initialized");
-        battling = contractAddress;
+        // require(battling == address(0), "FRTNA::Battling has already been initialized");
+        battling = battlingContractAddress;
 
         excludeFromPassiveRewards(battling, true);
 
         excludeFromFees(battling, true);
     }
 
-    function updateBuyingFees(uint256 _liquidityBuyingFee, uint256 _treasuryBuyingFee, uint256 _burnBuyingFee) public onlyOwner {
-        uint256 totalInputFee = _liquidityBuyingFee.add(_treasuryBuyingFee).add(_burnBuyingFee);
-        require(totalInputFee <= maxBuyingFee, "FRTNA: Cannot exceed total Buying fees");
+    function updateBuyingFees(uint256 newLiquidityBuyingFee, uint256 newTreasuryBuyingFee, uint256 newBurnBuyingFee) public onlyOwner {
+        uint256 totalInputFee = newLiquidityBuyingFee.add(newTreasuryBuyingFee).add(newBurnBuyingFee);
+        require(totalInputFee <= maxBuyingFee, "FRTNA::Cannot exceed total Buying fees");
 
-        liquidityBuyingFee = _liquidityBuyingFee;
-        treasuryBuyingFee = _treasuryBuyingFee;
-        burnBuyingFee = _burnBuyingFee;
+        liquidityBuyingFee = newLiquidityBuyingFee;
+        treasuryBuyingFee = newTreasuryBuyingFee;
+        burnBuyingFee = newBurnBuyingFee;
     }
 
-    function updateSellingFees(uint256 _liquiditySellingFee, uint256 _treasurySellingFee, uint256 _burnSellingFee) public onlyOwner {
-        uint256 totalInputFee = _liquiditySellingFee.add(_treasurySellingFee).add(_burnSellingFee);
-        require(totalInputFee <= maxSellingFee, "FRTNA: Cannot exceed total selling fees");
+    function updateSellingFees(uint256 newLiquiditySellingFee, uint256 newTreasurySellingFee, uint256 newBurnSellingFee) public onlyOwner {
+        uint256 totalInputFee = newLiquiditySellingFee.add(newTreasurySellingFee).add(newBurnSellingFee);
+        require(totalInputFee <= maxSellingFee, "FRTNA::Cannot exceed total selling fees");
 
-        liquiditySellingFee = _liquiditySellingFee;
-        treasurySellingFee = _treasurySellingFee;
-        burnSellingFee = _burnSellingFee;
+        liquiditySellingFee = newLiquiditySellingFee;
+        treasurySellingFee = newTreasurySellingFee;
+        burnSellingFee = newBurnSellingFee;
     }
 
-    function updatePancakeRouter(address newAddress) public onlyOwner {
-        require(newAddress != address(pancakeRouter), "FRTNA: The router already has that address");
-        emit UpdatedPancakeRouter(newAddress, address(pancakeRouter));
-        pancakeRouter = IPancakeRouter02(newAddress);
+    function updatePancakeRouter(address router) public onlyOwner {
+        require(router != address(pancakeRouter), "FRTNA::The router already has that address");
+        emit UpdatedPancakeRouter(router, address(pancakeRouter));
+        pancakeRouter = IPancakeRouter02(router);
     }
 
     function excludeFromFees(address account, bool excluded) public onlyOwner {
-        require(isExcludedFromFees[account] != excluded, "FRTNA: Account is already the value of 'excluded'");
+        require(isExcludedFromFees[account] != excluded, "FRTNA::Account is already the value of 'excluded'");
         isExcludedFromFees[account] = excluded;
 
         emit ExcludedFromFees(account, excluded);
@@ -233,7 +233,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function excludeFromPassiveRewards(address account, bool excluded) public onlyOwner {
-        require(isExcludedFromPassiveRewards[account] != excluded, "FRTNA: Account is already the value of 'excluded'");
+        require(isExcludedFromPassiveRewards[account] != excluded, "FRTNA::Account is already the value of 'excluded'");
 
         isExcludedFromPassiveRewards[account] = excluded;
     }
@@ -245,20 +245,20 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
-        require(pair != pancakePair, "FRTNA: The PancakeSwap pair cannot be removed from automatedMarketMakerPairs");
+        require(pair != pancakePair, "FRTNA::The PancakeSwap pair cannot be removed from automatedMarketMakerPairs");
 
         _setAutomatedMarketMakerPair(pair, value);
     }
 
     function _setAutomatedMarketMakerPair(address pair, bool value) private {
-        require(automatedMarketMakerPairs[pair] != value, "FRTNA: Automated market maker pair is already set to that value");
+        require(automatedMarketMakerPairs[pair] != value, "FRTNA::Automated market maker pair is already set to that value");
         automatedMarketMakerPairs[pair] = value;
 
         emit SetAutomatedMarketMakerPair(pair, value);
     }
 
     function updateLiquidityWallet(address newLiquidityWallet) public onlyOwner {
-        require(newLiquidityWallet != liquidityWallet, "FRTNA: The liquidity wallet is already this address");
+        require(newLiquidityWallet != liquidityWallet, "FRTNA::The liquidity wallet is already this address");
         excludeFromFees(liquidityWallet, false);
         excludeFromFees(newLiquidityWallet, true);
         emit UpdatedLiquidityWallet(newLiquidityWallet, liquidityWallet);
@@ -266,7 +266,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function updateTreasuryWallet(address newTreasuryWallet) public onlyOwner {
-        require(newTreasuryWallet != treasuryWallet, "FRTNA: The treasury wallet is already this address");
+        require(newTreasuryWallet != treasuryWallet, "FRTNA::The treasury wallet is already this address");
         excludeFromFees(treasuryWallet, false);
         excludeFromFees(newTreasuryWallet, true);
         emit UpdatedTreasuryWallet(newTreasuryWallet, treasuryWallet);
@@ -274,7 +274,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function updateRewardWallet(address newRewardWallet) public onlyOwner {
-        require(newRewardWallet != rewardWallet, "FRTNA: The staking wallet is already this address");
+        require(newRewardWallet != rewardWallet, "FRTNA::The staking wallet is already this address");
         excludeFromFees(rewardWallet, false);
         excludeFromFees(newRewardWallet, true);
         emit UpdatedRewardWallet(newRewardWallet, rewardWallet);
@@ -302,13 +302,13 @@ contract FortunasToken is ERC20, Ownable {
         address to,
         uint256 amount
     ) internal override {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
+        require(from != address(0), "ERC20::transfer from the zero address");
+        require(to != address(0), "ERC20::transfer to the zero address");
 
         bool tradingIsEnabled = getTradingIsEnabled();
 
         if (!tradingIsEnabled) {
-            require(canTransferBeforeTradingIsEnabled[from], "FRTNA: This account cannot send tokens until trading is enabled");
+            require(canTransferBeforeTradingIsEnabled[from], "FRTNA::This account cannot send tokens until trading is enabled");
         }
 
         if(amount == 0) {
@@ -407,7 +407,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function updateLedger(address account) external {
-        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
+        require(!isExcludedFromPassiveRewards[account], "FRTNA::Account is excluded from passive rewards");
 
         _updateLedger(account);
     }
@@ -424,13 +424,13 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function claimLedger() external {
-        require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA: Account is excluded from passive rewards");
+        require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA::Account is excluded from passive rewards");
 
         uint256 totalPassiveRewards =
             fortunasLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
 
         if (totalPassiveRewards == 0) {
-            require(false, "FRTNA: No rewards to claim");
+            require(false, "FRTNA::No rewards to claim");
         }
 
         uint256 rewardWalletBalance = balanceOf(rewardWallet);
@@ -455,7 +455,7 @@ contract FortunasToken is ERC20, Ownable {
     }
 
     function viewLedger(address account) external view returns (uint256) {
-        require(!isExcludedFromPassiveRewards[account], "FRTNA: Account is excluded from passive rewards");
+        require(!isExcludedFromPassiveRewards[account], "FRTNA::Account is excluded from passive rewards");
 
         uint256 totalPassiveRewards =
             fortunasLedger.getCurrentLedgerStatus(account, balanceOf(account));
@@ -479,7 +479,7 @@ contract FortunasToken is ERC20, Ownable {
     // modifiers
 
     modifier onlyContract {
-        require(msg.sender == battling, "FRTNA: Only Fortunas Battling Contract can call this function");
+        require(msg.sender == battling, "FRTNA::Only Fortunas Battling Contract can call this function");
         _;
     }
 }
