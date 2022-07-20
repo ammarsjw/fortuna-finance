@@ -467,6 +467,14 @@ contract Battling is BattlingBase, ERC1155Holder {
                 if (chanceToLoseAssets != 0) {
                     tempBattle = _handleLoss(tempBattle, chanceToLoseAssets, true);
                 }
+
+                if (tempBattle.hero != 0) {
+                    fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.hero, 1, "");
+                }
+
+                if (tempBattle.cavalry != 0) {
+                    fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
+                }
             }
         }
 
@@ -538,16 +546,6 @@ contract Battling is BattlingBase, ERC1155Holder {
             );
 
             _tempBattle.cavalry = 0;
-        }
-
-        if (_isEndBattle) {
-            if (_tempBattle.hero != 0) {
-                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _tempBattle.hero, 1, "");
-            }
-
-            if (_tempBattle.cavalry != 0) {
-                fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, _tempBattle.cavalry, 1, "");
-            }
         }
 
         return _tempBattle;
