@@ -14,6 +14,7 @@ abstract contract BattlingBase is Ownable {
     uint256 public baseBattleTime;                          // 3 days in seconds
 
     uint256 public multiplier;
+    uint256 public multiplierForRations;
     uint256 public multiplierForReward;
 
     uint256[6] public toCollectPercentages;                        // chance to win for every iteration
@@ -41,6 +42,7 @@ abstract contract BattlingBase is Ownable {
         uint256 rationsDaysTotal;
         uint256 hero;
         uint256 cavalry;
+        uint256 daysAtMaxToCollect;
     }
 
     // constructor
@@ -55,6 +57,7 @@ abstract contract BattlingBase is Ownable {
         baseBattleTime = 144;
 
         multiplier = 10 ** 6;
+        multiplierForRations = 10 ** 9;
         multiplierForReward = 10 ** 9;
 
         toCollectPercentages = [1000, 1000, 750, 500, 200, 100];

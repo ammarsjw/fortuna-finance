@@ -196,7 +196,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             fortunasToken.transferFrom(msg.sender, address(this), _amount);
         }
 
-        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], 0, 0, block.timestamp, 0, 0, 0, 0);
+        battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], 0, 0, block.timestamp, 0, 0, 0, 0, 0);
     }
 
     function sendRations(
@@ -245,9 +245,16 @@ contract Battling is BattlingBase, ERC1155Holder {
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
         tempBattle.additionalTokens += _amountToAdd;
-        if (tempBattle.additionalTokens >
-            tempBattle.initialTokensStaked.mul(battleResetPercentage).div(100)) {
+        if (
+            tempBattle.additionalTokens >
+            tempBattle.initialTokensStaked.mul(battleResetPercentage).div(100)
+        ) {
             tempBattle.currentToCollectPercentage = toCollectPercentages[tempBattle.battleType - 1];
+
+            if (tempBattle.currentToCollectPercentage < 1000) {
+                tempBattle.daysAtMaxToCollect = 0;
+            }
+
             if (tempBattle.hero != 0) {
                 tempBattle.currentToCollectPercentage += assetPercentages[tempBattle.hero - 1];
             }
@@ -319,7 +326,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
 
             if (chanceToLoseAssets != 0) {
-                tempBattle = handleLoss(tempBattle, chanceToLoseAssets, false);
+                tempBattle = _handleLoss(tempBattle, chanceToLoseAssets, false);
             }
         }
 
@@ -458,7 +465,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
 
                 if (chanceToLoseAssets != 0) {
-                    tempBattle = handleLoss(tempBattle, chanceToLoseAssets, true);
+                    tempBattle = _handleLoss(tempBattle, chanceToLoseAssets, true);
                 }
             }
         }
@@ -478,7 +485,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         );
     }
 
-    function handleLoss(
+    function _handleLoss(
         Battle memory _tempBattle,
         uint256 _chanceToLoseAssets,
         bool _isEndBattle
@@ -502,6 +509,10 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             if (!_isEndBattle) {
                 _tempBattle.currentToCollectPercentage -= assetPercentages[_tempBattle.hero - 1];
+
+                if (_tempBattle.currentToCollectPercentage < 1000) {
+                    _tempBattle.daysAtMaxToCollect = 0;
+                }
             }
 
             emit LostAsset(
