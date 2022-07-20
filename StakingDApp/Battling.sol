@@ -215,7 +215,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                 daysWagingBattle = 3;
             }
             else {
-                daysWagingBattle = block.timestamp.sub(tempBattle.battleStartTime).div(oneDayTime);
+                daysWagingBattle = block.timestamp.sub(tempBattle.battleStartTime).ceilDiv(oneDayTime);
             }
 
             uint256 unusedRations = battleDaysTotal.sub(daysWagingBattle);
