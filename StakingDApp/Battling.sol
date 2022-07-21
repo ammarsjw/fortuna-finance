@@ -610,7 +610,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
     }
 
-    // testing only
+    // TODO testing only
     function testRewardTime(uint256 _seconds) public {
         rewardTime = _seconds;
         oneDayTime = _seconds.mul(48);

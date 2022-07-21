@@ -486,7 +486,7 @@ contract BattlingExtension is BattlingBase {
         return accruedReward.sub(_principal);
     }
 
-    // testing only
+    // TODO testing only
     function testRewardTime(uint256 _seconds) public {
         rewardTime = _seconds;
         oneDayTime = _seconds.mul(48);
