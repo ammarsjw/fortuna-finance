@@ -102,24 +102,13 @@ contract FortunasToken is ERC20, Ownable {
 
     constructor() ERC20("Fortunas Token", "FRTNA") {
         // TODO remove
-        if (block.chainid == 97) {
-            BUSD = 0x8354e8b945D6C35bD35615DD0277C4032cd0a67D;
-        }
-        else if (block.chainid == 4) {
-            BUSD = 0x7D9385C733a967793EE14D933212ee44025f1B9d;
-        }
+        BUSD = 0x7D9385C733a967793EE14D933212ee44025f1B9d;
 
         // PancakeRouter02 mainnet
     	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
 
         // TODO remove
-        IPancakeRouter02 _pancakeRouter;
-        if (block.chainid == 97) {
-            _pancakeRouter = IPancakeRouter02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
-        }
-        else if (block.chainid == 4) {
-            _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-        }
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
             .createPair(address(this), BUSD);
 
@@ -176,9 +165,10 @@ contract FortunasToken is ERC20, Ownable {
         // enable owner to send tokens before trading is enabled
         canTransferBeforeTradingIsEnabled[owner()] = true;
 
-        // TODO mint to reward wallet
         // TODO change initial supply
-        _mint(owner(), 1000000000 * (10 ** 18));
+        // TODO change initial supply for reward wallet
+        _mint(rewardWallet, 250000000 * (10 ** 18));
+        _mint(owner(), 250000000 * (10 ** 18));
     }
 
     // getters and setters

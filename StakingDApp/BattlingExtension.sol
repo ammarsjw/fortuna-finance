@@ -32,13 +32,7 @@ contract BattlingExtension is BattlingBase {
         // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
 
         // TODO remove
-        IPancakeRouter02 _pancakeRouter;
-        if (block.chainid == 97) {
-            _pancakeRouter = IPancakeRouter02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
-        }
-        else if (block.chainid == 4) {
-            _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
-        }
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         IPancakeFactory _pancakeFactory = IPancakeFactory(_pancakeRouter.factory());
 
         rng_pancakeRouter = _pancakeRouter;
@@ -376,7 +370,13 @@ contract BattlingExtension is BattlingBase {
     }
 
     function calculateRewardsForEndBattle(Battle memory _tempBattle) external view onlyOwner returns (Battle memory) {
-        uint256 battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
+        uint256 battleEndTime;
+        if (_tempBattle.battleType != 2) {
+            battleEndTime = _tempBattle.rationsDaysTotal.add(3).mul(oneDayTime).add(_tempBattle.battleStartTime);
+        }
+        else {
+            battleEndTime = uint256(30).mul(oneDayTime).add(_tempBattle.battleStartTime);
+        }
 
         if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
             _tempBattle = calculateRewards(_tempBattle);
@@ -398,7 +398,7 @@ contract BattlingExtension is BattlingBase {
                 compoundReward = _compound(
                     tempTotalTokens,
                     ratio,
-                    daysForReward.mul(48)
+                    1440
                 );
                 _tempBattle.rewards += compoundReward;
             }
