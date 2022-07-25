@@ -228,7 +228,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     function addTroops(
         uint256 _amountToAdd,
         uint8 _battleType
-    ) external validBattle(_battleType) {
+    ) external validBattleType(_battleType) validBattle(_battleType) {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
