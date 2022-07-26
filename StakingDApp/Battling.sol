@@ -380,7 +380,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             if (tempBattle.hero != 0 || tempBattle.cavalry != 0) {
                 uint256 chanceToLoseAssets = baseChanceToLoseAssets;
 
-                if (tempBattle.battleDaysExpended > 3) {
+                if (tempBattle.battleDaysExpended >= 3) {
                     uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
                     chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
                 }
