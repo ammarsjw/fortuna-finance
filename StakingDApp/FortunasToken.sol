@@ -318,7 +318,6 @@ contract FortunasToken is ERC20, Ownable {
             tradingIsEnabled &&
             canTransfer &&
             !transferring &&
-            !_isBuy(from) &&
             from != liquidityWallet &&
             to != liquidityWallet
         ) {
