@@ -150,10 +150,10 @@ contract FortunasToken is ERC20, Ownable {
 
         // exclude from receiving passive holding rewards
         excludeFromPassiveRewards(address(this), true);
+        excludeFromPassiveRewards(address(_pancakeRouter), true);
         excludeFromPassiveRewards(liquidityWallet, true);
         excludeFromPassiveRewards(treasuryWallet, true);
         excludeFromPassiveRewards(rewardWallet, true);
-        excludeFromPassiveRewards(_pancakePair, true);
         excludeFromPassiveRewards(address(0), true);
 
         // exclude from paying fees
@@ -243,6 +243,10 @@ contract FortunasToken is ERC20, Ownable {
     function _setAutomatedMarketMakerPair(address pair, bool value) private {
         require(automatedMarketMakerPairs[pair] != value, "FRTNA::Automated market maker pair is already set to that value");
         automatedMarketMakerPairs[pair] = value;
+
+        if (automatedMarketMakerPairs[pair]) {
+            excludeFromPassiveRewards(pair, true);
+        }
 
         emit SetAutomatedMarketMakerPair(pair, value);
     }

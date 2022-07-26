@@ -395,4 +395,13 @@ contract Test is Ownable, BaseTest {
     function fun29(uint256 _ratio) external pure returns (uint256) {
         return _ratio.mod(10000000);
     }
+
+    function fun30(uint256 startingNumber, uint256 length) external {
+        arr = new uint256[](0);
+
+        for (uint256 i = 0 ; i < length ; i++) {
+            arr.push(startingNumber);
+            startingNumber++;
+        }
+    }
 }
