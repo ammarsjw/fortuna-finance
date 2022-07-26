@@ -381,7 +381,11 @@ contract Battling is BattlingBase, ERC1155Holder {
                 uint256 chanceToLoseAssets = baseChanceToLoseAssets;
 
                 if (tempBattle.battleDaysExpended >= 3) {
-                    uint256 chanceDecrease = tempBattle.battleDaysExpended.sub(3).mul(5);
+                    uint256 daysForDecrease = tempBattle.battleDaysExpended.sub(3);
+                    if (daysForDecrease < tempBattle.rationsDaysTotal) {
+                        daysForDecrease++;
+                    }
+                    uint256 chanceDecrease = daysForDecrease.mul(5);
                     chanceToLoseAssets = chanceToLoseAssets.safeSub(chanceDecrease);
                 }
 
