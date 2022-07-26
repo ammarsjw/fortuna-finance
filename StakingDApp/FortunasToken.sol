@@ -53,7 +53,7 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public maxBuyingFee;
     uint256 public maxSellingFee;
-    uint256 public immutable multiplierForTotalFee;
+    uint256 public multiplierForTotalFee;
 
     uint256 public totalSellingFeesAccumulated;
 
