@@ -404,4 +404,8 @@ contract Test is Ownable, BaseTest {
             startingNumber++;
         }
     }
+
+    function fun31(uint256 startTime) external view returns (uint256) {
+        return block.timestamp.sub(startTime).ceilDiv(1800);
+    }
 }
