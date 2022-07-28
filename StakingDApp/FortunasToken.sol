@@ -60,10 +60,6 @@ contract FortunasToken is ERC20, Ownable {
     // TODO confirm
     uint256 public transferTokensAtAmount = 1000 * (10**18);
 
-    // TODO change
-    // Timestamp for when the token can be traded freely on PanackeSwap
-    uint256 public immutable tradingEnabledTimestamp = 1654041600; // June 1, 00:00 GMT, 2022
-
     // mappings
 
     // Addresses that are excluded from buying and selling fees
@@ -72,19 +68,24 @@ contract FortunasToken is ERC20, Ownable {
     // Addresses that are excluded from FRTNA holder's rewards
     mapping (address => bool) private isExcludedFromPassiveRewards;
 
-    // Addresses that can make transfers before trading is enabled
-    mapping (address => bool) private canTransferBeforeTradingIsEnabled;
-
     // Store addresses that are automatic market maker pairs
     mapping (address => bool) public automatedMarketMakerPairs;
 
     // events
+
+    event UpdatedBuyingFees(uint256 newLiquidityBuyingFee, uint256 newTreasuryBuyingFee, uint256 newBurnBuyingFee);
+    
+    event UpdatedSellingFees(uint256 newLiquiditySellingFee, uint256 newTreasurySellingFee, uint256 newBurnSellingFee);
 
     event UpdatedPancakeRouter(address indexed newAddress, address indexed oldAddress);
 
     event ExcludedFromFees(address indexed account, bool isExcluded);
 
     event ExcludedMultipleAccountsFromFees(address[] accounts, bool isExcluded);
+
+    event ExcludedFromPassiveRewards(address indexed account, bool isExcluded);
+
+    event ExcludedMultipleAccountsFromPassiveRewards(address[] accounts, bool isExcluded);
 
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
 
@@ -162,9 +163,6 @@ contract FortunasToken is ERC20, Ownable {
         excludeFromFees(treasuryWallet, true);
         excludeFromFees(rewardWallet, true);
 
-        // enable owner to send tokens before trading is enabled
-        canTransferBeforeTradingIsEnabled[owner()] = true;
-
         // TODO change initial supply
         // TODO change initial supply for reward wallet
         _mint(rewardWallet, 250000000 * (10 ** 18));
@@ -190,6 +188,8 @@ contract FortunasToken is ERC20, Ownable {
         liquidityBuyingFee = newLiquidityBuyingFee;
         treasuryBuyingFee = newTreasuryBuyingFee;
         burnBuyingFee = newBurnBuyingFee;
+
+        emit UpdatedBuyingFees(newLiquidityBuyingFee, newTreasuryBuyingFee, newBurnBuyingFee);
     }
 
     function updateSellingFees(uint256 newLiquiditySellingFee, uint256 newTreasurySellingFee, uint256 newBurnSellingFee) public onlyOwner {
@@ -199,6 +199,8 @@ contract FortunasToken is ERC20, Ownable {
         liquiditySellingFee = newLiquiditySellingFee;
         treasurySellingFee = newTreasurySellingFee;
         burnSellingFee = newBurnSellingFee;
+
+        emit UpdatedSellingFees(newLiquiditySellingFee, newTreasurySellingFee, newBurnSellingFee);
     }
 
     function updatePancakeRouter(address router) public onlyOwner {
@@ -226,12 +228,16 @@ contract FortunasToken is ERC20, Ownable {
         require(isExcludedFromPassiveRewards[account] != excluded, "FRTNA::Account is already the value of 'excluded'");
 
         isExcludedFromPassiveRewards[account] = excluded;
+
+        emit ExcludedFromPassiveRewards(account, excluded);
     }
 
     function excludeMultipleAccountsFromPassiveRewards(address[] calldata accounts, bool excluded) public onlyOwner {
         for(uint256 i = 0; i < accounts.length; i++) {
             isExcludedFromPassiveRewards[accounts[i]] = excluded;
         }
+
+        emit ExcludedMultipleAccountsFromPassiveRewards(accounts, excluded);
     }
 
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
@@ -275,10 +281,6 @@ contract FortunasToken is ERC20, Ownable {
         rewardWallet = newRewardWallet;
     }
 
-    function getTradingIsEnabled() public view returns (bool) {
-        return block.timestamp >= tradingEnabledTimestamp;
-    }
-
     // functions
 
     function _isBuy(address from) internal view returns (bool) {
@@ -299,12 +301,6 @@ contract FortunasToken is ERC20, Ownable {
         require(from != address(0), "ERC20::transfer from the zero address");
         require(to != address(0), "ERC20::transfer to the zero address");
 
-        bool tradingIsEnabled = getTradingIsEnabled();
-
-        if (!tradingIsEnabled) {
-            require(canTransferBeforeTradingIsEnabled[from], "FRTNA::This account cannot send tokens until trading is enabled");
-        }
-
         if(amount == 0) {
             super._transfer(from, to, 0);
             return;
@@ -315,7 +311,6 @@ contract FortunasToken is ERC20, Ownable {
         bool canTransfer = contractTokenBalance >= transferTokensAtAmount;
 
         if (
-            tradingIsEnabled &&
             canTransfer &&
             !transferring &&
             from != liquidityWallet &&
@@ -462,11 +457,6 @@ contract FortunasToken is ERC20, Ownable {
 
     function burn(address account, uint256 amount) external onlyContract {
         _burn(account, amount);
-    }
-
-    function circulatingSupply() external view returns (uint256) {
-        uint256 lockedSupply = balanceOf(liquidityWallet).add(balanceOf(treasuryWallet)).add(balanceOf(rewardWallet));
-        return totalSupply().sub(lockedSupply);
     }
 
     // modifiers
