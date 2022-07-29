@@ -70,23 +70,18 @@ contract BattlingExtension is BattlingBase {
     function createToCollectRandomness(uint256 _magic) public view onlyOwner returns (uint256) {
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _magic)))
-                .mod(rng_pancakeFactory.allPairsLength().safeSub(3));
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
 
         address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
         address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector + 1);
-        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector + 2);
 
         uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
         uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
 
         uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
-        uint256 d = IPancakePair(addressForPancakePair2).price1CumulativeLast();
-
-        uint256 e = IPancakePair(addressForPancakePair3).price0CumulativeLast();
-        uint256 f = IPancakePair(addressForPancakePair3).price1CumulativeLast();
 
         uint256 randomChance =
-            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, _magic))).mod(100).add(1);
+            uint256(keccak256(abi.encodePacked(a, b, c, _magic))).mod(100).add(1);
 
         return randomChance;
     }
