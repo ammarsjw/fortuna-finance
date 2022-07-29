@@ -44,17 +44,17 @@ contract BattlingExtension is BattlingBase {
 
     // RNG functions
 
-    function createRandomness(uint256 _chance, uint256 _multiplier, uint256 _helper) public view onlyOwner returns (bool) {
+    function createRandomness(uint256 _chance, uint256 _max, uint256 _magic) public view onlyOwner returns (bool) {
         if (_chance == 0) {
             return false;
         }
 
         uint256 pairSelector =
-            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _helper)))
+            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _magic)))
                 .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
 
         address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
-        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
+        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector + 1);
 
         uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
         uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
@@ -62,19 +62,43 @@ contract BattlingExtension is BattlingBase {
         uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
 
         uint256 randomChance =
-            uint256(keccak256(abi.encodePacked(a, b, c, _helper))).mod(_multiplier).add(1);
+            uint256(keccak256(abi.encodePacked(a, b, c, _magic))).mod(_max).add(1);
 
         return randomChance <= _chance;
+    }
+
+    function createToCollectRandomness(uint256 _magic) public view onlyOwner returns (uint256) {
+        uint256 pairSelector =
+            uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _magic)))
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(3));
+
+        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
+        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector + 1);
+        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector + 2);
+
+        uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
+        uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
+
+        uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
+        uint256 d = IPancakePair(addressForPancakePair2).price1CumulativeLast();
+
+        uint256 e = IPancakePair(addressForPancakePair3).price0CumulativeLast();
+        uint256 f = IPancakePair(addressForPancakePair3).price1CumulativeLast();
+
+        uint256 randomChance =
+            uint256(keccak256(abi.encodePacked(a, b, c, d, e, f, _magic))).mod(100).add(1);
+
+        return randomChance;
     }
 
     function createAssetRandomness() external view onlyOwner returns (uint256) {
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin)))
-                .mod(rng_pancakeFactory.allPairsLength());
+                .mod(rng_pancakeFactory.allPairsLength().safeSub(3));
 
-        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector++);
-        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector++);
-        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector++);
+        address addressForPancakePair1 = rng_pancakeFactory.allPairs(pairSelector);
+        address addressForPancakePair2 = rng_pancakeFactory.allPairs(pairSelector + 1);
+        address addressForPancakePair3 = rng_pancakeFactory.allPairs(pairSelector + 2);
 
         uint256 a = IPancakePair(addressForPancakePair1).price0CumulativeLast();
         uint256 b = IPancakePair(addressForPancakePair1).price1CumulativeLast();
@@ -119,36 +143,44 @@ contract BattlingExtension is BattlingBase {
         uint256 _numberOfCycles,
         bool _isStatic
     ) internal view returns (uint256, uint256, uint256) {
-        uint256 numberOfWins;
         uint256 daysAtMaxToCollect;
+        uint256 numberOfWins;
 
         if (_isStatic) {
-            for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
-                bool result = createRandomness(_currentToCollectPercentage, 1000, i);
+            uint256 magic;
 
-                if (result) {
-                    numberOfWins++;
-                }
+            uint256 randomNumber1 = _currentToCollectPercentage.sub(createToCollectRandomness(magic));
+            uint256 randomNumber2 = _currentToCollectPercentage.add(createToCollectRandomness(magic + 1));
+            if (randomNumber2 > 1000) {
+                randomNumber2 = 1000;
             }
+
+            uint256 result = randomNumber1.add(randomNumber2).roundDiv(2);
+
+            numberOfWins = _numberOfCycles.mul(result).div(1000);
         }
         else {
-            for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
-                if (i.mod(48) == 0 && _currentToCollectPercentage != 1000) {
+            uint256 numberOfDays = _numberOfCycles.div(48);
+            for (uint256 i = 0 ; i < numberOfDays ; i++) {
+                if (_currentToCollectPercentage != 1000) {
                     _currentToCollectPercentage += toCollectIncreasePerDay;
                 }
 
                 if (_currentToCollectPercentage == 1000) {
-                    uint256 numberOfWinsAtMaxToCollect = _numberOfCycles.sub(i);
-                    numberOfWins += numberOfWinsAtMaxToCollect;
-                    daysAtMaxToCollect = numberOfWinsAtMaxToCollect.div(48);
+                    daysAtMaxToCollect = numberOfDays.sub(i);
+                    numberOfWins += daysAtMaxToCollect.mul(48);
                     break;
                 }
 
-                bool result = createRandomness(_currentToCollectPercentage, 1000, i);
-
-                if (result) {
-                    numberOfWins++;
+                uint256 randomNumber1 = _currentToCollectPercentage.sub(createToCollectRandomness(i));
+                uint256 randomNumber2 = _currentToCollectPercentage.add(createToCollectRandomness(i + 1));
+                if (randomNumber2 > 1000) {
+                    randomNumber2 = 1000;
                 }
+
+                uint256 result = randomNumber1.add(randomNumber2).roundDiv(2);
+
+                numberOfWins += uint256(48).mul(result).div(1000);
             }
         }
 

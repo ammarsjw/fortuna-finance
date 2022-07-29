@@ -77,6 +77,8 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     event UpdatedBattleResetPercentage(uint256 newBattleResetPercentage, uint256 oldBattleResetPercentage);
 
+    // event UpdatedBattlingExtension(address indexed newBattlingExtension, address indexed oldBattlingExtension);
+
     event EndedBattle(
         address indexed user,
         uint256 battleType,
@@ -137,31 +139,35 @@ contract Battling is BattlingBase, ERC1155Holder {
         baseChanceToLoseAssets = 50;
     }
 
-    // getters
+    // getters and setters
 
     function getBattleForAddress(address _user, uint8 _battleType) external view returns (Battle memory) {
         return battleForAddress[_user][_battleType];
     }
 
-    // setters
-
-    function setTreasuryWallet(address _treasuryWallet) external onlyOwner {
-        require(treasuryWallet != _treasuryWallet, "setTreasuryWallet::TW");
+    function updateTreasuryWallet(address _treasuryWallet) external onlyOwner {
+        require(treasuryWallet != _treasuryWallet, "updateTreasuryWallet::TW");
         emit UpdatedTreasuryWallet(_treasuryWallet, treasuryWallet);
         treasuryWallet = _treasuryWallet;
     }
 
-    function setRewardWallet(address _rewardWallet) external onlyOwner {
-        require(rewardWallet != _rewardWallet, "setRewardWallet::RW");
+    function updateRewardWallet(address _rewardWallet) external onlyOwner {
+        require(rewardWallet != _rewardWallet, "updateRewardWallet::RW");
         emit UpdatedRewardWallet(_rewardWallet, rewardWallet);
         rewardWallet = _rewardWallet;
     }
 
-    function setBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
-        require(battleResetPercentage != _battleResetPercentage, "setBattleResetPercentage::BRP");
+    function updateBattleResetPercentage(uint256 _battleResetPercentage) external onlyOwner {
+        require(battleResetPercentage != _battleResetPercentage, "updateBattleResetPercentage::BRP");
         emit UpdatedBattleResetPercentage(_battleResetPercentage, battleResetPercentage);
         battleResetPercentage = _battleResetPercentage;
     }
+
+    // function updateBattlingExtension(address _battlingExtension) external onlyOwner {
+    //     require(address(battlingExtension) != _battlingExtension, "updateBattleResetPercentage::BRP");
+    //     emit UpdatedBattlingExtension(_battlingExtension, address(battlingExtension));
+    //     battlingExtension = BattlingExtension(_battlingExtension);
+    // }
 
     // functions
 
@@ -275,9 +281,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         else {
             (, reserves, ) = pancakePair.getReserves();
         }
+        require(reserves > 0, "purchaseAsset::NLP");
 
         uint256 price = reserves.mul(pricePercentage).roundDiv(multiplier);
-        fortunasToken.transferFrom(msg.sender, address(this), price);
+        fortunasToken.transferFrom(msg.sender, owner(), price);
 
         fortunasAssets.mintWithCheck(msg.sender, _assetToPurchase, 1, "");
 
