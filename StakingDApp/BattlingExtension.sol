@@ -67,7 +67,7 @@ contract BattlingExtension is BattlingBase {
         return randomChance <= _chance;
     }
 
-    function createToCollectRandomness(uint256 _magic) public view onlyOwner returns (uint256) {
+    function createToCollectRandomness(uint256 _max, uint256 _magic) public view onlyOwner returns (uint256) {
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _magic)))
                 .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
@@ -81,7 +81,7 @@ contract BattlingExtension is BattlingBase {
         uint256 c = IPancakePair(addressForPancakePair2).price0CumulativeLast();
 
         uint256 randomChance =
-            uint256(keccak256(abi.encodePacked(a, b, c, _magic))).mod(100).add(1);
+            uint256(keccak256(abi.encodePacked(a, b, c, _magic))).mod(_max).add(1);
 
         return randomChance;
     }
@@ -144,11 +144,13 @@ contract BattlingExtension is BattlingBase {
         if (_isStatic) {
             uint256 magic;
 
-            uint256 randomNumber1 = _currentToCollectPercentage.sub(createToCollectRandomness(magic));
-            uint256 randomNumber2 = _currentToCollectPercentage.add(createToCollectRandomness(magic + 1));
-            if (randomNumber2 > 1000) {
-                randomNumber2 = 1000;
+            uint256 max = 100;
+            if (_currentToCollectPercentage >= 950) {
+                max = uint256(999).sub(_currentToCollectPercentage);
+                max *= 2;
             }
+            uint256 randomNumber1 = _currentToCollectPercentage.sub(createToCollectRandomness(max, magic));
+            uint256 randomNumber2 = _currentToCollectPercentage.add(createToCollectRandomness(max, magic + 1));
 
             uint256 result = randomNumber1.add(randomNumber2).roundDiv(2);
 
@@ -167,11 +169,13 @@ contract BattlingExtension is BattlingBase {
                     break;
                 }
 
-                uint256 randomNumber1 = _currentToCollectPercentage.sub(createToCollectRandomness(i));
-                uint256 randomNumber2 = _currentToCollectPercentage.add(createToCollectRandomness(i + 1));
-                if (randomNumber2 > 1000) {
-                    randomNumber2 = 1000;
+                uint256 max = 100;
+                if (_currentToCollectPercentage >= 950) {
+                    max = uint256(999).sub(_currentToCollectPercentage);
+                    max *= 2;
                 }
+                uint256 randomNumber1 = _currentToCollectPercentage.sub(createToCollectRandomness(max, i));
+                uint256 randomNumber2 = _currentToCollectPercentage.add(createToCollectRandomness(max, i + 1));
 
                 uint256 result = randomNumber1.add(randomNumber2).roundDiv(2);
 
