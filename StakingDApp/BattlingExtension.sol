@@ -505,10 +505,14 @@ contract BattlingExtension is BattlingBase {
         return _tempBattle;
     }
 
-    function viewLockedRewards(uint256 _initialTokensStaked, uint256 _battleStartTime) public view onlyOwner returns (uint256) {
+    function viewLockedRewards(
+        uint256 _initialTokensStaked,
+        uint256 _currentRewardPercentagePerCycle,
+        uint256 _battleStartTime
+    ) external view onlyOwner returns (uint256) {
         uint256 cyclesForReward = block.timestamp.sub(_battleStartTime).div(rewardTime);
 
-        uint256 ratio = rewardPercentagesPerCycle[1].mul(10 ** 18).div(multiplierForReward);
+        uint256 ratio = _currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
         uint256 compoundReward = _compound(
             _initialTokensStaked,

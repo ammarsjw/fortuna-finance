@@ -487,7 +487,11 @@ contract Battling is BattlingBase, ERC1155Holder {
                     i == 0 &&
                     block.timestamp < tempBattle.battleStartTime.add(baseLockTime)
                 ) {
-                    potentialRewards[i] = battlingExtension.viewLockedRewards(tempBattle.initialTokensStaked, tempBattle.battleStartTime);
+                    potentialRewards[i] = battlingExtension.viewLockedRewards(
+                        tempBattle.initialTokensStaked,
+                        tempBattle.currentRewardPercentagePerCycle,
+                        tempBattle.battleStartTime
+                    );
                 }
                 else if (
                     i != 0 &&
