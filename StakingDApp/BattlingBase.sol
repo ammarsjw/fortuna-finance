@@ -12,16 +12,17 @@ abstract contract BattlingBase is Ownable {
     uint256 public rewardTime;                              // 30 minutes in seconds
     uint256 public oneDayTime;                              // 1 day in seconds
     uint256 public baseBattleTime;                          // 3 days in seconds
+    uint256 public baseLockTime;                            // 30 days in seconds
 
     uint256 public multiplier;
     uint256 public multiplierForRations;
     uint256 public multiplierForReward;
 
-    uint256[6] public toCollectPercentages;                        // chance to win for every iteration
-    uint256 public toCollectIncreasePerDay;                        // increase in chance to win for every ration day
+    uint256[6] public toCollectPercentages;                 // chance to win for every iteration
+    uint256 public toCollectIncreasePerDay;                 // increase in chance to win for every ration day
 
-    uint256[6] public rewardPercentages;                           // reward percentage per day
-    uint256[6] public rewardPercentagesPerCycle;                   // reward percentage per reward iteration
+    uint256[6] public rewardPercentages;                    // reward percentage per day
+    uint256[6] public rewardPercentagesPerCycle;            // reward percentage per reward iteration
     uint256[6] public minStakeAmount;                       // minimum stake amount to be able to receive rewards
 
     // structs
@@ -52,9 +53,11 @@ abstract contract BattlingBase is Ownable {
         // rewardTime = 1800;
         // oneDayTime = 86400;
         // baseBattleTime = 259200;
+        // baseLockTime = 2592000;
         rewardTime = 1;
         oneDayTime = 48;
         baseBattleTime = 144;
+        baseLockTime = 1440;
 
         multiplier = 10 ** 6;
         multiplierForRations = 10 ** 9;

@@ -483,8 +483,16 @@ contract Battling is BattlingBase, ERC1155Holder {
         for (uint8 i = 0 ; i < 5 ; i++) {
             tempBattle = battleForAddress[_user][i + 2];
             if (tempBattle.initialTokensStaked != 0) {
-                if (block.timestamp <
-                    tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))) {
+                if (
+                    i == 0 &&
+                    block.timestamp < tempBattle.battleStartTime.add(baseLockTime)
+                ) {
+                    potentialRewards[i] = battlingExtension.viewLockedRewards(tempBattle.initialTokensStaked, tempBattle.battleStartTime);
+                }
+                else if (
+                    i != 0 &&
+                    block.timestamp < tempBattle.battleStartTime.add(baseBattleTime).add(tempBattle.rationsDaysTotal.mul(oneDayTime))
+                ) {
                     committedRewards[i] = tempBattle.rewards;
 
                     tempBattle.currentToCollectPercentage = 1000;
@@ -499,6 +507,7 @@ contract Battling is BattlingBase, ERC1155Holder {
                     tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 
                     potentialRewards[i] = tempBattle.rewards.sub(committedRewards[i]);
+
                     passiveRewards[i] = tempBattle.passiveRewards;
                 }
             }
