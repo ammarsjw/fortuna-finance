@@ -77,8 +77,6 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     event UpdatedBattleResetPercentage(uint256 newBattleResetPercentage, uint256 oldBattleResetPercentage);
 
-    // event UpdatedBattlingExtension(address indexed newBattlingExtension, address indexed oldBattlingExtension);
-
     event EndedBattle(
         address indexed user,
         uint256 battleType,
@@ -124,7 +122,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         // TODO change
         rewardWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
 
-        suppliesCost = 5000;
+        suppliesCost = 20000;
 
         battleResetPercentage = 200;
 
@@ -162,12 +160,6 @@ contract Battling is BattlingBase, ERC1155Holder {
         emit UpdatedBattleResetPercentage(_battleResetPercentage, battleResetPercentage);
         battleResetPercentage = _battleResetPercentage;
     }
-
-    // function updateBattlingExtension(address _battlingExtension) external onlyOwner {
-    //     require(address(battlingExtension) != _battlingExtension, "updateBattleResetPercentage::BRP");
-    //     emit UpdatedBattlingExtension(_battlingExtension, address(battlingExtension));
-    //     battlingExtension = BattlingExtension(_battlingExtension);
-    // }
 
     // functions
 
@@ -255,6 +247,11 @@ contract Battling is BattlingBase, ERC1155Holder {
             }
         }
 
+        uint256 supplies = _amountToAdd.mul(suppliesCost).div(multiplier);
+        _amountToAdd -= supplies;
+
+        fortunasToken.transferFrom(msg.sender, treasuryWallet, supplies);
+
         fortunasToken.transferFrom(msg.sender, address(this), _amountToAdd);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
@@ -339,6 +336,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
         require(2 <= _battleType && _battleType <= 6, "endBattle::WBT1");
         require(tempBattle.initialTokensStaked != 0, "endBattle:WB");
+        if (_battleType == 2) {
+            uint256 battleEndTime = uint256(30).mul(oneDayTime).add(tempBattle.battleStartTime);
+            require(block.timestamp >= battleEndTime, "calculateRewardsForEndBattle::BNE");
+        }
 
         tempBattle = battlingExtension.calculateRewardsForEndBattle(tempBattle);
 

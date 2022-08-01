@@ -409,7 +409,7 @@ contract BattlingExtension is BattlingBase {
             battleEndTime = uint256(30).mul(oneDayTime).add(_tempBattle.battleStartTime);
         }
 
-        if (block.timestamp < battleEndTime && _tempBattle.battleType != 2) {
+        if (block.timestamp < battleEndTime) {
             _tempBattle = calculateRewards(_tempBattle);
         }
         else {
@@ -424,8 +424,6 @@ contract BattlingExtension is BattlingBase {
             uint256 compoundReward;
 
             if (_tempBattle.battleType == 2) {
-                require(block.timestamp >= battleEndTime, "calculateRewardsForEndBattle::BNE");
-
                 compoundReward = _compound(
                     tempTotalTokens,
                     ratio,
