@@ -231,6 +231,13 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         tempBattle = battlingExtension.calculateRewards(tempBattle);
 
+        uint256 supplies = _amountToAdd.mul(suppliesCost).div(multiplier);
+        _amountToAdd -= supplies;
+
+        fortunasToken.transferFrom(msg.sender, treasuryWallet, supplies);
+
+        fortunasToken.transferFrom(msg.sender, address(this), _amountToAdd);
+
         tempBattle.additionalTokens += _amountToAdd;
         if (
             tempBattle.additionalTokens >
@@ -246,13 +253,6 @@ contract Battling is BattlingBase, ERC1155Holder {
                 tempBattle.currentToCollectPercentage += assetPercentages[tempBattle.hero - 1];
             }
         }
-
-        uint256 supplies = _amountToAdd.mul(suppliesCost).div(multiplier);
-        _amountToAdd -= supplies;
-
-        fortunasToken.transferFrom(msg.sender, treasuryWallet, supplies);
-
-        fortunasToken.transferFrom(msg.sender, address(this), _amountToAdd);
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
     }
