@@ -141,6 +141,20 @@ contract BattlingExtension is BattlingBase {
         uint256 daysAtMaxToCollect;
         uint256 numberOfWins;
 
+        if (_numberOfCycles < uint256(1000).ceilDiv(_currentToCollectPercentage - 5)) {
+            bool result;
+
+            for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
+                result = createRandomness(_currentToCollectPercentage, 1000, i);
+
+                if (result) {
+                    numberOfWins++;
+                }
+            }
+
+            return (_currentToCollectPercentage, daysAtMaxToCollect, numberOfWins);
+        }
+
         if (_isStatic) {
             uint256 magic;
 
