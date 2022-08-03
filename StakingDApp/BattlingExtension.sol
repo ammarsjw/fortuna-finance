@@ -212,7 +212,7 @@ contract BattlingExtension is BattlingBase {
     function calculateRewards(Battle memory _tempBattle) public view onlyOwner returns (Battle memory) {
         uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
-        uint256 daysWagingBattle = block.timestamp.sub(_tempBattle.battleStartTime).div(oneDayTime);
+        uint256 daysWagingBattle = block.timestamp.safeSub(_tempBattle.battleStartTime).div(oneDayTime);
 
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
@@ -220,7 +220,7 @@ contract BattlingExtension is BattlingBase {
         uint256 cyclesForReward;
         uint256 compoundReward;
 
-        uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        uint256 cyclesToComplete = block.timestamp.safeSub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
 
         if (
             cyclesToComplete > _tempBattle.cyclesCompleted &&
@@ -229,9 +229,9 @@ contract BattlingExtension is BattlingBase {
             _tempBattle = _completeRemainingCycles(_tempBattle);
         }
 
-        if (daysWagingBattle.sub(_tempBattle.battleDaysExpended) != 0) {
+        if (daysWagingBattle.safeSub(_tempBattle.battleDaysExpended) != 0) {
             if (daysWagingBattle < 3) {
-                daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
+                daysForReward = daysWagingBattle.safeSub(_tempBattle.battleDaysExpended);
 
                 cyclesForReward = daysForReward.mul(48);
 
@@ -254,7 +254,7 @@ contract BattlingExtension is BattlingBase {
                 _tempBattle.rationsDaysTotal > 0
             ) {
                 if (_tempBattle.battleDaysExpended < 3) {
-                    daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
+                    daysForReward = uint256(3).safeSub(_tempBattle.battleDaysExpended);
 
                     cyclesForReward = daysForReward.mul(48);
 
@@ -275,7 +275,7 @@ contract BattlingExtension is BattlingBase {
                     _tempBattle.battleDaysExpended = 3;
                 }
 
-                daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
+                daysForReward = daysWagingBattle.safeSub(_tempBattle.battleDaysExpended);
 
                 bool continueBattle = daysForReward != 0;
 
@@ -311,7 +311,7 @@ contract BattlingExtension is BattlingBase {
             _tempBattle.battleDaysExpended = daysWagingBattle;
         }
 
-        cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        cyclesToComplete = block.timestamp.safeSub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
 
         if (
             cyclesToComplete > 0 &&
@@ -334,7 +334,7 @@ contract BattlingExtension is BattlingBase {
 
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
-        uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        uint256 cyclesToComplete = block.timestamp.safeSub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
         if (cyclesToComplete >= 48) {
             cyclesToComplete = _tempBattle.cyclesRemaining;
             _tempBattle.cyclesCompleted = 0;
@@ -342,7 +342,7 @@ contract BattlingExtension is BattlingBase {
             _tempBattle.battleDaysExpended++;
         }
         else {
-            cyclesToComplete = cyclesToComplete.sub(_tempBattle.cyclesCompleted);
+            cyclesToComplete = cyclesToComplete.safeSub(_tempBattle.cyclesCompleted);
             _tempBattle.cyclesCompleted += cyclesToComplete;
             _tempBattle.cyclesRemaining -= cyclesToComplete;
         }
@@ -370,7 +370,7 @@ contract BattlingExtension is BattlingBase {
 
         uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
-        uint256 cyclesToComplete = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+        uint256 cyclesToComplete = block.timestamp.safeSub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
         uint256 cyclesForReward = cyclesToComplete;
 
         if (_tempBattle.battleDaysExpended >= 3 && _tempBattle.currentToCollectPercentage != 1000) {
@@ -395,7 +395,7 @@ contract BattlingExtension is BattlingBase {
         );
 
         _tempBattle.cyclesCompleted = cyclesToComplete;
-        _tempBattle.cyclesRemaining = uint256(48).sub(cyclesToComplete);
+        _tempBattle.cyclesRemaining = uint256(48).safeSub(cyclesToComplete);
 
         return _tempBattle;
     }
@@ -416,7 +416,7 @@ contract BattlingExtension is BattlingBase {
             uint256 tempTotalTokens = _tempBattle.initialTokensStaked.add(_tempBattle.additionalTokens).add(_tempBattle.rewards);
 
             uint256 daysWagingBattle = _tempBattle.rationsDaysTotal.add(3);
-            uint256 daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
+            uint256 daysForReward = daysWagingBattle.safeSub(_tempBattle.battleDaysExpended);
 
             uint256 ratio = _tempBattle.currentRewardPercentagePerCycle.mul(10 ** 18).div(multiplierForReward);
 
@@ -432,7 +432,7 @@ contract BattlingExtension is BattlingBase {
                 _tempBattle.rewards += compoundReward;
             }
             else {
-                cyclesForReward = block.timestamp.sub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
+                cyclesForReward = block.timestamp.safeSub(_tempBattle.battleDaysExpended.mul(oneDayTime).add(_tempBattle.battleStartTime)).div(rewardTime);
 
                 if (
                     cyclesForReward > _tempBattle.cyclesCompleted &&
@@ -442,7 +442,7 @@ contract BattlingExtension is BattlingBase {
                 }
 
                 if (_tempBattle.battleDaysExpended < 3) {
-                    daysForReward = uint256(3).sub(_tempBattle.battleDaysExpended);
+                    daysForReward = uint256(3).safeSub(_tempBattle.battleDaysExpended);
 
                     cyclesForReward = daysForReward.mul(48);
 
@@ -463,7 +463,7 @@ contract BattlingExtension is BattlingBase {
                     _tempBattle.battleDaysExpended = 3;
                 }
 
-                daysForReward = daysWagingBattle.sub(_tempBattle.battleDaysExpended);
+                daysForReward = daysWagingBattle.safeSub(_tempBattle.battleDaysExpended);
 
                 bool continueBattle = daysForReward != 0;
 
@@ -491,7 +491,7 @@ contract BattlingExtension is BattlingBase {
             _tempBattle.battleDaysExpended = daysWagingBattle;
 
             // TODO change "60" to "rewardTime"
-            cyclesForReward = block.timestamp.sub(battleEndTime).div(60);
+            cyclesForReward = block.timestamp.safeSub(battleEndTime).div(60);
 
             ratio = rewardPercentagesPerCycle[0].mul(10 ** 18).div(multiplierForReward);
 

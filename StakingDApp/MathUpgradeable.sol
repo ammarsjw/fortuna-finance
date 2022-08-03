@@ -59,14 +59,9 @@ library MathUpgradeable {
     }
 
     function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 result;
-        if (a > b) {
-            result = a - b;
+        unchecked {
+            if (b > a) return 0;
+            return a - b;
         }
-        else {
-            result = 0;
-        }
-
-        return result;
     }
 }
