@@ -281,7 +281,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(reserves > 0, "purchaseAsset::NLP");
 
         uint256 price = reserves.mul(pricePercentage).roundDiv(multiplier);
-        fortunasToken.transferFrom(msg.sender, owner(), price);
+        fortunasToken.transferFrom(msg.sender, treasuryWallet, price);
 
         fortunasAssets.mintWithCheck(msg.sender, _assetToPurchase, 1, "");
 
