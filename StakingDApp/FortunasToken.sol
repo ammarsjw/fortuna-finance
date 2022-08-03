@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 import "./SafeMath.sol";
+import "./MathUpgradeable.sol";
 
 import "./ERC20.sol";
 import "./FortunasLedger.sol";
@@ -13,6 +14,7 @@ import "./IPancakePair.sol";
 
 contract FortunasToken is ERC20, Ownable {
     using SafeMath for uint256;
+    using MathUpgradeable for uint256;
 
     // BUSD mainnet
     // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
@@ -327,26 +329,26 @@ contract FortunasToken is ERC20, Ownable {
                 totalBuyingFeesAccumulated -= totalSellingFeesAccumulated;
 
                 toLiquidityAmount += totalSellingFeesAccumulated
-                    .mul(liquiditySellingFee).div(100);
+                    .mul(liquiditySellingFee).roundDiv(100);
 
                 toTreasuryAmount += totalSellingFeesAccumulated
-                    .mul(treasurySellingFee).div(100);
+                    .mul(treasurySellingFee).roundDiv(100);
 
                 toBurnAmount += totalSellingFeesAccumulated
-                    .mul(burnSellingFee).div(100);
+                    .mul(burnSellingFee).roundDiv(100);
 
                 totalSellingFeesAccumulated = 0;
             }
 
             if (totalBuyingFeesAccumulated > 0) {
                 toLiquidityAmount += totalBuyingFeesAccumulated
-                    .mul(liquidityBuyingFee).div(100);
+                    .mul(liquidityBuyingFee).roundDiv(100);
                 
                 toTreasuryAmount += totalBuyingFeesAccumulated
-                    .mul(treasuryBuyingFee).div(100);
+                    .mul(treasuryBuyingFee).roundDiv(100);
 
                 toBurnAmount += totalBuyingFeesAccumulated
-                    .mul(burnBuyingFee).div(100);
+                    .mul(burnBuyingFee).roundDiv(100);
             }
 
             super._transfer(address(this), liquidityWallet, toLiquidityAmount);
