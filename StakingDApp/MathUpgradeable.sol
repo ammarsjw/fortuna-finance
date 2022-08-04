@@ -58,6 +58,10 @@ library MathUpgradeable {
         return result;
     }
 
+    /**
+     * @dev Returns the subtraction of two unsigned integers and returns zero if
+     * overflow occurs
+     */
     function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
         unchecked {
             if (b > a) return 0;
