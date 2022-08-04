@@ -49,7 +49,7 @@ library MathUpgradeable {
     function roundDiv(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 result = a * 10 / b;
         if (result % 10 >= 5) {
-            result = a / b + (a % b == 0 ? 0 : 1);
+            result = a / b + 1;
         }
         else {
             result = a / b;
