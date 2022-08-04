@@ -45,10 +45,6 @@ contract BattlingExtension is BattlingBase {
     // RNG functions
 
     function createRandomness(uint256 _chance, uint256 _max, uint256 _magic) public view onlyOwner returns (bool) {
-        if (_chance == 0) {
-            return false;
-        }
-
         uint256 pairSelector =
             uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty, tx.origin, _magic)))
                 .mod(rng_pancakeFactory.allPairsLength().safeSub(2));
@@ -141,7 +137,7 @@ contract BattlingExtension is BattlingBase {
         uint256 daysAtMaxToCollect;
         uint256 numberOfWins;
 
-        if (_numberOfCycles < uint256(1000).ceilDiv(_currentToCollectPercentage - 5)) {
+        if (_numberOfCycles <= 10) {
             bool result;
 
             for (uint256 i = 0 ; i < _numberOfCycles ; i++) {

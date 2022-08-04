@@ -67,7 +67,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // mappings
 
-    mapping (address => mapping(uint8 => Battle)) private battleForAddress;
+    mapping (address => mapping(uint8 => Battle)) battleForAddress;
 
     // events
 
