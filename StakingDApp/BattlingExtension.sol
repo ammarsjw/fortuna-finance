@@ -137,7 +137,7 @@ contract BattlingExtension is BattlingBase {
         uint256 daysAtMaxToCollect;
         uint256 numberOfWins;
 
-        if (_numberOfCycles <= uint256(1000).sub(_currentToCollectPercentage).div(50).add(1)) {
+        if (_numberOfCycles <= uint256(1000).sub(_currentToCollectPercentage).div(50).add(2)) {
             bool result;
 
             for (uint256 i = 0 ; i < _numberOfCycles ; i++) {
