@@ -29,10 +29,7 @@ contract BattlingExtension is BattlingBase {
 
     constructor() {
         // PancakeRouter02 mainnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-
-        // TODO remove
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         IPancakeFactory _pancakeFactory = IPancakeFactory(_pancakeRouter.factory());
 
         rng_pancakeRouter = _pancakeRouter;
@@ -506,8 +503,7 @@ contract BattlingExtension is BattlingBase {
 
             _tempBattle.battleDaysExpended = daysWagingBattle;
 
-            // TODO change "60" to "rewardTime"
-            cyclesForReward = block.timestamp.sub(battleEndTime).div(60);
+            cyclesForReward = block.timestamp.sub(battleEndTime).div(rewardTime);
 
             ratio = rewardPercentagesPerCycle[0].mul(10 ** 18).div(multiplierForReward);
 
@@ -547,16 +543,5 @@ contract BattlingExtension is BattlingBase {
         uint256 accruedReward = ABDKMath64x64.mulu(ABDKMath64x64.pow(ABDKMath64x64.add(ABDKMath64x64.fromUInt(1), ABDKMath64x64.divu(_ratio,10**18)), _exponent), _principal);
 
         return accruedReward.sub(_principal);
-    }
-
-    // TODO testing only
-    function testRewardTime(uint256 _seconds) public {
-        rewardTime = _seconds;
-        oneDayTime = _seconds.mul(48);
-        baseBattleTime = _seconds.mul(144);
-    }
-
-    function testToCollectPercentage(uint256 _battleType, uint256 _chanceToCollect) public {
-        toCollectPercentages[_battleType] = _chanceToCollect;
     }
 }

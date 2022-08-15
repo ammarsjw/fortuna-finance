@@ -49,15 +49,10 @@ abstract contract BattlingBase is Ownable {
     // constructor
 
     constructor() {
-        // TODO
-        // rewardTime = 1800;
-        // oneDayTime = 86400;
-        // baseBattleTime = 259200;
-        // baseLockTime = 2592000;
-        rewardTime = 1;
-        oneDayTime = 48;
-        baseBattleTime = 144;
-        baseLockTime = 1440;
+        rewardTime = 1800;
+        oneDayTime = 86400;
+        baseBattleTime = 259200;
+        baseLockTime = 2592000;
 
         multiplier = 10 ** 6;
         multiplierForRations = 10 ** 9;

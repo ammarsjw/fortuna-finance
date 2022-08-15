@@ -20,10 +20,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     using MathUpgradeable for uint256;
 
     // BUSD mainnet
-    // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-
-    // TODO remove
-    address public BUSD;
+    address public immutable BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
 
     // PancakeSwap
     IPancakeRouter02 public pancakeRouter;
@@ -95,14 +92,8 @@ contract Battling is BattlingBase, ERC1155Holder {
     // constructor
 
     constructor(address _fortunasToken, address _fortunasAssets) {
-        // TODO remove
-        BUSD = 0x7D9385C733a967793EE14D933212ee44025f1B9d;
-
         // PancakeRouter02 mainnet
-        // IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-
-        // TODO remove
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
 
         pancakeRouter = _pancakeRouter;
@@ -116,11 +107,9 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         battlingExtension = new BattlingExtension();
 
-        // TODO change
-        treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
+        treasuryWallet = 0x8E98A208b3128066b8e1BA46BD8e34Dc09F8bf4f;
 
-        // TODO change
-        rewardWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
+        rewardWallet = 0x6429B65da9EEE43ECE3771c5A840145fddcd95bd;
 
         suppliesCost = 20000;
 
@@ -334,8 +323,10 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint8 _battleType
     ) external {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
+
         require(2 <= _battleType && _battleType <= 6, "endBattle::WBT1");
         require(tempBattle.initialTokensStaked != 0, "endBattle:WB");
+
         if (_battleType == 2) {
             uint256 battleEndTime = uint256(30).mul(oneDayTime).add(tempBattle.battleStartTime);
             require(block.timestamp >= battleEndTime, "calculateRewardsForEndBattle::BNE");
@@ -541,20 +532,5 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     function _validBattleType(uint8 _battleType) internal pure {
         require(3 <= _battleType && _battleType <= 6, "Battling::WBT2");
-    }
-
-    // TODO testing only
-    function testRewardTime(uint256 _seconds) public {
-        rewardTime = _seconds;
-        oneDayTime = _seconds.mul(48);
-        baseBattleTime = _seconds.mul(144);
-
-        battlingExtension.testRewardTime(_seconds);
-    }
-
-    function testToCollectPercentage(uint256 _battleType, uint256 _chanceToCollect) public {
-        toCollectPercentages[_battleType] = _chanceToCollect;
-
-        battlingExtension.testToCollectPercentage(_battleType, _chanceToCollect);
     }
 }

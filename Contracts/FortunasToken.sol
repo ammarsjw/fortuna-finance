@@ -17,10 +17,7 @@ contract FortunasToken is ERC20, Ownable {
     using MathUpgradeable for uint256;
 
     // BUSD mainnet
-    // address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-
-    // TODO remove
-    address public BUSD;
+    address public immutable BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
 
     // PancakeSwap
     IPancakeRouter02 public pancakeRouter;
@@ -59,7 +56,6 @@ contract FortunasToken is ERC20, Ownable {
 
     uint256 public totalSellingFeesAccumulated;
 
-    // TODO confirm
     uint256 public transferTokensAtAmount = 1000 * (10**18);
 
     // mappings
@@ -104,14 +100,8 @@ contract FortunasToken is ERC20, Ownable {
     // constructor
 
     constructor() ERC20("Fortunas Token", "FRTNA") {
-        // TODO remove
-        BUSD = 0x7D9385C733a967793EE14D933212ee44025f1B9d;
-
         // PancakeRouter02 mainnet
-    	// IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-
-        // TODO remove
-        IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+    	IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
             .createPair(address(this), BUSD);
 
@@ -124,11 +114,9 @@ contract FortunasToken is ERC20, Ownable {
 
     	liquidityWallet = address(owner());
 
-        // TODO change
-        treasuryWallet = 0x49A61ba8E25FBd58cE9B30E1276c4Eb41dD80a80;
+        treasuryWallet = 0x8E98A208b3128066b8e1BA46BD8e34Dc09F8bf4f;
 
-        // TODO change
-        rewardWallet = 0x3edCe801a3f1851675e68589844B1b412EAc6B07;
+        rewardWallet = 0x6429B65da9EEE43ECE3771c5A840145fddcd95bd;
 
         uint256 _liquidityBuyingFee = 25;
         uint256 _treasuryBuyingFee = 75;
@@ -154,6 +142,7 @@ contract FortunasToken is ERC20, Ownable {
         // exclude from receiving passive holding rewards
         excludeFromPassiveRewards(address(this), true);
         excludeFromPassiveRewards(address(_pancakeRouter), true);
+        excludeFromPassiveRewards(address(_pancakePair), true);
         excludeFromPassiveRewards(liquidityWallet, true);
         excludeFromPassiveRewards(treasuryWallet, true);
         excludeFromPassiveRewards(rewardWallet, true);
@@ -174,8 +163,7 @@ contract FortunasToken is ERC20, Ownable {
     // getters and setters
 
     function initializeBattling(address battlingContractAddress) external onlyOwner {
-        // TODO uncomment
-        // require(battling == address(0), "FRTNA::Battling has already been initialized");
+        require(battling == address(0), "FRTNA::Battling has already been initialized");
         battling = battlingContractAddress;
 
         excludeFromPassiveRewards(battling, true);
