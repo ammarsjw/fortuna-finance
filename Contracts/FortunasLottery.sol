@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import "./Context.sol";
 import "./Ownable.sol";
 import "./SafeMath.sol";
-import "./FortunasToken.sol";
+import "./FortunaToken.sol";
 
-contract FortunasLottery is Ownable {
+contract FortunaLottery is Ownable {
     using SafeMath for uint256;
 
-    FortunasToken fortunasToken;
+    FortunaToken fortunaToken;
 
     uint256 lotteryStartTime;
     uint256 timeTillLotteryEnd;
@@ -26,8 +26,8 @@ contract FortunasLottery is Ownable {
 
     // constructor
 
-    constructor(address _fortunasToken) {
-        fortunasToken = FortunasToken(payable(_fortunasToken));
+    constructor(address _fortunaToken) {
+        fortunaToken = FortunaToken(payable(_fortunaToken));
 
         lotteryStartTime = block.timestamp;
         timeTillLotteryEnd = 86400;
@@ -35,8 +35,8 @@ contract FortunasLottery is Ownable {
 
     // setters
 
-    function setFortunasToken(address _fortunasToken) external onlyOwner {
-        fortunasToken = FortunasToken(payable(_fortunasToken));
+    function setFortunaToken(address _fortunaToken) external onlyOwner {
+        fortunaToken = FortunaToken(payable(_fortunaToken));
     }
 
     // functions
@@ -51,7 +51,7 @@ contract FortunasLottery is Ownable {
 
     function depositLottery(uint256 _tokens) external {
         require(isLotteryLive, "depositLottery::Lottery is currently inactive. Please try again later");
-        require(fortunasToken.balanceOf(msg.sender) != 0, "depositLottery::Insufficient balance");
+        require(fortunaToken.balanceOf(msg.sender) != 0, "depositLottery::Insufficient balance");
         require(msg.sender != address(0), "depositLotter::msg.sender cannot be dead address");
 
         if (isNewPlayer(msg.sender)) {
@@ -63,7 +63,7 @@ contract FortunasLottery is Ownable {
             addressForPlayers[msg.sender].tokens += _tokens;
         }
 
-        fortunasToken.transferFrom(msg.sender, address(this), _tokens);
+        fortunaToken.transferFrom(msg.sender, address(this), _tokens);
     }
 
     function withdrawLottery(uint256 _tokens) external {
@@ -80,7 +80,7 @@ contract FortunasLottery is Ownable {
             addressForPlayers[msg.sender].tokens -= _tokens;
         }
 
-        fortunasToken.transfer(msg.sender, _tokens);
+        fortunaToken.transfer(msg.sender, _tokens);
     }
 
     function declareWinner() external onlyOwner returns (bool) {
@@ -97,11 +97,11 @@ contract FortunasLottery is Ownable {
         else {
             isWinnable = true;
 
-            uint256 winningAmount = fortunasToken.balanceOf(address(this)).div(10);
+            uint256 winningAmount = fortunaToken.balanceOf(address(this)).div(10);
 
             uint256[10] memory winners = generateRandomNumbers();
             for (uint256 i = 0 ; i < 10 ; i++) {
-                fortunasToken.transfer(addressIndexes[winners[i]], winningAmount);
+                fortunaToken.transfer(addressIndexes[winners[i]], winningAmount);
             }
         }
 
@@ -130,7 +130,7 @@ contract FortunasLottery is Ownable {
     }
 
     function getPrizePool() external view returns (uint256) {
-        return fortunasToken.balanceOf(address(this));
+        return fortunaToken.balanceOf(address(this));
     }
 
     function isNewPlayer(address playerAddress) internal view returns (bool) {

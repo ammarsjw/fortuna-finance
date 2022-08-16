@@ -6,18 +6,18 @@ import "./SafeMath.sol";
 import "./MathUpgradeable.sol";
 
 import "./ERC20.sol";
-import "./FortunasLedger.sol";
+import "./FortunaLedger.sol";
 
 import "./IPancakeFactory.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakePair.sol";
 
-contract FortunasToken is ERC20, Ownable {
+contract FortunaToken is ERC20, Ownable {
     using SafeMath for uint256;
     using MathUpgradeable for uint256;
 
     // BUSD mainnet
-    address public immutable BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+    address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
 
     // PancakeSwap
     IPancakeRouter02 public pancakeRouter;
@@ -26,7 +26,7 @@ contract FortunasToken is ERC20, Ownable {
     bool private transferring;
 
     // Ledger for all FRTNA holders
-    FortunasLedger public fortunasLedger;
+    FortunaLedger public fortunaLedger;
 
     // Battling contract address
     address public battling;
@@ -99,7 +99,7 @@ contract FortunasToken is ERC20, Ownable {
 
     // constructor
 
-    constructor() ERC20("Fortunas Token", "FRTNA") {
+    constructor() ERC20("Fortuna", "FRTNA") {
         // PancakeRouter02 mainnet
     	IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
         address _pancakePair = IPancakeFactory(_pancakeRouter.factory())
@@ -110,7 +110,7 @@ contract FortunasToken is ERC20, Ownable {
 
         _setAutomatedMarketMakerPair(_pancakePair, true);
 
-        fortunasLedger = new FortunasLedger();
+        fortunaLedger = new FortunaLedger();
 
     	liquidityWallet = address(owner());
 
@@ -142,7 +142,6 @@ contract FortunasToken is ERC20, Ownable {
         // exclude from receiving passive holding rewards
         excludeFromPassiveRewards(address(this), true);
         excludeFromPassiveRewards(address(_pancakeRouter), true);
-        excludeFromPassiveRewards(address(_pancakePair), true);
         excludeFromPassiveRewards(liquidityWallet, true);
         excludeFromPassiveRewards(treasuryWallet, true);
         excludeFromPassiveRewards(rewardWallet, true);
@@ -154,10 +153,7 @@ contract FortunasToken is ERC20, Ownable {
         excludeFromFees(treasuryWallet, true);
         excludeFromFees(rewardWallet, true);
 
-        // TODO change initial supply
-        // TODO change initial supply for reward wallet
-        _mint(rewardWallet, 250000000 * (10 ** 18));
-        _mint(owner(), 250000000 * (10 ** 18));
+        _mint(rewardWallet, 50000000 * (10 ** 18));
     }
 
     // getters and setters
@@ -392,7 +388,7 @@ contract FortunasToken is ERC20, Ownable {
 
     function _updateLedger(address account) internal {
         (, bool isFirstTransaction) =
-            fortunasLedger.updatePassiveRewards(account, balanceOf(account));
+            fortunaLedger.updatePassiveRewards(account, balanceOf(account));
 
         if (isFirstTransaction) {
             emit CreatedLedger(
@@ -405,7 +401,7 @@ contract FortunasToken is ERC20, Ownable {
         require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA::Account is excluded from passive rewards");
 
         uint256 totalPassiveRewards =
-            fortunasLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
+            fortunaLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
 
         if (totalPassiveRewards == 0) {
             require(false, "FRTNA::No rewards to claim");
@@ -436,7 +432,7 @@ contract FortunasToken is ERC20, Ownable {
         require(!isExcludedFromPassiveRewards[account], "FRTNA::Account is excluded from passive rewards");
 
         uint256 totalPassiveRewards =
-            fortunasLedger.getCurrentLedgerStatus(account, balanceOf(account));
+            fortunaLedger.getCurrentLedgerStatus(account, balanceOf(account));
 
         return totalPassiveRewards;
     }
@@ -452,7 +448,7 @@ contract FortunasToken is ERC20, Ownable {
     // modifiers
 
     modifier onlyContract {
-        require(msg.sender == battling, "FRTNA::Only Fortunas Battling Contract can call this function");
+        require(msg.sender == battling, "FRTNA::Only Fortuna Battling Contract can call this function");
         _;
     }
 }

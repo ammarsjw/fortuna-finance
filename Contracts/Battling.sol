@@ -9,8 +9,8 @@ import "./BattlingBase.sol";
 import "./BattlingExtension.sol";
 import "./ERC1155Holder.sol";
 
-import "./IFortunasToken.sol";
-import "./IFortunasAssets.sol";
+import "./IFortunaToken.sol";
+import "./IFortunaAssets.sol";
 import "./IPancakeFactory.sol";
 import "./IPancakeRouter02.sol";
 import "./IPancakePair.sol";
@@ -20,7 +20,7 @@ contract Battling is BattlingBase, ERC1155Holder {
     using MathUpgradeable for uint256;
 
     // BUSD mainnet
-    address public immutable BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+    address public BUSD = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
 
     // PancakeSwap
     IPancakeRouter02 public pancakeRouter;
@@ -30,10 +30,10 @@ contract Battling is BattlingBase, ERC1155Holder {
     IERC20 public LPToken;
 
     // FRTNA
-    IFortunasToken public fortunasToken;
+    IFortunaToken public fortunaToken;
 
-    // Fortunas Multi Token for heroes and cavalry
-    IFortunasAssets public fortunasAssets;
+    // Fortuna Multi Token for heroes and cavalry
+    IFortunaAssets public fortunaAssets;
 
     // Contract that handles calculations for Battling
     BattlingExtension public battlingExtension;
@@ -91,19 +91,19 @@ contract Battling is BattlingBase, ERC1155Holder {
 
     // constructor
 
-    constructor(address _fortunasToken, address _fortunasAssets) {
+    constructor(address _fortunaToken, address _fortunaAssets) {
         // PancakeRouter02 mainnet
         IPancakeRouter02 _pancakeRouter = IPancakeRouter02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-        address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunasToken, BUSD);
+        address _addressForPancakePair = IPancakeFactory(_pancakeRouter.factory()).getPair(_fortunaToken, BUSD);
 
         pancakeRouter = _pancakeRouter;
         pancakePair = IPancakePair(_addressForPancakePair);
 
         LPToken = IERC20(_addressForPancakePair);
 
-        fortunasToken = IFortunasToken(_fortunasToken);
+        fortunaToken = IFortunaToken(_fortunaToken);
 
-        fortunasAssets = IFortunasAssets(_fortunasAssets);
+        fortunaAssets = IFortunaAssets(_fortunaAssets);
 
         battlingExtension = new BattlingExtension();
 
@@ -167,9 +167,9 @@ contract Battling is BattlingBase, ERC1155Holder {
             uint256 supplies = _amount.mul(suppliesCost).div(multiplier);
             _amount -= supplies;
 
-            fortunasToken.transferFrom(msg.sender, treasuryWallet, supplies);
+            fortunaToken.transferFrom(msg.sender, treasuryWallet, supplies);
 
-            fortunasToken.transferFrom(msg.sender, address(this), _amount);
+            fortunaToken.transferFrom(msg.sender, address(this), _amount);
         }
 
         battleForAddress[msg.sender][_battleType] = Battle(_battleType, _amount, 0, 0, 0, 0, rewardPercentagesPerCycle[_battleType - 1], toCollectPercentages[_battleType - 1], 0, 0, block.timestamp, 0, 0, 0, 0, 0);
@@ -204,7 +204,7 @@ contract Battling is BattlingBase, ERC1155Holder {
 
         uint256 tempRations = battlingExtension.calculateRations(tempBattle, _rationDays);
 
-        fortunasToken.burn(msg.sender, tempRations);
+        fortunaToken.burn(msg.sender, tempRations);
 
         tempBattle.rations += tempRations;
         tempBattle.rationsDaysTotal += _rationDays;
@@ -223,9 +223,9 @@ contract Battling is BattlingBase, ERC1155Holder {
         uint256 supplies = _amountToAdd.mul(suppliesCost).div(multiplier);
         _amountToAdd -= supplies;
 
-        fortunasToken.transferFrom(msg.sender, treasuryWallet, supplies);
+        fortunaToken.transferFrom(msg.sender, treasuryWallet, supplies);
 
-        fortunasToken.transferFrom(msg.sender, address(this), _amountToAdd);
+        fortunaToken.transferFrom(msg.sender, address(this), _amountToAdd);
 
         tempBattle.additionalTokens += _amountToAdd;
         if (
@@ -261,7 +261,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         uint256 reserves;
-        if (address(fortunasToken) == pancakePair.token0()) {
+        if (address(fortunaToken) == pancakePair.token0()) {
             (reserves, , ) = pancakePair.getReserves();
         }
         else {
@@ -270,14 +270,14 @@ contract Battling is BattlingBase, ERC1155Holder {
         require(reserves > 0, "purchaseAsset::NLP");
 
         uint256 price = reserves.mul(pricePercentage).roundDiv(multiplier);
-        fortunasToken.transferFrom(msg.sender, treasuryWallet, price);
+        fortunaToken.transferFrom(msg.sender, treasuryWallet, price);
 
-        fortunasAssets.mintWithCheck(msg.sender, _assetToPurchase, 1, "");
+        fortunaAssets.mintWithCheck(msg.sender, _assetToPurchase, 1, "");
 
         emit PurchasedAsset(
             msg.sender,
             _assetToPurchase,
-            fortunasAssets.balanceOf(msg.sender, _assetToPurchase)
+            fortunaAssets.balanceOf(msg.sender, _assetToPurchase)
         );
     }
 
@@ -288,7 +288,7 @@ contract Battling is BattlingBase, ERC1155Holder {
         Battle memory tempBattle = battleForAddress[msg.sender][_battleType];
 
         require(1 <= _assetToDeploy && _assetToDeploy <= 10, "deployAsset::WA");
-        require(fortunasAssets.balanceOf(msg.sender, _assetToDeploy) > 0, "deployAsset::ANO");
+        require(fortunaAssets.balanceOf(msg.sender, _assetToDeploy) > 0, "deployAsset::ANO");
 
         if (_assetToDeploy <= 5) {
             require(tempBattle.hero == 0, "deployAsset::HIB");
@@ -314,7 +314,7 @@ contract Battling is BattlingBase, ERC1155Holder {
             tempBattle.cavalry = _assetToDeploy;
         }
 
-        fortunasAssets.safeTransferFromWithCheck(msg.sender, address(this), _assetToDeploy, 1, "");
+        fortunaAssets.safeTransferFromWithCheck(msg.sender, address(this), _assetToDeploy, 1, "");
 
         battleForAddress[msg.sender][_battleType] = tempBattle;
     }
@@ -339,19 +339,19 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             uint256 rewardsToReturn = tempBattle.rewards.add(tempBattle.passiveRewards);
 
-            uint256 rewardWalletBalance = fortunasToken.balanceOf(rewardWallet);
+            uint256 rewardWalletBalance = fortunaToken.balanceOf(rewardWallet);
 
             bool isMint = rewardsToReturn > rewardWalletBalance;
 
             if (isMint) {
                 if (rewardWalletBalance != 0) {
-                    fortunasToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
+                    fortunaToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
                 }
 
-                fortunasToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
+                fortunaToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
             }
             else {
-                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
+                fortunaToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
             }
         }
         else {
@@ -359,22 +359,22 @@ contract Battling is BattlingBase, ERC1155Holder {
 
             uint256 rewardsToReturn = tempBattle.rewards.add(tempBattle.passiveRewards);
 
-            uint256 rewardWalletBalance = fortunasToken.balanceOf(rewardWallet);
+            uint256 rewardWalletBalance = fortunaToken.balanceOf(rewardWallet);
 
             bool isMint = rewardsToReturn > rewardWalletBalance;
 
             if (isMint) {
                 if (rewardWalletBalance != 0) {
-                    fortunasToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
+                    fortunaToken.transferFrom(rewardWallet, msg.sender, rewardWalletBalance);
                 }
 
-                fortunasToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
+                fortunaToken.mint(msg.sender, rewardsToReturn.sub(rewardWalletBalance));
             }
             else {
-                fortunasToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
+                fortunaToken.transferFrom(rewardWallet, msg.sender, rewardsToReturn);
             }
 
-            fortunasToken.transfer(msg.sender, tokensToReturn);
+            fortunaToken.transfer(msg.sender, tokensToReturn);
 
             if (tempBattle.hero != 0 || tempBattle.cavalry != 0) {
                 uint256 chanceToLoseAssets = baseChanceToLoseAssets;
@@ -393,11 +393,11 @@ contract Battling is BattlingBase, ERC1155Holder {
                 }
 
                 if (tempBattle.hero != 0) {
-                    fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.hero, 1, "");
+                    fortunaAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.hero, 1, "");
                 }
 
                 if (tempBattle.cavalry != 0) {
-                    fortunasAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
+                    fortunaAssets.safeTransferFromWithCheck(address(this), msg.sender, tempBattle.cavalry, 1, "");
                 }
             }
         }
@@ -436,24 +436,24 @@ contract Battling is BattlingBase, ERC1155Holder {
         }
 
         if (isHeroLost) {
-            fortunasAssets.burnWithCheck(address(this), _tempBattle.hero, 1);
+            fortunaAssets.burnWithCheck(address(this), _tempBattle.hero, 1);
 
             emit LostAsset(
                 msg.sender,
                 _tempBattle.hero,
-                fortunasAssets.balanceOf(msg.sender, _tempBattle.hero)
+                fortunaAssets.balanceOf(msg.sender, _tempBattle.hero)
             );
 
             _tempBattle.hero = 0;
         }
 
         if (isCavalryLost) {
-            fortunasAssets.burnWithCheck(address(this), _tempBattle.cavalry, 1);
+            fortunaAssets.burnWithCheck(address(this), _tempBattle.cavalry, 1);
 
             emit LostAsset(
                 msg.sender,
                 _tempBattle.cavalry,
-                fortunasAssets.balanceOf(msg.sender, _tempBattle.cavalry)
+                fortunaAssets.balanceOf(msg.sender, _tempBattle.cavalry)
             );
 
             _tempBattle.cavalry = 0;

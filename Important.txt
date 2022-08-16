@@ -1,0 +1,19 @@
+Chainlink Testnet Subscription ID:
+6244
+
+Addresses:
+Owner 0x6429B65da9EEE43ECE3771c5A840145fddcd95bd 
+Reward 0x6429B65da9EEE43ECE3771c5A840145fddcd95bd
+Treasury 0x8E98A208b3128066b8e1BA46BD8e34Dc09F8bf4f
+
+Deployment Costs:
+FortunaToken - 0.036874 BNB
+FortunaAssets - 0.010035 BNB
+Battling - 0.04244492 BNB
+
+PancakeSwap
+Gempad for fair launch
+Pair with BUSD
+Initial total supply is 50 million
+Fortuna and FRTNA
+Wallets are correct

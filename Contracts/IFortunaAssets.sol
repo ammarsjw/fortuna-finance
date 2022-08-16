@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./IERC1155.sol";
 
-interface IFortunasAssets is IERC1155 {
+interface IFortunaAssets is IERC1155 {
 
     function mintWithCheck(
         address _to,

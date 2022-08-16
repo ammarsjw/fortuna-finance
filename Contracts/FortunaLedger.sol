@@ -5,7 +5,7 @@ import "./Ownable.sol";
 import "./SafeMath.sol";
 import "./ABDKMath64x64.sol";
 
-contract FortunasLedger is Ownable {
+contract FortunaLedger is Ownable {
     using SafeMath for uint256;
 
     uint256 public passiveRewardTime;

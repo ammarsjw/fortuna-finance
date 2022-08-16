@@ -6,7 +6,7 @@ import "./SafeMath.sol";
 
 import "./ERC1155.sol";
 
-contract FortunasAssets is Ownable, ERC1155 {
+contract FortunaAssets is Ownable, ERC1155 {
 
     address public battling;
 
