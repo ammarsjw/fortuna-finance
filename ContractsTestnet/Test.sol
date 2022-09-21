@@ -408,4 +408,34 @@ contract Test is Ownable, BaseTest {
     function fun31(uint256 startTime) external view returns (uint256) {
         return block.timestamp.sub(startTime).ceilDiv(1800);
     }
+
+    function fun32(uint256 amount) external pure returns (uint256) {
+        return amount.mul(10 ** (18 - 6)).mul(0.0007 * (10 ** 18)).div(10 ** 18);
+    }
+
+    function fun33(uint256 amount) external pure returns (uint256, uint256) {
+        return ((amount / 31536000) * 60 * 5, amount / 31536000 * 60 * 5);
+    }
+
+    function fun34(uint256 total) external pure returns (uint256[] memory arr2, uint256 length) {
+        uint num;
+
+        for (uint256 i = 0 ; i < total ; i++) {
+            if (i.mod(2) == 0) {
+                num++;
+            }
+        }
+
+        arr2 = new uint256[](num);
+        num = 0;
+
+        for (uint256 i = 0 ; i < total ; i++) {
+            if (i.mod(2) == 0) {
+                arr2[num] = i;
+                num++;
+            }
+        }
+
+        length = arr2.length;
+    }
 }
