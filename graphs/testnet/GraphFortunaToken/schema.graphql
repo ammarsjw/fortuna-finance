@@ -1,0 +1,34 @@
+type Transaction @entity {
+  id: ID!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  from: Bytes!
+  to: Bytes
+  value: BigInt!
+  gasPrice: BigInt!
+}
+
+type LedgerCreated @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes!
+  totalPassiveRewards: BigInt!
+  nextReward: BigInt!
+}
+
+type LedgerUpdated @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes!
+  totalPassiveRewards: BigInt!
+  nextReward: BigInt!
+}
+
+type LedgerClaimed @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes!
+  totalPassiveRewards: BigInt!
+  nextReward: BigInt!
+}

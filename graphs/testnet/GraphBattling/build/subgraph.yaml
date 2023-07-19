@@ -1,0 +1,45 @@
+specVersion: 0.0.2
+schema:
+  file: schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Battling
+    network: rinkeby
+    source:
+      address: "0x144f4F1Ffc42D1F6Af4e0F121bFD53a985295A0d"
+      abi: Battling
+      startBlock: 10935214
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - BattleStarted
+        - BattleUpdated
+        - BattleEnded
+        - AssetPurchased
+        - AssetDeployed
+        - AssetReturned
+        - AssetLost
+      abis:
+        - name: Battling
+          file: Battling\abis\Battling.json
+      eventHandlers:
+        - event: BattleStarted(indexed
+            address,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleBattleStarted
+        - event: BattleUpdated(indexed
+            address,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleBattleUpdated
+        - event: BattleEnded(indexed
+            address,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handleBattleEnded
+        - event: AssetPurchased(indexed address,uint256,uint256)
+          handler: handleAssetPurchased
+        - event: AssetDeployed(indexed address,uint256,uint256)
+          handler: handleAssetDeployed
+        - event: AssetReturned(indexed address,uint256,uint256)
+          handler: handleAssetReturned
+        - event: AssetLost(indexed address,uint256,uint256)
+          handler: handleAssetLost
+      file: Battling\Battling.wasm

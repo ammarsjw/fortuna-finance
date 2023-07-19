@@ -1,0 +1,93 @@
+type Transaction @entity {
+  id: ID!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  from: Bytes!
+  to: Bytes
+  value: BigInt!
+  gasPrice: BigInt!
+}
+
+type BattleStarted @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  battleStatus: Boolean!
+  initialTokensStaked: BigInt!
+  additionalTokens: BigInt!
+  rewards: BigInt!
+  rations: BigInt!
+  passiveRewards: BigInt!
+  battleStartTime: BigInt!
+  battleDurationInDays: BigInt!
+  hero: BigInt!
+  cavalry: BigInt!
+}
+
+type BattleUpdated @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  battleStatus: Boolean!
+  initialTokensStaked: BigInt!
+  additionalTokens: BigInt!
+  rewards: BigInt!
+  rations: BigInt!
+  passiveRewards: BigInt!
+  battleStartTime: BigInt!
+  battleDurationInDays: BigInt!
+  hero: BigInt!
+  cavalry: BigInt!
+}
+
+type BattleEnded @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  battleType: BigInt!
+  battleStatus: Boolean!
+  initialTokensStaked: BigInt!
+  additionalTokens: BigInt!
+  rewards: BigInt!
+  rations: BigInt!
+  passiveRewards: BigInt!
+  battleStartTime: BigInt!
+  battleDurationInDays: BigInt!
+  hero: BigInt!
+  cavalry: BigInt!
+}
+
+type AssetPurchased @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  asset: BigInt!
+  amount: BigInt!
+}
+
+type AssetDeployed @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  asset: BigInt!
+  amount: BigInt!
+}
+
+type AssetReturned @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  asset: BigInt!
+  amount: BigInt!
+}
+
+type AssetLost @entity {
+  id: ID!
+  transaction: Transaction!
+  user: Bytes!
+  asset: BigInt!
+  amount: BigInt!
+}

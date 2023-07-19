@@ -1,0 +1,17 @@
+{
+  "name": "fortunas-token",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ ammarsjw/fortunas-token",
+    "create-local": "graph create --node http://localhost:8020/ ammarsjw/fortunas-token",
+    "remove-local": "graph remove --node http://localhost:8020/ ammarsjw/fortunas-token",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 ammarsjw/fortunas-token",
+    "deploy-hosted": "graph deploy --product hosted-service ammarsjw/fortunas-token"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.29.0",
+    "@graphprotocol/graph-ts": "0.26.0"
+  }
+}

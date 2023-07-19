@@ -1,0 +1,125 @@
+type Transaction @entity {
+  id: ID!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  from: Bytes!
+  to: Bytes
+  value: BigInt!
+  gasPrice: BigInt!
+}
+
+type Approval @entity {
+  id: ID!
+  transaction: Transaction!
+  owner: Bytes
+  spender: Bytes
+  value: BigInt
+}
+
+type Transfer @entity {
+  id: ID!
+  transaction: Transaction!
+  from: Bytes
+  to: Bytes
+  value: BigInt
+}
+
+type CreatedLedger @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes
+}
+
+type ClaimedLedger @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes
+  totalPassiveRewards: BigInt
+}
+
+type ExcludedFromFees @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes
+  isExcluded: Boolean
+}
+
+type ExcludedMultipleAccountsFromFees @entity {
+  id: ID!
+  transaction: Transaction!
+  accounts: [Bytes!]
+  isExcluded: Boolean
+}
+
+type ExcludedFromPassiveRewards @entity {
+  id: ID!
+  transaction: Transaction!
+  account: Bytes
+  isExcluded: Boolean
+}
+
+type ExcludedMultipleAccountsFromPassiveRewards @entity {
+  id: ID!
+  transaction: Transaction!
+  accounts: [Bytes!]
+  isExcluded: Boolean
+}
+
+type SetAutomatedMarketMakerPair @entity {
+  id: ID!
+  transaction: Transaction!
+  pair: Bytes
+  value: Boolean
+}
+
+type UpdatedBuyingFees @entity {
+  id: ID!
+  transaction: Transaction!
+  newLiquidityBuyingFee: BigInt
+  newTreasuryBuyingFee: BigInt
+  newBurnBuyingFee: BigInt
+}
+
+type UpdatedSellingFees @entity {
+  id: ID!
+  transaction: Transaction!
+  newLiquiditySellingFee: BigInt
+  newTreasurySellingFee: BigInt
+  newBurnSellingFee: BigInt
+}
+
+type UpdatedLiquidityWallet @entity {
+  id: ID!
+  transaction: Transaction!
+  newLiquidityWallet: Bytes
+  oldLiquidityWallet: Bytes
+}
+
+type UpdatedTreasuryWallet @entity {
+  id: ID!
+  transaction: Transaction!
+  newTreasuryWallet: Bytes
+  oldTreasuryWallet: Bytes
+}
+
+type UpdatedRewardWallet @entity {
+  id: ID!
+  transaction: Transaction!
+  newRewardWallet: Bytes
+  oldRewardWallet: Bytes
+}
+
+type UpdatedPancakeRouter @entity {
+  id: ID!
+  transaction: Transaction!
+  newAddress: Bytes
+  oldAddress: Bytes
+}
+
+type OwnershipTransferred @entity {
+  id: ID!
+  transaction: Transaction!
+  previousOwner: Bytes
+  newOwner: Bytes
+}

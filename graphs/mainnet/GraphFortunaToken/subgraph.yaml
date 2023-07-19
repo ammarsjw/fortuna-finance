@@ -1,0 +1,69 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: FortunaToken
+    network: bsc
+    source:
+      address: "0x3949D773d188Bb53E67CAE443Aa8e741878b5216"
+      abi: FortunaToken
+      startBlock: 20491197
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Approval
+        - Transfer
+        - CreatedLedger
+        - ClaimedLedger
+        - ExcludedFromFees
+        - ExcludedMultipleAccountsFromFees
+        - ExcludedFromPassiveRewards
+        - ExcludedMultipleAccountsFromPassiveRewards
+        - SetAutomatedMarketMakerPair
+        - UpdatedBuyingFees
+        - UpdatedSellingFees
+        - UpdatedLiquidityWallet
+        - UpdatedTreasuryWallet
+        - UpdatedRewardWallet
+        - UpdatedPancakeRouter
+        - OwnershipTransferred
+      abis:
+        - name: FortunaToken
+          file: ./abis/FortunaToken.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleApproval
+        - event: ClaimedLedger(indexed address,uint256)
+          handler: handleClaimedLedger
+        - event: CreatedLedger(indexed address)
+          handler: handleCreatedLedger
+        - event: ExcludedFromFees(indexed address,bool)
+          handler: handleExcludedFromFees
+        - event: ExcludedFromPassiveRewards(indexed address,bool)
+          handler: handleExcludedFromPassiveRewards
+        - event: ExcludedMultipleAccountsFromFees(address[],bool)
+          handler: handleExcludedMultipleAccountsFromFees
+        - event: ExcludedMultipleAccountsFromPassiveRewards(address[],bool)
+          handler: handleExcludedMultipleAccountsFromPassiveRewards
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: SetAutomatedMarketMakerPair(indexed address,indexed bool)
+          handler: handleSetAutomatedMarketMakerPair
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: UpdatedBuyingFees(uint256,uint256,uint256)
+          handler: handleUpdatedBuyingFees
+        - event: UpdatedLiquidityWallet(indexed address,indexed address)
+          handler: handleUpdatedLiquidityWallet
+        - event: UpdatedPancakeRouter(indexed address,indexed address)
+          handler: handleUpdatedPancakeRouter
+        - event: UpdatedRewardWallet(indexed address,indexed address)
+          handler: handleUpdatedRewardWallet
+        - event: UpdatedSellingFees(uint256,uint256,uint256)
+          handler: handleUpdatedSellingFees
+        - event: UpdatedTreasuryWallet(indexed address,indexed address)
+          handler: handleUpdatedTreasuryWallet
+      file: ./src/fortuna-token.ts
