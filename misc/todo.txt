@@ -1,0 +1,64 @@
+// IMPORTANT TODO - can I have more than 1 hero in a battle or similarly can I have more than 1 cavalry in a battle
+
+// TODO/Done LP staking
+// TODO/Done conditions for addHero/addCavalry (owned or not) -> mapping?
+// TODO/Done pancake pair reserve for purchasing/selling heroes/cavalry (maybe selling not needed)
+// TODO/Done Fortunas Chance. Random Hero (L1 to L5)
+// TODO/NotNeeded 33% chance of losing heroes, cavalry, rations when unstaking after battle finished
+// TODO/Done 50% chance of losing heroes, cavalry, rations when unstaking before battle finished
+// TODO/Done decrease in .5% chance of losing heroes, cavalry, rations after every ration day when unstaking before battle finished
+// TODO/Done dividend tracking token
+// TODO/Done cavalry increase in max limit
+// TODO/Done check if isLimitReached is done properly
+// TODO/Done math upgradeable -> add a function for round off and safe Sub -> ".roundDiv", ".safeSub" to make the code less clogged
+// TODO/Done adjust getters (how do mappings and getters work) (do i even need so many getters)
+// TODO/Done adjust setters (do i even need so many setters)
+// TODO/Done Losses on remove troops and 50% of losses when unstaking after battle finished
+// TODO/Done check with wasif for some TODOs about liquidity, LP Staking and pancake swap
+// TODO/Done buy/sell fees
+// TODO/Done Ludos? Lottery? Similar to Titano PLAY (https://app.sphere.finance/games)
+// TODO/Done Heroes and cavalry -> NFTs (ERC1155)
+// TODO/Done Heroes and cavalry -> make sure to add checks so that more than 1 of any type of NFT cant be owned (1 x L1 hero, 1 x L1 cavalry etc)
+// TODO/Done FortunasToken -> make sure tax is only on selling/buying and not on every transfer -> add this contract's address to excludedFromFees mapping
+// TODO/Done divide normal reward function into 2 (normal + extra)
+// TODO/Done islimitreached and reconfigure reward reset for additional troops not rations
+// TODO/Done nft transfer and mapping in assets for ownership
+// TODO/Done adjust calculation for price of heroes/cavalry
+// TODO/Done Reward -> Compound interest
+// TODO/Done battlingHelper.calculateRewardsForBattleEnd...
+// TODO/Done set all required values for testing in Battling, FortunasToken, FortunasAssets and FortunasLottery
+
+// W - Hourly on last day or not?
+// FortunasToken and Battling - Ctrl + F for "immutable" and adjust these for mainnet
+
+// TODO Testing
+// TODO PancakeSwap - implement for testnet so we can test all PancakeSwap functionalities
+// TODO Randomizer - Chainlink VRF randomizer
+// TODO FortunasToken - Remove minimum required balance for dividends eligibility, add functionality for percentage of user's current balance rather than percentage of pool owned by user
+// TODO FortunasToken - Remove unnecessary fields such as preSale etc.
+
+// ? - Code optimization/cleaning
+
+// Code Size? - Replace some imports with Interfaces (IFortunasToken, IFortunasAssets)?
+// Code Size? - Shorten require statements after testing
+// Code Size? - move sendRations calculations to battlingHelper contract
+
+// TODO:
+// Done - typo in battle 6 reward percentage
+// Done - mint directly to user
+// Done - lose/win percentage calculation
+// ^save to collect percentage in mapping
+// ^save number of times lost in mapping
+// passive rewards (scenario 1) after battle end
+// ^save amount of this into mapping
+// Done - remove reward base, reward increase per day and change reward limit to reward percentage and save x/48 value^
+// Done - (Add/Remove hero) heroes now change percentage to win by up to 10%
+// Done - (Add/Remove cavalry) cavalries now change current reward percentage by up to .05%
+// Done - (calculate rations) ration prices now increase by 12.5 percent (compounded) after reaching 100% winrate
+// Done - (add/remove troops) additional troops now resets winrate rather than reward percentage
+// rework send rations in battling, that is, all changes should be reflected
+// rework viewAllRewards to remove any calculateExtraRewards
+// rework startBattle, initialization of battle
+// maybe add a new function updateAllBattles()
+// update events
+// update graphs
