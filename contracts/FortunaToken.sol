@@ -287,13 +287,11 @@ contract FortunaToken is ERC20, Ownable {
         require(from != address(0), "ERC20::transfer from the zero address");
         require(to != address(0), "ERC20::transfer to the zero address");
 
-        if(amount == 0) {
+        if (amount == 0) {
             super._transfer(from, to, 0);
             return;
         }
-
         uint256 contractTokenBalance = balanceOf(address(this));
-
         bool canTransfer = contractTokenBalance >= transferTokensAtAmount;
 
         if (
@@ -311,78 +309,54 @@ contract FortunaToken is ERC20, Ownable {
 
             if (totalSellingFeesAccumulated > 0) {
                 totalBuyingFeesAccumulated -= totalSellingFeesAccumulated;
-
                 toLiquidityAmount += totalSellingFeesAccumulated
                     .mul(liquiditySellingFee).roundDiv(100);
-
                 toTreasuryAmount += totalSellingFeesAccumulated
                     .mul(treasurySellingFee).roundDiv(100);
-
                 toBurnAmount += totalSellingFeesAccumulated
                     .mul(burnSellingFee).roundDiv(100);
-
                 totalSellingFeesAccumulated = 0;
             }
-
             if (totalBuyingFeesAccumulated > 0) {
                 toLiquidityAmount += totalBuyingFeesAccumulated
                     .mul(liquidityBuyingFee).roundDiv(100);
-                
                 toTreasuryAmount += totalBuyingFeesAccumulated
                     .mul(treasuryBuyingFee).roundDiv(100);
-
                 toBurnAmount += totalBuyingFeesAccumulated
                     .mul(burnBuyingFee).roundDiv(100);
             }
-
             super._transfer(address(this), liquidityWallet, toLiquidityAmount);
-
             super._transfer(address(this), treasuryWallet, toTreasuryAmount);
-
             _burn(address(this), toBurnAmount);
 
             transferring = false;
         }
-
-        if (
-            _isBuy(from) &&
-            !isExcludedFromFees[to]
-        ) {
+        if (_isBuy(from) && !isExcludedFromFees[to]) {
             uint256 totalBuyingFee = liquidityBuyingFee.add(treasuryBuyingFee).add(burnBuyingFee);
-
             uint256 buyingFee = amount.mul(totalBuyingFee).div(multiplierForTotalFee);
             amount -= buyingFee;
-
             super._transfer(from, address(this), buyingFee);
         }
-
-        if (
-            _isSell(from, to) &&
-            !isExcludedFromFees[from]
-        ) {
+        if (_isSell(from, to) && !isExcludedFromFees[from]) {
             uint256 totalSellingFee = liquiditySellingFee.add(treasurySellingFee).add(burnSellingFee);
-
             uint256 sellingFee = amount.mul(totalSellingFee).div(multiplierForTotalFee);
             totalSellingFeesAccumulated += sellingFee;
             amount -= sellingFee;
-
             super._transfer(from, address(this), sellingFee);
         }
-
         super._transfer(from, to, amount);
 
         if (!isExcludedFromPassiveRewards[from]) {
             _updateLedger(from);
         }
- 
         if (!isExcludedFromPassiveRewards[to]) {
             _updateLedger(to);
         }
     }
 
     function updateLedger(address account) external {
+        require(balanceOf(account) > 0, "FRTNA::Insufficient balance");
         require(!isExcludedFromPassiveRewards[account], "FRTNA::Account is excluded from passive rewards");
-
         _updateLedger(account);
     }
 
@@ -390,42 +364,28 @@ contract FortunaToken is ERC20, Ownable {
         (, bool isFirstTransaction) =
             fortunaLedger.updatePassiveRewards(account, balanceOf(account));
 
-        if (isFirstTransaction) {
-            emit CreatedLedger(
-                account
-            );
-        }
+        if (isFirstTransaction) emit CreatedLedger(account);
     }
 
     function claimLedger() external {
         require(!isExcludedFromPassiveRewards[msg.sender], "FRTNA::Account is excluded from passive rewards");
-
         uint256 totalPassiveRewards =
             fortunaLedger.claimPassiveRewards(msg.sender, balanceOf(msg.sender));
 
-        if (totalPassiveRewards == 0) {
-            require(false, "FRTNA::No rewards to claim");
-        }
-
+        require(totalPassiveRewards > 0, "FRTNA::No rewards to claim");
         uint256 rewardWalletBalance = balanceOf(rewardWallet);
-
         bool isMint = totalPassiveRewards > rewardWalletBalance;
 
         if (isMint) {
             if (rewardWalletBalance != 0) {
                 _transfer(rewardWallet, msg.sender, rewardWalletBalance);
             }
-
             _mint(msg.sender, totalPassiveRewards.sub(rewardWalletBalance));
-        }
-        else {
+        } else {
             _transfer(rewardWallet, msg.sender, totalPassiveRewards);
         }
 
-        emit ClaimedLedger(
-            msg.sender,
-            totalPassiveRewards
-        );
+        emit ClaimedLedger(msg.sender, totalPassiveRewards);
     }
 
     function viewLedger(address account) external view returns (uint256) {
